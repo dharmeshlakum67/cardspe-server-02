@@ -3,7 +3,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { AppBreadcrumbs } from '../../../components/common';
+import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
 import { TPillBadgeColor } from '../../../components/common/PillBadge';
 import Icon from '../../../components/icon/Icon';
 import Spinner from '../../../components/bootstrap/Spinner';

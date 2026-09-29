@@ -14,7 +14,8 @@ import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../menu';
 import { decryptId } from '../../../helpers/routeEncryption';
 import usePermission from '../../../hooks/usePermission';
-import RoleForm, { IRoleFormData } from './RoleForm';
+import RoleForm from './RoleForm';
+import type { IRoleFormData } from './RoleForm';
 
 const RoleEditPage: FC = () => {
 	const { id: rawId } = useParams<{ id: string }>();

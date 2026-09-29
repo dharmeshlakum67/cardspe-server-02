@@ -7,7 +7,7 @@ import SubHeader, {
 } from '../../../layout/SubHeader/SubHeader';
 import Card, { CardBody, CardHeader, CardTitle } from '../../../components/bootstrap/Card';
 import Button from '../../../components/bootstrap/Button';
-import { AppBreadcrumbs } from '../../../components/common';
+import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
 
 const DashboardPage = () => {
 	return (

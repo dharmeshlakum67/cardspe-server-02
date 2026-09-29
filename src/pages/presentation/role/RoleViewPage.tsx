@@ -13,7 +13,7 @@ import permissionService from '../../../services/permissionService';
 import { IRoleDetail } from './type/role-type';
 import { IPermissionItem } from '../../../type/permission-type';
 import ConfirmationModal from '../../../components/common/ConfirmationModal';
-import { AppBreadcrumbs } from '../../../components/common';
+import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../menu';
