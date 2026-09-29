@@ -31,8 +31,8 @@ export const roleService = {
 	},
 
 	// CREATE ROLE
-	createRole: async (data: Partial<IRoleItem>): Promise<{ success: boolean; data: IRoleItem }> => {
-		return apiClient<{ success: boolean; data: IRoleItem }>(ROLE_ENDPOINTS.CREATE, {
+	createRole: async (data: Partial<IRoleItem>): Promise<{ success: boolean; message?: string; data: IRoleItem }> => {
+		return apiClient<{ success: boolean; message?: string; data: IRoleItem }>(ROLE_ENDPOINTS.CREATE, {
 			body: data,
 		});
 	},
@@ -41,8 +41,8 @@ export const roleService = {
 	updateRole: async (
 		id: number | string,
 		data: Partial<IRoleItem>,
-	): Promise<{ success: boolean; data: IRoleItem }> => {
-		return apiClient<{ success: boolean; data: IRoleItem }>(ROLE_ENDPOINTS.UPDATE(id), {
+	): Promise<{ success: boolean; message?: string; data: IRoleItem }> => {
+		return apiClient<{ success: boolean; message?: string; data: IRoleItem }>(ROLE_ENDPOINTS.UPDATE(id), {
 			body: data,
 		});
 	},

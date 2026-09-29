@@ -125,8 +125,12 @@ const RoleListPage: FC = () => {
 		if (!roleToDelete) return;
 		setIsDeleting(true);
 		try {
-			await roleService.deleteRole(roleToDelete.id);
-			showNotification('Success', `Role "${roleToDelete.role_name}" deleted successfully`, 'success');
+			const res = await roleService.deleteRole(roleToDelete.id);
+			showNotification(
+				'Success',
+				res?.message || `Role "${roleToDelete.role_name}" deleted successfully`,
+				'success',
+			);
 			setIsDeleteModalOpen(false);
 			setRoles((prev) => prev.filter((r) => r.id !== roleToDelete.id));
 			setTotalDocuments((prev) => Math.max(0, prev - 1));
@@ -151,7 +155,7 @@ const RoleListPage: FC = () => {
 			const res = await roleService.updateRoleStatus(role.id, newStatus);
 			showNotification(
 				'Success',
-				`Status of "${role.role_name}" changed to ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
+				res?.message || `Status of "${role.role_name}" changed to ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
 				'success',
 			);
 			setRoles((prev) =>

@@ -146,8 +146,12 @@ const RoleViewPage: FC = () => {
 		if (!role) return;
 		setIsDeleting(true);
 		try {
-			await roleService.deleteRole(role.id);
-			showNotification('Success', `Role "${role.role_name}" deleted successfully`, 'success');
+			const res = await roleService.deleteRole(role.id);
+			showNotification(
+				'Success',
+				res?.message || `Role "${role.role_name}" deleted successfully`,
+				'success',
+			);
 			setIsDeleteModalOpen(false);
 			navigate(`/${PAGE_ROUTES.ROLES}`);
 		} catch (error: any) {

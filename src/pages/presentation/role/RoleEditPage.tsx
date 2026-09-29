@@ -141,9 +141,13 @@ const RoleEditPage: FC = () => {
 
 		setIsSaving(true);
 		try {
-			await roleService.updateRole(targetRoleId, formData);
+			const res = await roleService.updateRole(targetRoleId, formData);
 			const displayName = formData.role_name || role?.role_name || 'Role';
-			showNotification('Success', `Role "${displayName}" updated successfully`, 'success');
+			showNotification(
+				'Success',
+				res?.message || `Role "${displayName}" updated successfully`,
+				'success',
+			);
 			navigate(-1);
 		} catch (error: any) {
 			showNotification(
@@ -163,8 +167,12 @@ const RoleEditPage: FC = () => {
 
 		setIsDeleting(true);
 		try {
-			await roleService.deleteRole(targetRoleId);
-			showNotification('Success', `Role "${role?.role_name || ''}" deleted successfully`, 'success');
+			const res = await roleService.deleteRole(targetRoleId);
+			showNotification(
+				'Success',
+				res?.message || `Role "${role?.role_name || ''}" deleted successfully`,
+				'success',
+			);
 			setIsDeleteModalOpen(false);
 			navigate(`/${PAGE_ROUTES.ROLES}`);
 		} catch (error: any) {
