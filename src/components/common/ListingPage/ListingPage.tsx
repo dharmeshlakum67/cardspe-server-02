@@ -1,12 +1,13 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable react/require-default-props, react/forbid-prop-types, jsx-a11y/control-has-associated-label */
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import usePermission from '../../../hooks/usePermission';
 import Icon from '../../icon/Icon';
 import Spinner from '../../bootstrap/Spinner';
 import Collapse from '../../bootstrap/Collapse';
+import AppBreadcrumbs from '../AppBreadcrumbs/AppBreadcrumbs';
 import ListingActionButtons from './ListingActionButtons';
 import ListingPagination from './ListingPagination';
 import { authPagesMenu } from '../../../menu';
@@ -99,35 +100,12 @@ export const ListingPage = <T,>({
 				{/* BREADCRUMB / TITLE */}
 				<div>
 					{breadcrumbs && breadcrumbs.length > 0 ? (
-						<nav className='listing-breadcrumbs' aria-label='Breadcrumbs'>
-							<NavLink to='/' className='breadcrumb-home-link' aria-label='Home'>
-								<span className='breadcrumb-home-icon'>
-									<Icon icon='Home' size='sm' />
-								</span>
-							</NavLink>
-							<span className='breadcrumb-sep'>›</span>
-							{breadcrumbs.map((crumb, idx) => {
-								const isLast = idx === breadcrumbs.length - 1;
-								return (
-									<React.Fragment key={crumb.text}>
-										{crumb.to && !isLast ? (
-											<NavLink to={crumb.to} className='breadcrumb-link'>
-												{crumb.text}
-											</NavLink>
-										) : (
-											<span
-												className={classNames({
-													'breadcrumb-current': isLast,
-													'breadcrumb-item-static': !isLast,
-												})}>
-												{crumb.text}
-											</span>
-										)}
-										{!isLast && <span className='breadcrumb-sep'>›</span>}
-									</React.Fragment>
-								);
-							})}
-						</nav>
+						<AppBreadcrumbs
+							items={breadcrumbs.map((crumb) => ({
+								label: crumb.text,
+								to: crumb.to,
+							}))}
+						/>
 					) : (
 						<div>
 							<h4 className='mb-0 fw-bold text-dark'>{title}</h4>

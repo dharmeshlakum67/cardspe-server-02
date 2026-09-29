@@ -4,25 +4,17 @@ import Page from '../../../layout/Page/Page';
 import SubHeader, {
 	SubHeaderLeft,
 	SubHeaderRight,
-	SubheaderSeparator,
 } from '../../../layout/SubHeader/SubHeader';
 import Card, { CardBody, CardHeader, CardTitle } from '../../../components/bootstrap/Card';
 import Button from '../../../components/bootstrap/Button';
-import Breadcrumb from '../../../components/bootstrap/Breadcrumb';
+import { AppBreadcrumbs } from '../../../components/common';
 
 const DashboardPage = () => {
 	return (
 		<PageWrapper title='Dashboard'>
 			<SubHeader>
 				<SubHeaderLeft>
-					<span className='h4 mb-0 fw-bold'>Dashboard</span>
-					<SubheaderSeparator />
-					<Breadcrumb
-						list={[
-							{ title: 'Home', to: '/' },
-							{ title: 'Dashboard', to: '/' },
-						]}
-					/>
+					<AppBreadcrumbs items={[{ label: 'Dashboard', current: true }]} />
 				</SubHeaderLeft>
 				<SubHeaderRight>
 					<Button color='primary' isLight icon='Add'>

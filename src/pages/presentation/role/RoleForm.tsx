@@ -2,7 +2,8 @@
 /* eslint-disable react/require-default-props, react/forbid-prop-types, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { AppBreadcrumbs } from '../../../components/common';
 import { TPillBadgeColor } from '../../../components/common/PillBadge';
 import Icon from '../../../components/icon/Icon';
 import Spinner from '../../../components/bootstrap/Spinner';
@@ -752,21 +753,13 @@ export const RoleForm: FC<IRoleFormProps> = ({
 			<div className='role-edit-header'>
 				<div className='role-title-section'>
 					{/* BREADCRUMBS */}
-					<nav className='role-breadcrumbs' aria-label='Breadcrumbs'>
-						<NavLink to='/' className='breadcrumb-home-link' aria-label='Home'>
-							<span className='breadcrumb-home-icon'>
-								<Icon icon='Home' size='sm' />
-							</span>
-						</NavLink>
-						<span className='breadcrumb-sep'>›</span>
-						<span className='breadcrumb-item-static'>User Management</span>
-						<span className='breadcrumb-sep'>›</span>
-						<NavLink to={`/${PAGE_ROUTES.ROLES}`} className='breadcrumb-link'>
-							Roles
-						</NavLink>
-						<span className='breadcrumb-sep'>›</span>
-						<span className='breadcrumb-current'>{titleText}</span>
-					</nav>
+					<AppBreadcrumbs
+						items={[
+							{ label: 'User Management' },
+							{ label: 'Roles', to: `/${PAGE_ROUTES.ROLES}` },
+							{ label: titleText, current: true },
+						]}
+					/>
 
 					{/* HEADING */}
 					<h2 className='role-name-heading'>{titleText}</h2>

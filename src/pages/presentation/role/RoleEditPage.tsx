@@ -12,7 +12,7 @@ import ConfirmationModal from '../../../components/common/ConfirmationModal';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../menu';
-import { decryptId, encryptId } from '../../../helpers/routeEncryption';
+import { decryptId } from '../../../helpers/routeEncryption';
 import usePermission from '../../../hooks/usePermission';
 import RoleForm, { IRoleFormData } from './RoleForm';
 
@@ -63,12 +63,45 @@ const RoleEditPage: FC = () => {
 			if (roleRes && roleRes.data) {
 				const roleData = roleRes.data;
 				setRole(roleData);
-				if (Array.isArray(roleData.role_access) && roleData.role_access.length > 0) {
-					setAllSystemPermissions(roleData.role_access as unknown as IPermissionItem[]);
+
+				const embeddedAccess =
+					(Array.isArray(roleData.role_access) && roleData.role_access.length > 0
+						? roleData.role_access
+						: null) ||
+					(Array.isArray(roleData.permissions) && roleData.permissions.length > 0
+						? roleData.permissions
+						: null) ||
+					(Array.isArray(roleData.role_permissions) &&
+					roleData.role_permissions.length > 0
+						? roleData.role_permissions
+						: null) ||
+					(Array.isArray(roleData.access) && roleData.access.length > 0
+						? roleData.access
+						: null);
+
+				if (embeddedAccess) {
+					setAllSystemPermissions(embeddedAccess as unknown as IPermissionItem[]);
 				} else {
-					const allPerms = await permissionService.getAllPermissions();
-					if (Array.isArray(allPerms)) {
-						setAllSystemPermissions(allPerms);
+					try {
+						const accessRes = await roleService.getRoleAccessOne(decryptedId);
+						const accessData =
+							accessRes?.data?.role_access ||
+							accessRes?.data?.permissions ||
+							accessRes?.data ||
+							accessRes;
+						if (Array.isArray(accessData) && accessData.length > 0) {
+							setAllSystemPermissions(accessData as unknown as IPermissionItem[]);
+						} else {
+							const allPerms = await permissionService.getAllPermissions();
+							if (Array.isArray(allPerms)) {
+								setAllSystemPermissions(allPerms);
+							}
+						}
+					} catch {
+						const allPerms = await permissionService.getAllPermissions();
+						if (Array.isArray(allPerms)) {
+							setAllSystemPermissions(allPerms);
+						}
 					}
 				}
 			} else {

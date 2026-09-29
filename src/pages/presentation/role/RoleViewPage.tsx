@@ -1,7 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable react/require-default-props, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, NavLink } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
 import { PillBadge } from '../../../components/common/PillBadge';
@@ -13,6 +13,7 @@ import permissionService from '../../../services/permissionService';
 import { IRoleDetail } from './type/role-type';
 import { IPermissionItem } from '../../../type/permission-type';
 import ConfirmationModal from '../../../components/common/ConfirmationModal';
+import { AppBreadcrumbs } from '../../../components/common';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../menu';
@@ -186,9 +187,48 @@ const RoleViewPage: FC = () => {
 			const roleRes = await roleService.getRoleOne(decryptedId);
 
 			if (roleRes && roleRes.data) {
-				setRole(roleRes.data);
-				if (Array.isArray(roleRes.data.role_access) && roleRes.data.role_access.length > 0) {
-					setAllSystemPermissions(roleRes.data.role_access as unknown as IPermissionItem[]);
+				const roleData = roleRes.data;
+				setRole(roleData);
+
+				const embeddedAccess =
+					(Array.isArray(roleData.role_access) && roleData.role_access.length > 0
+						? roleData.role_access
+						: null) ||
+					(Array.isArray(roleData.permissions) && roleData.permissions.length > 0
+						? roleData.permissions
+						: null) ||
+					(Array.isArray(roleData.role_permissions) && roleData.role_permissions.length > 0
+						? roleData.role_permissions
+						: null) ||
+					(Array.isArray(roleData.access) && roleData.access.length > 0
+						? roleData.access
+						: null);
+
+				if (embeddedAccess) {
+					setAllSystemPermissions(embeddedAccess as unknown as IPermissionItem[]);
+				} else {
+					// FALLBACK: ROLE-ACCESS GET-ONE, THEN FULL PERMISSION TREE
+					try {
+						const accessRes = await roleService.getRoleAccessOne(decryptedId);
+						const accessData =
+							accessRes?.data?.role_access ||
+							accessRes?.data?.permissions ||
+							accessRes?.data ||
+							accessRes;
+						if (Array.isArray(accessData) && accessData.length > 0) {
+							setAllSystemPermissions(accessData as unknown as IPermissionItem[]);
+						} else {
+							const allPerms = await permissionService.getAllPermissions();
+							if (Array.isArray(allPerms)) {
+								setAllSystemPermissions(allPerms);
+							}
+						}
+					} catch {
+						const allPerms = await permissionService.getAllPermissions();
+						if (Array.isArray(allPerms)) {
+							setAllSystemPermissions(allPerms);
+						}
+					}
 				}
 			} else {
 				navigate(`/${authPagesMenu.page404.path}`, { replace: true });
@@ -410,9 +450,17 @@ const RoleViewPage: FC = () => {
 
 		// EXTRACT ROLE ACCESS ENTRIES FROM ROLE DATA OR SYSTEM PERMISSIONS
 		const moduleSourceList: any[] =
-			Array.isArray(role.role_access) && role.role_access.length > 0
+			(Array.isArray(role.role_access) && role.role_access.length > 0
 				? role.role_access
-				: allSystemPermissions;
+				: null) ||
+			(Array.isArray(role.permissions) && role.permissions.length > 0
+				? role.permissions
+				: null) ||
+			(Array.isArray(role.role_permissions) && role.role_permissions.length > 0
+				? role.role_permissions
+				: null) ||
+			(Array.isArray(role.access) && role.access.length > 0 ? role.access : null) ||
+			allSystemPermissions;
 
 		if (moduleSourceList.length === 0) {
 			return { orderedModules: [], totalModuleCount: 0 };
@@ -744,21 +792,13 @@ const RoleViewPage: FC = () => {
 						{/* TITLE & META BADGES */}
 						<div className='role-title-section'>
 							{/* BREADCRUMBS */}
-							<nav className='role-breadcrumbs' aria-label='Breadcrumbs'>
-								<NavLink to='/' className='breadcrumb-home-link' aria-label='Home'>
-									<span className='breadcrumb-home-icon'>
-										<Icon icon='Home' size='sm' />
-									</span>
-								</NavLink>
-								<span className='breadcrumb-sep'>›</span>
-								<span className='breadcrumb-item-static'>User Management</span>
-								<span className='breadcrumb-sep'>›</span>
-								<NavLink to={`/${PAGE_ROUTES.ROLES}`} className='breadcrumb-link'>
-									Roles
-								</NavLink>
-								<span className='breadcrumb-sep'>›</span>
-								<span className='breadcrumb-current'>{role.name}</span>
-							</nav>
+							<AppBreadcrumbs
+								items={[
+									{ label: 'User Management' },
+									{ label: 'Roles', to: `/${PAGE_ROUTES.ROLES}` },
+									{ label: role.name, current: true },
+								]}
+							/>
 
 							{/* ROLE NAME */}
 							<h2 className='role-name-heading'>{role.name}</h2>

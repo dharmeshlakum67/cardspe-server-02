@@ -1,5 +1,5 @@
 import apiClient from '../../../../services/apiClient';
-import { ROLE_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import { ROLE_ACCESS_ENDPOINTS, ROLE_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import {
 	IRolesResponse,
 	IRoleFilterParams,
@@ -27,7 +27,7 @@ export const roleService = {
 
 	// FETCH ROLE ACCESS VIA ROLE-ACCESS GET-ONE
 	getRoleAccessOne: async (id: number | string): Promise<any> => {
-		return apiClient<any>(`/api/role-access/get-one/${id}`);
+		return apiClient<any>(ROLE_ACCESS_ENDPOINTS.GET_ONE(id));
 	},
 
 	// CREATE ROLE

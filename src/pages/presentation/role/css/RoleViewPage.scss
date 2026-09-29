@@ -19,69 +19,6 @@
 			flex-direction: column;
 			gap: 0.85rem;
 
-			.role-breadcrumbs {
-				display: flex;
-				align-items: center;
-				flex-wrap: wrap;
-				gap: 0.5rem;
-				font-size: 1.05rem;
-				color: #475569;
-				font-weight: 600;
-				font-family: inherit;
-				margin-bottom: 0.85rem;
-
-				.breadcrumb-home-link {
-					display: inline-flex;
-					align-items: center;
-					justify-content: center;
-					color: #475569;
-					text-decoration: none;
-					transition: color 0.15s;
-
-					&:hover {
-						color: #0f172a;
-					}
-				}
-
-				.breadcrumb-home-icon {
-					display: inline-flex;
-					align-items: center;
-					justify-content: center;
-					color: inherit;
-					font-size: 1.35rem;
-				}
-
-				.breadcrumb-sep {
-					color: #94a3b8;
-					font-size: 1.05rem;
-					margin: 0 0.2rem;
-					user-select: none;
-				}
-
-				.breadcrumb-item-static {
-					color: #475569;
-					font-weight: 600;
-					cursor: default;
-					user-select: none;
-				}
-
-				.breadcrumb-link {
-					color: #475569;
-					text-decoration: none;
-					font-weight: 600;
-					transition: color 0.15s;
-
-					&:hover {
-						color: #0f172a;
-					}
-				}
-
-				.breadcrumb-current {
-					color: #94a3b8;
-					font-weight: 600;
-				}
-			}
-
 			.role-name-heading {
 				font-size: 1.75rem;
 				font-weight: 800;
