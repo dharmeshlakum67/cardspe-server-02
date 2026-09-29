@@ -39,6 +39,8 @@ export interface IRoleFilterParams {
 	page?: number;
 	limit?: number;
 	status?: string;
+	role_status?: string;
+	role_type?: string;
 }
 
 export interface IRolePermissionModule {

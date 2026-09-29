@@ -1,3 +1,5 @@
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
@@ -8,7 +10,7 @@ import roleService from './service/roleService';
 import { IRoleItem } from './type/role-type';
 import showNotification from '../../../components/extras/showNotification';
 import Icon from '../../../components/icon/Icon';
-import { ConfirmationModal, StatusToggle } from '../../../components/common';
+import { ConfirmationModal, StatusToggle, DateRangePicker } from '../../../components/common';
 import usePermission from '../../../hooks/usePermission';
 import useDebounce from '../../../hooks/useDebounce';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
@@ -35,6 +37,9 @@ const RoleListPage: FC = () => {
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const debouncedSearchTerm = useDebounce(searchTerm, 1500);
 	const [statusFilter, setStatusFilter] = useState<string>('');
+	const [roleTypeFilter, setRoleTypeFilter] = useState<string>('');
+	const [startDate, setStartDate] = useState<string>('');
+	const [endDate, setEndDate] = useState<string>('');
 
 	// PAGINATION STATES
 	const [currentPage, setCurrentPage] = useState<number>(1);
@@ -53,7 +58,8 @@ const RoleListPage: FC = () => {
 				return;
 			}
 
-			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${currentPage}_${perPage}`;
+			const isDateRangeValid = Boolean(startDate && endDate);
+			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${roleTypeFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''}_${currentPage}_${perPage}`;
 			if (!force && (isFetchingRef.current || lastFetchKeyRef.current === currentFetchKey)) {
 				return;
 			}
@@ -65,7 +71,11 @@ const RoleListPage: FC = () => {
 			try {
 				const res = await roleService.getRoles({
 					search: debouncedSearchTerm.trim() || undefined,
+					role_status: statusFilter || undefined,
 					status: statusFilter || undefined,
+					role_type: roleTypeFilter || undefined,
+					start_date: isDateRangeValid ? startDate : undefined,
+					end_date: isDateRangeValid ? endDate : undefined,
 					page: currentPage,
 					limit: perPage,
 				});
@@ -91,11 +101,12 @@ const RoleListPage: FC = () => {
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[debouncedSearchTerm, statusFilter, currentPage, perPage, isLoadingPermissions],
+		[debouncedSearchTerm, statusFilter, roleTypeFilter, startDate, endDate, currentPage, perPage, isLoadingPermissions],
 	);
 
 	useEffect(() => {
-		const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${currentPage}_${perPage}`;
+		const isDateRangeValid = Boolean(startDate && endDate);
+		const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${roleTypeFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''}_${currentPage}_${perPage}`;
 		if (
 			!isLoadingPermissions &&
 			canRead(PERMISSION_KEYS.ROLE) &&
@@ -105,12 +116,15 @@ const RoleListPage: FC = () => {
 			fetchRoles();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSearchTerm, statusFilter, currentPage, perPage, isLoadingPermissions]);
+	}, [debouncedSearchTerm, statusFilter, roleTypeFilter, startDate, endDate, currentPage, perPage, isLoadingPermissions]);
 
 	// HANDLE RESET FILTERS
 	const handleResetFilters = () => {
 		setSearchTerm('');
 		setStatusFilter('');
+		setRoleTypeFilter('');
+		setStartDate('');
+		setEndDate('');
 		setCurrentPage(1);
 	};
 
@@ -179,12 +193,10 @@ const RoleListPage: FC = () => {
 
 	// ACTIVE FILTER COUNT
 	let activeFilterCount = 0;
-	if (searchTerm) {
-		activeFilterCount += 1;
-	}
-	if (statusFilter) {
-		activeFilterCount += 1;
-	}
+	if (searchTerm) activeFilterCount += 1;
+	if (statusFilter) activeFilterCount += 1;
+	if (roleTypeFilter) activeFilterCount += 1;
+	if (startDate && endDate) activeFilterCount += 1;
 
 	// TABLE COLUMNS CONFIGURATION WITH DYNAMIC HEADER DIFFERENTIATION & PILL BADGES
 	const columns: IListingColumn<IRoleItem>[] = [
@@ -289,7 +301,7 @@ const RoleListPage: FC = () => {
 					filterContent={
 						<div className='d-flex align-items-end justify-content-end flex-wrap gap-3 w-100'>
 							{/* COMPACT UNIFORM SEARCH INPUT */}
-							<div style={{ width: '220px' }}>
+							<div style={{ width: '200px' }}>
 								<label htmlFor='roleSearch' className='filter-field-label'>Search</label>
 								<input
 									id='roleSearch'
@@ -305,7 +317,7 @@ const RoleListPage: FC = () => {
 							</div>
 
 							{/* STATUS FILTER DROPDOWN */}
-							<div style={{ width: '150px' }}>
+							<div style={{ width: '140px' }}>
 								<label htmlFor='roleStatusFilter' className='filter-field-label'>Status</label>
 								<select
 									id='roleStatusFilter'
@@ -316,9 +328,44 @@ const RoleListPage: FC = () => {
 										setCurrentPage(1);
 									}}>
 									<option value=''>All Status</option>
-									<option value='ACTIVE'>Active</option>
-									<option value='INACTIVE'>Inactive</option>
+									<option value='active'>Active</option>
+									<option value='inactive'>Inactive</option>
 								</select>
+							</div>
+
+							{/* ROLE TYPE FILTER DROPDOWN */}
+							<div style={{ width: '150px' }}>
+								<label htmlFor='roleTypeFilter' className='filter-field-label'>Role Type</label>
+								<select
+									id='roleTypeFilter'
+									className='form-select'
+									value={roleTypeFilter}
+									onChange={(e) => {
+										setRoleTypeFilter(e.target.value);
+										setCurrentPage(1);
+									}}>
+									<option value=''>All Types</option>
+									<option value='super_user'>Super User</option>
+									<option value='user'>User</option>
+									<option value='api_user'>API User</option>
+								</select>
+							</div>
+
+							{/* CUSTOM DATE RANGE PICKER (APPLY WHEN BOTH DATES ARE SELECTED) */}
+							<div style={{ width: '240px' }}>
+								<span className='filter-field-label d-block'>Date Range</span>
+								<DateRangePicker
+									startDate={startDate}
+									endDate={endDate}
+									placeholder='Select Start & End Date'
+									onChange={({ startDate: sDate, endDate: eDate }) => {
+										setStartDate(sDate);
+										setEndDate(eDate);
+										if ((sDate && eDate) || (!sDate && !eDate)) {
+											setCurrentPage(1);
+										}
+									}}
+								/>
 							</div>
 
 							{/* RESET FILTER BUTTON */}
