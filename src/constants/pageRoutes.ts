@@ -6,6 +6,7 @@ export const PAGE_ROUTES = {
 
 	// AUTHENTICATION
 	LOGIN: 'auth-pages/login',
+	SIGNUP: 'auth-pages/signup',
 	FORGOT_PASSWORD: 'auth-pages/forgot-password',
 	RESET_PASSWORD: 'auth-pages/reset-password/:token',
 	PAGE_404: 'auth-pages/404',

@@ -24,6 +24,12 @@ export const authPagesMenu = {
 		path: 'auth-pages/login',
 		icon: 'Login',
 	},
+	signup: {
+		id: 'signup',
+		text: 'Signup',
+		path: 'auth-pages/signup',
+		icon: 'PersonAdd',
+	},
 	page404: {
 		id: 'Page404',
 		text: '404 Page',

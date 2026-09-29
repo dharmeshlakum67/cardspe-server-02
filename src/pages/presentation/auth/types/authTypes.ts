@@ -63,3 +63,63 @@ export interface IResetPasswordResponse {
 	message?: string;
 	data?: any;
 }
+
+export interface ISignupRole {
+	id: number;
+	role_name: string;
+	role_type: string;
+}
+
+export interface IRoleResponse {
+	success: boolean;
+	statusCode?: number;
+	message?: string;
+	total_document?: number;
+	result?: number;
+	data: ISignupRole[];
+}
+
+export interface IRegisterPayload {
+	name: string;
+	username: string;
+	mobile_number: string;
+	email_address: string;
+	company_name: string;
+	password: string;
+	role_id: number;
+}
+
+export interface IRegisterResponse {
+	message: string;
+	user: {
+		name: string;
+		email_address: string;
+		mobile_number: string;
+		token?: string;
+		token_expiry?: string;
+	};
+}
+
+export interface IVerifyOTPPayload {
+	mobile_number: string;
+	otp: string;
+}
+
+export interface IVerifyOTPResponse {
+	message?: string;
+	token?: string;
+	user?: IAuthUser;
+	data?: {
+		token: string;
+		user: IAuthUser;
+	};
+}
+
+export interface IResendOTPPayload {
+	mobile_number: string;
+}
+
+export interface IResendOTPResponse {
+	message?: string;
+	cooldown_seconds?: number;
+}

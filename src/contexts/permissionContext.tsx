@@ -20,6 +20,7 @@ import {
 import { getMenuMetadataForPermission } from '../config/menu-route.config';
 import { dashboardPagesMenu } from '../menu';
 import { ENV } from '../config/env.config';
+import authService from '../pages/presentation/auth/services/authService';
 
 export interface IPermissionContextProps {
 	permissions: IPermissionItem[];
@@ -52,7 +53,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 
 	// FETCH PERMISSIONS DIRECTLY FROM /api/v1/permission (CONTAINS ACCESS OBJECT & TREE)
 	const refetchPermissions = useCallback(async () => {
-		const token = localStorage.getItem(ENV.TOKEN_KEY);
+		const token = authService.getToken();
 		if (!token) {
 			setPermissions([]);
 			setIsFetchingPermissions(false);
@@ -81,7 +82,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 		refetchPermissions();
 	}, [refetchPermissions]);
 
-	const token = localStorage.getItem(ENV.TOKEN_KEY);
+	const token = authService.getToken();
 	const isLoadingPermissions = Boolean(
 		token && (isAuthLoading || isFetchingPermissions || !hasFetchedOnce)
 	);

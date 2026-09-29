@@ -16,3 +16,5 @@
 .border-transparent {
 	--#{$prefix}border-opacity: 0;
 }
+
+@import 'auth';

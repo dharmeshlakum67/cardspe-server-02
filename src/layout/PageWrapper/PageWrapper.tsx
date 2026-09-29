@@ -9,6 +9,7 @@ import usePermission from '../../hooks/usePermission';
 import { authPagesMenu } from '../../menu';
 import { ENV } from '../../config/env.config';
 import Spinner from '../../components/bootstrap/Spinner';
+import authService from '../../pages/presentation/auth/services/authService';
 
 interface IPageWrapperProps {
 	isProtected?: boolean;
@@ -55,7 +56,7 @@ const PageWrapper = forwardRef<HTMLDivElement, IPageWrapperProps>(
 		const isChecking = Boolean(isAuthLoading || isLoadingPermissions);
 
 		useEffect(() => {
-			const token = localStorage.getItem(ENV.TOKEN_KEY);
+			const token = authService.getToken();
 
 			// REDIRECT TO LOGIN IF NOT AUTHENTICATED
 			if (isProtected && !token) {

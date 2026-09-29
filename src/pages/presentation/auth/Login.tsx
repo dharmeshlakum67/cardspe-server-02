@@ -12,6 +12,7 @@ import Spinner from '../../../components/bootstrap/Spinner';
 import Icon from '../../../components/icon/Icon';
 import authService from './services/authService';
 import showNotification from '../../../components/extras/showNotification';
+import PAGE_ROUTES from '../../../constants/pageRoutes';
 
 const Login: FC = () => {
 	const { setUser, setAuthUser } = useContext(AuthContext);
@@ -153,7 +154,7 @@ const Login: FC = () => {
 
 									<div className='col-12 text-end'>
 										<Link
-											to='/auth-pages/forgot-password'
+											to={`/${PAGE_ROUTES.FORGOT_PASSWORD}`}
 											className='text-decoration-none fw-semibold small'
 											style={{ color: '#0E5F98' }}>
 											Forgot Password?
@@ -173,6 +174,16 @@ const Login: FC = () => {
 											{isLoading && <Spinner isSmall inButton isGrow />}
 											Sign In
 										</Button>
+									</div>
+									<div className='col-12 text-center'>
+										<p
+											className='text-decoration-none fw-semibold small'> Don't have an account?
+											<Link
+												to={`/${PAGE_ROUTES.SIGNUP}`}
+												style={{ color: '#0E5F98', marginLeft: '2px' }}>
+												Signup
+											</Link>
+										</p>
 									</div>
 								</form>
 							</CardBody>
