@@ -126,21 +126,21 @@ interface IRoleTypeOption {
 }
 
 const ROLE_TYPE_OPTIONS: IRoleTypeOption[] = [
-	{ value: 'SUPER_ADMIN', label: 'Super Admin', color: 'purple' },
-	{ value: 'ADMIN', label: 'Admin', color: 'indigo' },
-	{ value: 'STAFF', label: 'Staff', color: 'teal' },
+	{ value: 'super_user', label: 'Super User', color: 'purple' },
+	{ value: 'user', label: 'User', color: 'indigo' },
+	{ value: 'api_user', label: 'API User', color: 'teal' },
 ];
 
 // STATUS OPTIONS (ACTIVE & INACTIVE)
 interface IStatusOption {
-	value: 'ACTIVE' | 'INACTIVE';
+	value: 'active' | 'inactive';
 	label: string;
 	color: string;
 }
 
 const STATUS_OPTIONS: IStatusOption[] = [
-	{ value: 'ACTIVE', label: 'Active', color: '#10b981' },
-	{ value: 'INACTIVE', label: 'Inactive', color: '#ef4444' },
+	{ value: 'active', label: 'Active', color: '#10b981' },
+	{ value: 'inactive', label: 'Inactive', color: '#ef4444' },
 ];
 
 // TREE NODE DEFINITION
@@ -156,10 +156,13 @@ export interface ITreePermissionNode {
 }
 
 export type IRoleFormData = Partial<{
-	name: string;
-	status: 'ACTIVE' | 'INACTIVE';
+	role_name: string;
+	role_status: 'active' | 'inactive' | string;
 	role_type: string;
-	accesses: any[];
+	accesses: Array<{
+		permission_id: number;
+		actions: Record<string, boolean>;
+	}>;
 }>;
 
 export interface IRoleFormProps {
@@ -184,18 +187,18 @@ export const RoleForm: FC<IRoleFormProps> = ({
 	const navigate = useNavigate();
 
 	// FORM STATE
-	const [roleName, setRoleName] = useState<string>(initialRole?.name || '');
+	const [roleName, setRoleName] = useState<string>(initialRole?.role_name || '');
 	const [roleType, setRoleType] = useState<string>(
-		initialRole?.role_type ? initialRole.role_type.toUpperCase().trim() : 'ADMIN',
+		initialRole?.role_type ? initialRole.role_type.toLowerCase().trim() : 'user',
 	);
-	const [roleStatus, setRoleStatus] = useState<'ACTIVE' | 'INACTIVE'>(
-		initialRole?.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+	const [roleStatus, setRoleStatus] = useState<'active' | 'inactive'>(
+		(initialRole?.status || '').toLowerCase() === 'inactive' ? 'inactive' : 'active',
 	);
 
 	// TRACK INITIAL VALUES FOR DIRTY / CHANGED CHECK
 	const initialNameRef = useRef<string>('');
 	const initialRoleTypeRef = useRef<string>('');
-	const initialStatusRef = useRef<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+	const initialStatusRef = useRef<'active' | 'inactive'>('active');
 	const initialMatrixRef = useRef<Record<string, Record<string, boolean>>>({});
 
 	// DROPDOWN OPEN STATES
@@ -217,12 +220,12 @@ export const RoleForm: FC<IRoleFormProps> = ({
 	// SYNC INITIAL ROLE DATA
 	useEffect(() => {
 		if (initialRole) {
-			const initName = initialRole.name || '';
-			const normType = (initialRole.role_type || '').toUpperCase().trim();
+			const initName = initialRole.role_name || '';
+			const normType = (initialRole.role_type || '').toLowerCase().trim();
 			const matchedType =
-				ROLE_TYPE_OPTIONS.find((opt) => opt.value === normType)?.value || 'ADMIN';
-			const initStatus: 'ACTIVE' | 'INACTIVE' =
-				initialRole.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+				ROLE_TYPE_OPTIONS.find((opt) => opt.value === normType)?.value || 'user';
+			const initStatus: 'active' | 'inactive' =
+				(initialRole.status || '').toLowerCase() === 'inactive' ? 'inactive' : 'active';
 
 			setRoleName(initName);
 			setRoleType(matchedType);
@@ -681,19 +684,21 @@ export const RoleForm: FC<IRoleFormProps> = ({
 				node.children.forEach(processNodeForAccess);
 			} else if (node.actions.length > 0) {
 				const permIdNum = Number(node.id) || node.id;
-				const actionsList = node.actions.map((act) => {
+				const actionsObj: Record<string, boolean> = {};
+
+				node.actions.forEach((act) => {
 					const clean = act.toLowerCase().trim();
 					const isActive = isActionActive(node.id, clean);
 					const initialActive = isInitialActionActive(node.id, clean);
 					if (isActive !== initialActive) {
 						hasAccessesChanged = true;
 					}
-					return { [clean]: isActive };
+					actionsObj[clean] = isActive;
 				});
 
 				accessesPayload.push({
 					permission_id: permIdNum,
-					actions: actionsList,
+					actions: actionsObj,
 				});
 			}
 		};
@@ -702,15 +707,15 @@ export const RoleForm: FC<IRoleFormProps> = ({
 
 		const hasNameChanged = roleName.trim() !== (initialNameRef.current || '').trim();
 		const hasRoleTypeChanged = roleType !== initialRoleTypeRef.current;
-		const currentNormalizedStatus = roleStatus === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+		const currentNormalizedStatus = roleStatus === 'inactive' ? 'inactive' : 'active';
 		const hasStatusChanged = currentNormalizedStatus !== initialStatusRef.current;
 		const hasAnyChange =
 			hasNameChanged || hasRoleTypeChanged || hasStatusChanged || hasAccessesChanged;
 
 		if (mode === 'add') {
 			const payload: IRoleFormData = {
-				name: roleName.trim(),
-				status: currentNormalizedStatus,
+				role_name: roleName.trim(),
+				role_status: currentNormalizedStatus,
 				role_type: roleType,
 				accesses: accessesPayload,
 			};
@@ -722,28 +727,19 @@ export const RoleForm: FC<IRoleFormProps> = ({
 				return;
 			}
 
-			// EDIT MODE: ONLY INCLUDE CHANGED FIELDS FOR BASIC PROPS + ALWAYS PASS CURRENT/SELECTED ACCESSES
+			// EDIT MODE: INCLUDE UPDATED DATA FOR API
 			const payload: IRoleFormData = {
+				role_name: roleName.trim(),
+				role_status: currentNormalizedStatus,
+				role_type: roleType,
 				accesses: accessesPayload,
 			};
-
-			if (hasNameChanged) {
-				payload.name = roleName.trim();
-			}
-
-			if (hasRoleTypeChanged) {
-				payload.role_type = roleType;
-			}
-
-			if (hasStatusChanged) {
-				payload.status = currentNormalizedStatus;
-			}
 
 			await onSubmit(payload);
 		}
 	};
 
-	const titleText = mode === 'add' ? 'Add New Role' : (initialRole?.name || 'Role Details');
+	const titleText = mode === 'add' ? 'Add New Role' : (initialRole?.role_name || 'Role Details');
 	const saveButtonText = mode === 'add' ? 'Save Role' : 'Save Changes';
 	const savingButtonText = mode === 'add' ? 'Creating...' : 'Saving...';
 

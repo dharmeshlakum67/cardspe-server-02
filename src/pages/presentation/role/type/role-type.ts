@@ -13,15 +13,10 @@ export type TRoleType = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF';
 
 export interface IRoleItem {
 	id: number;
-	tenant_id?: ITenantRef | null;
-	company_id?: ICompanyRef | null;
-	name: string;
+	role_name: string;
 	role_key: string;
 	role_type: TRoleType | string;
-	status: 'ACTIVE' | 'INACTIVE' | string;
-	description?: string | null;
-	created_by?: number | string | null;
-	updated_by?: number | string | null;
+	status: 'active' | 'inactive' | string;
 	created_at: string;
 	updated_at: string;
 }

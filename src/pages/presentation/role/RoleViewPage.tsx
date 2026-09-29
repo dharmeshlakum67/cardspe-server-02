@@ -147,7 +147,7 @@ const RoleViewPage: FC = () => {
 		setIsDeleting(true);
 		try {
 			await roleService.deleteRole(role.id);
-			showNotification('Success', `Role "${role.name}" deleted successfully`, 'success');
+			showNotification('Success', `Role "${role.role_name}" deleted successfully`, 'success');
 			setIsDeleteModalOpen(false);
 			navigate(`/${PAGE_ROUTES.ROLES}`);
 		} catch (error: any) {
@@ -784,7 +784,7 @@ const RoleViewPage: FC = () => {
 	const hasAnyModules = filteredOrderedModules.length > 0;
 
 	return (
-		<PageWrapper title={`View Role: ${role.name}`} permissionKey={PERMISSION_KEYS.ROLE}>
+		<PageWrapper title={`View Role: ${role.role_name}`} permissionKey={PERMISSION_KEYS.ROLE}>
 			<Page container='fluid'>
 				<div className='role-view-page'>
 					{/* TOP FIXED HEADER SECTION */}
@@ -796,12 +796,12 @@ const RoleViewPage: FC = () => {
 								items={[
 									{ label: 'User Management' },
 									{ label: 'Roles', to: `/${PAGE_ROUTES.ROLES}` },
-									{ label: role.name, current: true },
+									{ label: role.role_name, current: true },
 								]}
 							/>
 
 							{/* ROLE NAME */}
-							<h2 className='role-name-heading'>{role.name}</h2>
+							<h2 className='role-name-heading'>{role.role_name}</h2>
 
 							{/* META PILL BADGES ROW */}
 							<div className='role-meta-pills'>

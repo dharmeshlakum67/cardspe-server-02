@@ -126,7 +126,7 @@ const RoleListPage: FC = () => {
 		setIsDeleting(true);
 		try {
 			await roleService.deleteRole(roleToDelete.id);
-			showNotification('Success', `Role "${roleToDelete.name}" deleted successfully`, 'success');
+			showNotification('Success', `Role "${roleToDelete.role_name}" deleted successfully`, 'success');
 			setIsDeleteModalOpen(false);
 			setRoles((prev) => prev.filter((r) => r.id !== roleToDelete.id));
 			setTotalDocuments((prev) => Math.max(0, prev - 1));
@@ -145,13 +145,13 @@ const RoleListPage: FC = () => {
 	// DIRECT INLINE STATUS TOGGLE (NO CONFIRMATION POPUP)
 	const handleDirectStatusToggle = async (role: IRoleItem, newChecked: boolean) => {
 		if (!canUpdate(PERMISSION_KEYS.ROLE)) return;
-		const newStatus = newChecked ? 'ACTIVE' : 'INACTIVE';
+		const newStatus = newChecked ? 'active' : 'inactive';
 		setUpdatingStatusId(role.id);
 		try {
 			const res = await roleService.updateRoleStatus(role.id, newStatus);
 			showNotification(
 				'Success',
-				`Status of "${role.name}" changed to ${newStatus === 'ACTIVE' ? 'Active' : 'Inactive'}`,
+				`Status of "${role.role_name}" changed to ${newStatus === 'active' ? 'Active' : 'Inactive'}`,
 				'success',
 			);
 			setRoles((prev) =>
@@ -192,7 +192,7 @@ const RoleListPage: FC = () => {
 			render: (row) => (
 				<div>
 					<div className='fw-bold text-dark' style={{ fontSize: '0.875rem' }}>
-						{row.name}
+						{row.role_name}
 					</div>
 				</div>
 			),
@@ -200,9 +200,11 @@ const RoleListPage: FC = () => {
 		{
 			key: 'role_type',
 			header: 'Role Type',
-			width: '130px',
-			minWidth: '130px',
-			headerStyle: { width: '130px', minWidth: '130px' },
+			align: 'center',
+			headerAlign: 'center',
+			width: '140px',
+			minWidth: '140px',
+			headerStyle: { width: '140px', minWidth: '140px' },
 			render: (row) => {
 				const { label, color } = getRoleTypeDetails(row.role_type);
 				return (
@@ -210,41 +212,6 @@ const RoleListPage: FC = () => {
 						{label}
 					</PillBadge>
 				);
-			},
-		},
-		{
-			key: 'company',
-			header: 'Company Name',
-			align: 'center',
-			width: '160px',
-			minWidth: '160px',
-			headerStyle: { width: '160px', minWidth: '160px' },
-			render: (row) => {
-				const companyName = row.company_id?.name || '-';
-				const companyCode = row.company_id?.company_code || ''; 
-
-				return (
-					<div className="d-flex flex-column align-items-center">
-						<span className="fw-bold text-dark">{companyName}</span>
-						{companyCode && (
-							<span className="badge bg-light text-muted border mt-1 px-2 py-1" style={{ fontSize: '0.75rem', fontWeight: '500' }}>
-								{companyCode}
-							</span>
-						)}
-					</div>
-				);
-			},
-		},
-		{
-			key: 'tenant',
-			header: 'Tenant Name',
-			align: 'center',
-			width: '150px',
-			minWidth: '150px',
-			headerStyle: { width: '150px', minWidth: '150px' },
-			render: (row) => {
-				const tenantName = row.tenant_id?.name || '-';
-				return <span className='fw-bold text-dark'>{tenantName}</span>;
 			},
 		},
 		{
@@ -256,7 +223,7 @@ const RoleListPage: FC = () => {
 			minWidth: '120px',
 			headerStyle: { width: '120px', minWidth: '120px' },
 			render: (row) => {
-				const isActive = row.status === 'ACTIVE';
+				const isActive = (row.status || (row as any).role_status || '').toLowerCase() === 'active';
 				const isPermitted = canUpdate(PERMISSION_KEYS.ROLE);
 				return (
 					<StatusToggle
@@ -264,7 +231,7 @@ const RoleListPage: FC = () => {
 						disabled={!isPermitted}
 						isLoading={updatingStatusId === row.id}
 						onChange={(newChecked) => handleDirectStatusToggle(row, newChecked)}
-						ariaLabel={`Toggle status for ${row.name}`}
+						ariaLabel={`Toggle status for ${row.role_name}`}
 					/>
 				);
 			},
@@ -272,6 +239,8 @@ const RoleListPage: FC = () => {
 		{
 			key: 'created_at',
 			header: 'Created Date',
+			align: 'center',
+			headerAlign: 'center',
 			width: '160px',
 			minWidth: '160px',
 			headerStyle: { width: '160px', minWidth: '160px' },

@@ -50,10 +50,10 @@ export const roleService = {
 	// UPDATE ROLE STATUS
 	updateRoleStatus: async (
 		id: number | string,
-		status: 'ACTIVE' | 'INACTIVE' | string,
+		role_status: 'active' | 'inactive' | string,
 	): Promise<{ success: boolean; message: string; data?: any }> => {
 		return apiClient(ROLE_ENDPOINTS.UPDATE_STATUS(id), {
-			body: { status },
+			body: { role_status },
 		});
 	},
 

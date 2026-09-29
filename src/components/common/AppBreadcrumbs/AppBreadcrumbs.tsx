@@ -1,3 +1,5 @@
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable react/require-default-props, react/no-array-index-key */
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import Icon from '../../icon/Icon';

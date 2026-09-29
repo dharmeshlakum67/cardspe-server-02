@@ -142,7 +142,7 @@ const RoleEditPage: FC = () => {
 		setIsSaving(true);
 		try {
 			await roleService.updateRole(targetRoleId, formData);
-			const displayName = formData.name || role?.name || 'Role';
+			const displayName = formData.role_name || role?.role_name || 'Role';
 			showNotification('Success', `Role "${displayName}" updated successfully`, 'success');
 			navigate(-1);
 		} catch (error: any) {
@@ -164,7 +164,7 @@ const RoleEditPage: FC = () => {
 		setIsDeleting(true);
 		try {
 			await roleService.deleteRole(targetRoleId);
-			showNotification('Success', `Role "${role?.name || ''}" deleted successfully`, 'success');
+			showNotification('Success', `Role "${role?.role_name || ''}" deleted successfully`, 'success');
 			setIsDeleteModalOpen(false);
 			navigate(`/${PAGE_ROUTES.ROLES}`);
 		} catch (error: any) {
@@ -198,7 +198,7 @@ const RoleEditPage: FC = () => {
 	}
 
 	return (
-		<PageWrapper title={`${role.name}`} permissionKey={PERMISSION_KEYS.ROLE}>
+		<PageWrapper title={`${role.role_name}`} permissionKey={PERMISSION_KEYS.ROLE}>
 			<Page container='fluid'>
 				<RoleForm
 					mode='edit'

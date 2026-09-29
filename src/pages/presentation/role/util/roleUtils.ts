@@ -16,28 +16,19 @@ export const formatRoleType = (roleType?: string | null): string => {
 // GET ROLE TYPE PILL BADGE COLOR
 export const getRoleTypeBadgeColor = (roleType?: string | null): TPillBadgeColor => {
 	if (!roleType) {
-		return 'blue';
-	}
-
-	const normalized = roleType.toUpperCase().trim();
-
-	if (normalized === 'SUPER_ADMIN') {
-		return 'purple';
-	}
-	if (normalized === 'ADMIN') {
 		return 'indigo';
 	}
-	if (normalized === 'STAFF') {
+
+	const normalized = roleType.toLowerCase().trim();
+
+	if (normalized === 'super_user' || normalized === 'super_admin' || normalized === 'superuser') {
+		return 'purple';
+	}
+	if (normalized === 'user' || normalized === 'staff') {
+		return 'indigo';
+	}
+	if (normalized === 'api_user' || normalized === 'apiuser' || normalized === 'api') {
 		return 'teal';
-	}
-	if (normalized === 'MANAGER') {
-		return 'cyan';
-	}
-	if (normalized === 'USER') {
-		return 'blue';
-	}
-	if (normalized === 'GUEST') {
-		return 'secondary';
 	}
 
 	return 'blue';
