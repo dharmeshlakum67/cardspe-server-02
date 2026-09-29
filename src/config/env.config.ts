@@ -5,7 +5,7 @@ export const STORAGE_KEYS = {
 
 // ENVIRONMENT VARIABLES
 export const ENV = {
-	API_BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api',
+	API_BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000',
 	SITE_NAME: process.env.REACT_APP_SITE_NAME || 'cardspe',
 	PRIMARY_COLOR: process.env.REACT_APP_PRIMARY_COLOR || '#0E5F98',
 	MODERN_DESIGN: process.env.REACT_APP_MODERN_DESGIN === 'true',

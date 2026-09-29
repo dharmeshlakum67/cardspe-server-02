@@ -1,0 +1,667 @@
+.role-edit-page {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	font-family: inherit;
+	height: calc(100vh - 120px);
+	min-height: 550px;
+	overflow: hidden;
+	padding: 0.5rem 0.25rem 2rem 0.25rem;
+
+	// TOP NAVIGATION & ACTIONS HEADER (FIXED)
+	.role-edit-header {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 1.25rem;
+		margin-bottom: 2rem;
+
+		.role-title-section {
+			display: flex;
+			flex-direction: column;
+			gap: 0.85rem;
+
+			.role-breadcrumbs {
+				display: flex;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+				font-size: 1.05rem;
+				color: #475569;
+				font-weight: 600;
+				font-family: inherit;
+				margin-bottom: 0.85rem;
+
+				.breadcrumb-home-link {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					color: #475569;
+					text-decoration: none;
+					transition: color 0.15s;
+
+					&:hover {
+						color: #0f172a;
+					}
+				}
+
+				.breadcrumb-home-icon {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					color: inherit;
+					font-size: 1.35rem;
+				}
+
+				.breadcrumb-sep {
+					color: #94a3b8;
+					font-size: 1.05rem;
+					margin: 0 0.2rem;
+					user-select: none;
+				}
+
+				.breadcrumb-item-static {
+					color: #475569;
+					font-weight: 600;
+					cursor: default;
+					user-select: none;
+				}
+
+				.breadcrumb-link {
+					color: #475569;
+					text-decoration: none;
+					font-weight: 600;
+					transition: color 0.15s;
+
+					&:hover {
+						color: #0f172a;
+					}
+				}
+
+				.breadcrumb-current {
+					color: #94a3b8;
+					font-weight: 600;
+				}
+			}
+
+			.role-name-heading {
+				font-size: 1.55rem;
+				font-weight: 800;
+				color: #0f172a;
+				letter-spacing: -0.02em;
+				margin: 0;
+				line-height: 1.2;
+				font-family: inherit;
+			}
+		}
+
+		.role-header-actions {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+
+			.btn-cancel-action {
+				background-color: #64748b;
+				border: 1px solid #64748b;
+				color: #ffffff;
+				border-radius: 0.5rem;
+				padding: 0.5rem 1.25rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				cursor: pointer;
+				box-shadow: 0 1px 3px rgba(100, 116, 139, 0.2);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover {
+					background-color: #475569;
+					border-color: #475569;
+					color: #ffffff;
+				}
+			}
+
+			.btn-delete-action {
+				background-color: #fee2e2;
+				border: 1px solid #fca5a5;
+				color: #dc2626;
+				border-radius: 0.5rem;
+				padding: 0.5rem 1.25rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				cursor: pointer;
+				box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover:not(:disabled) {
+					background-color: #fecaca;
+					border-color: #f87171;
+					color: #b91c1c;
+					transform: translateY(-1px);
+					box-shadow: 0 3px 8px rgba(220, 38, 38, 0.2);
+				}
+
+				&:disabled {
+					opacity: 0.6;
+					cursor: not-allowed;
+				}
+			}
+
+			.btn-save-action {
+				background-color: #5c56b6;
+				border: 1px solid #5c56b6;
+				color: #ffffff;
+				border-radius: 0.5rem;
+				padding: 0.5rem 1.5rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.45rem;
+				cursor: pointer;
+				box-shadow: 0 2px 8px rgba(92, 86, 182, 0.25);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover:not(:disabled) {
+					background-color: #4c46a6;
+					border-color: #4c46a6;
+					color: #ffffff;
+				}
+
+				&:disabled {
+					opacity: 0.7;
+					cursor: not-allowed;
+				}
+			}
+		}
+	}
+
+	// EDIT FORM CONTAINER (FILLS SPACE)
+	.role-edit-form {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: visible;
+	}
+
+	// EDIT FORM CARDS
+	.role-form-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.875rem;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+		.card-header-bar {
+			background: #f8fafc;
+			padding: 0.85rem 1.35rem;
+			border-bottom: 1px solid #e2e8f0;
+			display: flex;
+			align-items: center;
+			gap: 0.85rem;
+			flex-shrink: 0;
+
+			.card-header-icon {
+				width: 34px;
+				height: 34px;
+				border-radius: 0.5rem;
+				background: #eef2ff;
+				color: #4f46e5;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.1rem;
+				flex-shrink: 0;
+			}
+
+			.card-header-title {
+				font-size: 1.05rem;
+				font-weight: 700;
+				color: #0f172a;
+				margin: 0;
+				line-height: 1.2;
+				font-family: inherit;
+			}
+
+			.card-header-subtitle {
+				font-size: 0.75rem;
+				color: #64748b;
+				margin: 0;
+				font-family: inherit;
+			}
+		}
+
+		.card-body-content {
+			padding: 1.15rem 1.35rem;
+		}
+	}
+
+	// ROLE INFORMATION CARD (PINNED AT TOP OF FORM, OVERFLOW VISIBLE FOR DROPDOWNS)
+	.role-info-card {
+		flex-shrink: 0;
+		margin-bottom: 0.85rem;
+		position: relative;
+		z-index: 100;
+		overflow: visible !important;
+
+		.card-body-content {
+			overflow: visible !important;
+		}
+
+		.role-name-input {
+			height: 38px;
+			border-radius: 0.5rem;
+			border: 1px solid #cbd5e1;
+			font-size: 0.9rem;
+			color: #0f172a;
+
+			&:focus {
+				border-color: #5c56b6;
+				box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.15);
+			}
+		}
+	}
+
+	// REACT-SELECT STYLED DROPDOWN COMPONENTS
+	.custom-react-select-wrapper {
+		position: relative;
+		width: 100%;
+		z-index: 50;
+
+		.custom-react-select-control {
+			width: 100%;
+			height: 38px;
+			border: 1px solid #cbd5e1;
+			border-radius: 0.5rem;
+			background: #ffffff;
+			padding: 0 0.75rem;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			cursor: pointer;
+			transition: all 0.2s ease-in-out;
+			font-family: inherit;
+
+			&:hover {
+				border-color: #94a3b8;
+			}
+
+			&.is-open {
+				border-color: #5c56b6;
+				box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.15);
+			}
+
+			.select-value-display {
+				display: flex;
+				align-items: center;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+
+				.select-text-value {
+					font-size: 0.875rem;
+					font-weight: 600;
+					color: #1e293b;
+				}
+
+				.status-dot-indicator {
+					width: 8px;
+					height: 8px;
+					border-radius: 50%;
+					display: inline-block;
+					flex-shrink: 0;
+				}
+			}
+
+			.select-arrow-icon {
+				color: #64748b;
+				display: flex;
+				align-items: center;
+				transition: transform 0.2s ease-in-out;
+
+				&.is-open {
+					transform: rotate(180deg);
+				}
+			}
+		}
+
+		.custom-react-select-menu {
+			position: absolute;
+			top: calc(100% + 4px);
+			left: 0;
+			right: 0;
+			z-index: 9999;
+			background: #ffffff;
+			border: 1px solid #cbd5e1;
+			border-radius: 0.5rem;
+			box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+			padding: 0.35rem;
+			display: flex;
+			flex-direction: column;
+			gap: 0.2rem;
+			max-height: 220px;
+			overflow-y: auto;
+
+			.custom-react-select-option {
+				width: 100%;
+				border: none;
+				background: transparent;
+				padding: 0.5rem 0.75rem;
+				border-radius: 0.375rem;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				cursor: pointer;
+				font-size: 0.875rem;
+				color: #334155;
+				transition: background-color 0.15s;
+				text-align: left;
+				font-family: inherit;
+
+				&:hover {
+					background-color: #f1f5f9;
+					color: #0f172a;
+				}
+
+				&.is-selected {
+					background-color: #eef2ff;
+					font-weight: 600;
+					color: #4338ca;
+				}
+
+				.option-label-text {
+					font-size: 0.875rem;
+					font-weight: 500;
+					color: inherit;
+				}
+
+				.status-dot-indicator {
+					width: 8px;
+					height: 8px;
+					border-radius: 50%;
+					display: inline-block;
+					flex-shrink: 0;
+				}
+
+				.option-check-icon {
+					color: #4f46e5;
+					display: flex;
+					align-items: center;
+				}
+			}
+		}
+	}
+
+	// PERMISSIONS HIERARCHICAL TREE CARD (FILLS REMAINING HEIGHT, ONLY INNER CONTAINER SCROLLS)
+	.permissions-tree-card {
+		position: relative;
+		z-index: 1;
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+
+		.permissions-tree-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			padding: 1.25rem 1.5rem;
+			background: #ffffff;
+			overflow-y: auto;
+			display: flex;
+			flex-direction: column;
+			gap: 0.65rem;
+
+			&::-webkit-scrollbar {
+				width: 6px;
+			}
+			&::-webkit-scrollbar-track {
+				background: #f8fafc;
+			}
+			&::-webkit-scrollbar-thumb {
+				background: #cbd5e1;
+				border-radius: 4px;
+
+				&:hover {
+					background: #94a3b8;
+				}
+			}
+
+			// TREE ROOT ITEM
+			.tree-root-item {
+				display: flex;
+				flex-direction: column;
+				gap: 0.35rem;
+
+				.tree-node-row {
+					display: flex;
+					align-items: center;
+					gap: 0.45rem;
+					min-height: 28px;
+
+					.tree-caret-btn {
+						background: none;
+						border: none;
+						padding: 0;
+						width: 18px;
+						height: 18px;
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
+						cursor: pointer;
+						color: #64748b;
+						font-size: 0.9rem;
+						line-height: 1;
+						flex-shrink: 0;
+
+						.caret-arrow {
+							display: inline-block;
+							transition: transform 0.15s;
+							user-select: none;
+						}
+					}
+
+					.tree-caret-placeholder {
+						width: 18px;
+						height: 18px;
+						flex-shrink: 0;
+						display: inline-block;
+					}
+
+					.tree-checkbox-label {
+						display: inline-flex;
+						align-items: center;
+						gap: 0.55rem;
+						cursor: pointer;
+						margin: 0;
+						user-select: none;
+
+						.tree-node-name {
+							font-size: 0.95rem;
+							color: #1e293b;
+							font-family: inherit;
+
+							&.root-name {
+								font-weight: 700;
+								color: #0f172a;
+							}
+
+							&.child-name {
+								font-weight: 600;
+								color: #334155;
+							}
+						}
+					}
+				}
+
+				// EXPANDED BODY (CHILDREN & ACTIONS)
+				.tree-expanded-body {
+					margin-left: 0.55rem;
+					padding-left: 1.15rem;
+					border-left: 1.5px solid #e2e8f0;
+					display: flex;
+					flex-direction: column;
+					gap: 0.65rem;
+					margin-top: 0.25rem;
+					margin-bottom: 0.35rem;
+
+					.tree-child-item {
+						display: flex;
+						flex-direction: column;
+						gap: 0.25rem;
+						margin-bottom: 0.35rem;
+
+						&:last-child {
+							margin-bottom: 0;
+						}
+
+						.child-row {
+							gap: 0.45rem;
+						}
+					}
+
+					// ACTION CHECKBOXES LIST (VERTICAL STACKED, INDENTED UNDER SUB-MODULE)
+					.tree-actions-list {
+						margin-left: 0.55rem;
+						padding-left: 1.15rem;
+						border-left: 1.5px solid #cbd5e1;
+						display: flex;
+						flex-direction: column;
+						gap: 0.3rem;
+						margin-top: 0.2rem;
+						margin-bottom: 0.35rem;
+
+						.tree-action-item {
+							display: flex;
+							align-items: center;
+							gap: 0.5rem;
+							min-height: 26px;
+
+							.tree-action-checkbox-label {
+								display: inline-flex;
+								align-items: center;
+								gap: 0.5rem;
+								cursor: pointer;
+								margin: 0;
+								user-select: none;
+
+								.action-label-text {
+									font-size: 0.875rem;
+									color: #475569;
+									font-weight: 500;
+									font-family: inherit;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// CUSTOM CHECKBOX STYLING (UNIFORM 18px ACROSS ALL ITEMS)
+			.tree-checkbox {
+				appearance: none;
+				-webkit-appearance: none;
+				width: 18px;
+				height: 18px;
+				border: 1.5px solid #94a3b8;
+				border-radius: 4px;
+				background-color: #ffffff;
+				display: inline-grid;
+				place-content: center;
+				cursor: pointer;
+				margin: 0;
+				flex-shrink: 0;
+				transition: all 0.12s ease-in-out;
+
+				&::before {
+					content: '';
+					width: 10px;
+					height: 10px;
+					transform: scale(0);
+					transition: 120ms transform ease-in-out;
+					box-shadow: inset 1em 1em #ffffff;
+					clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+				}
+
+				&:checked {
+					background-color: #6366f1;
+					border-color: #6366f1;
+
+					&::before {
+						transform: scale(1);
+					}
+				}
+
+				&:indeterminate,
+				&.is-indeterminate {
+					background-color: #6366f1;
+					border-color: #6366f1;
+
+					&::before {
+						content: '';
+						width: 8px;
+						height: 2.5px;
+						background-color: #ffffff;
+						box-shadow: none;
+						clip-path: none;
+						transform: scale(1);
+						border-radius: 1px;
+					}
+				}
+
+				&:focus {
+					outline: none;
+					box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+				}
+			}
+
+			.no-tree-nodes {
+				padding: 2.5rem 1rem;
+				text-align: center;
+				color: #94a3b8;
+			}
+		}
+	}
+
+	// RESPONSIVE RULES
+	@media (max-width: 768px) {
+		height: auto;
+		min-height: auto;
+		overflow: visible;
+
+		.role-edit-header {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.85rem;
+
+			.role-header-actions {
+				width: 100%;
+
+				.btn-cancel-action,
+				.btn-save-action {
+					flex: 1 1 auto;
+					justify-content: center;
+				}
+			}
+		}
+
+		.role-edit-form {
+			overflow: visible;
+		}
+
+		.permissions-tree-card {
+			.permissions-tree-container {
+				max-height: 450px;
+			}
+		}
+	}
+}

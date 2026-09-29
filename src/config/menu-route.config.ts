@@ -16,6 +16,28 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Dashboard',
 		subMenu: null,
 	},
+
+	// USER MANAGEMENT PARENT (PATH NULL = EXPANDABLE GROUP)
+	user_management: {
+		path: null,
+		icon: 'ManageAccounts',
+		text: 'User Management',
+		subMenu: null,
+	},
+
+	// ROLE MODULE (SUPPORT BOTH role / roles KEYS FROM API)
+	role: {
+		path: PAGE_ROUTES.ROLES,
+		icon: 'AdminPanelSettings',
+		text: 'Roles',
+		subMenu: null,
+	},
+	roles: {
+		path: PAGE_ROUTES.ROLES,
+		icon: 'AdminPanelSettings',
+		text: 'Roles',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY
@@ -28,17 +50,22 @@ export const getMenuMetadataForPermission = (
 	const keyNorm = normalizeStr(permissionKey);
 	const nameNorm = normalizeStr(fallbackName);
 
-	const candidates = [keyNorm, nameNorm];
+	const candidates = [
+		keyNorm,
+		nameNorm,
+		keyNorm.endsWith('s') ? keyNorm.slice(0, -1) : `${keyNorm}s`,
+		nameNorm.endsWith('s') ? nameNorm.slice(0, -1) : `${nameNorm}s`,
+	];
 
 	for (const candidate of candidates) {
 		if (candidate && MENU_ROUTE_CONFIG[candidate]) {
 			return {
 				...MENU_ROUTE_CONFIG[candidate],
-				text: MENU_ROUTE_CONFIG[candidate].text || fallbackName,
+				// Prefer API permission name for dynamic sidebar label
+				text: fallbackName || MENU_ROUTE_CONFIG[candidate].text,
 			};
 		}
 	}
 
 	return null;
 };
-

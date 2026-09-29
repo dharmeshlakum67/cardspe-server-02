@@ -325,7 +325,8 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				if (metadata || subMenuObj !== null) {
 					return {
 						id: perm.id || key,
-						text: metadata?.text || perm.name,
+						// Prefer API name so sidebar labels stay dynamic
+						text: perm.name || metadata?.text || key,
 						path: resolvedPath,
 						icon: metadata?.icon || (perm as any).icon || 'ListAlt',
 						subMenu: subMenuObj || metadata?.subMenu || null,

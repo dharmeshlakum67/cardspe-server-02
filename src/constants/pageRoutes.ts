@@ -13,9 +13,14 @@ export const PAGE_ROUTES = {
 
 	// ADMIN & PROFILE
 	PROFILE: 'admin/profile',
+
+	// USER MANAGEMENT / ROLES
+	ROLES: 'roles',
+	ROLES_ADD: 'roles/add',
+	ROLES_VIEW: 'roles/view/:id',
+	ROLES_EDIT: 'roles/edit/:id',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];
 
 export default PAGE_ROUTES;
-

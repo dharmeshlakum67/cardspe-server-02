@@ -8,6 +8,10 @@ import ResetPassword from '../pages/presentation/auth/ResetPassword';
 import Page404 from '../pages/presentation/auth/Page404';
 
 const DashboardPage = lazy(() => import('../pages/presentation/dashboard/DashboardPage'));
+const RoleListPage = lazy(() => import('../pages/presentation/role/RoleListPage'));
+const RoleAddPage = lazy(() => import('../pages/presentation/role/RoleAddPage'));
+const RoleViewPage = lazy(() => import('../pages/presentation/role/RoleViewPage'));
+const RoleEditPage = lazy(() => import('../pages/presentation/role/RoleEditPage'));
 
 const contents: RouteProps[] = [
 	{
@@ -29,6 +33,22 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.DASHBOARD,
 		element: <DashboardPage />,
+	},
+	{
+		path: PAGE_ROUTES.ROLES,
+		element: <RoleListPage />,
+	},
+	{
+		path: PAGE_ROUTES.ROLES_ADD,
+		element: <RoleAddPage />,
+	},
+	{
+		path: PAGE_ROUTES.ROLES_VIEW,
+		element: <RoleViewPage />,
+	},
+	{
+		path: PAGE_ROUTES.ROLES_EDIT,
+		element: <RoleEditPage />,
 	},
 	{
 		path: '*',

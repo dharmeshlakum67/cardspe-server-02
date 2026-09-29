@@ -2,9 +2,13 @@
 
 export const PERMISSION_KEYS = {
 	DASHBOARD: 'dashboard',
+	USER_MANAGEMENT: 'user_management',
+	USERS: 'users',
+	ROLE: 'role',
+	ROLES: 'roles',
+	LOGIN_HISTORY: 'login_history',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];
 
 export default PERMISSION_KEYS;
-
