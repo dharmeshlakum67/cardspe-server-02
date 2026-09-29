@@ -18,6 +18,7 @@ import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { encryptId } from '../../../helpers/routeEncryption';
 import { formatDateTime } from '../../../helpers/dateUtils';
 import { getRoleTypeDetails } from './util/roleUtils';
+import constantService, { IConstantOption } from '../../../services/constantService';
 
 const RoleListPage: FC = () => {
 	const navigate = useNavigate();
@@ -37,7 +38,9 @@ const RoleListPage: FC = () => {
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const debouncedSearchTerm = useDebounce(searchTerm, 1500);
 	const [statusFilter, setStatusFilter] = useState<string>('');
+	const [statusOptions, setStatusOptions] = useState<IConstantOption[]>([]);
 	const [roleTypeFilter, setRoleTypeFilter] = useState<string>('');
+	const [roleTypeOptions, setRoleTypeOptions] = useState<IConstantOption[]>([]);
 	const [startDate, setStartDate] = useState<string>('');
 	const [endDate, setEndDate] = useState<string>('');
 
@@ -117,6 +120,29 @@ const RoleListPage: FC = () => {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [debouncedSearchTerm, statusFilter, roleTypeFilter, startDate, endDate, currentPage, perPage, isLoadingPermissions]);
+
+	// FETCH DYNAMIC STATUS & ROLE TYPE CONSTANTS ON MOUNT
+	useEffect(() => {
+		let isMounted = true;
+		const fetchConstants = async () => {
+			try {
+				const [statusOpts, roleOpts] = await Promise.all([
+					constantService.getStatusConstants(),
+					constantService.getRoleConstants(),
+				]);
+				if (isMounted) {
+					if (statusOpts && statusOpts.length > 0) setStatusOptions(statusOpts);
+					if (roleOpts && roleOpts.length > 0) setRoleTypeOptions(roleOpts);
+				}
+			} catch (err) {
+				console.error('Failed to load constants', err);
+			}
+		};
+		fetchConstants();
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
 	// HANDLE RESET FILTERS
 	const handleResetFilters = () => {
@@ -222,7 +248,9 @@ const RoleListPage: FC = () => {
 			minWidth: '140px',
 			headerStyle: { width: '140px', minWidth: '140px' },
 			render: (row) => {
-				const { label, color } = getRoleTypeDetails(row.role_type);
+				const { color, label: defaultLabel } = getRoleTypeDetails(row.role_type);
+				const matchedOpt = roleTypeOptions.find((opt) => opt.value === row.role_type);
+				const label = matchedOpt ? matchedOpt.label : defaultLabel;
 				return (
 					<PillBadge color={color} isPill size='md'>
 						{label}
@@ -247,6 +275,7 @@ const RoleListPage: FC = () => {
 						disabled={!isPermitted}
 						isLoading={updatingStatusId === row.id}
 						onChange={(newChecked) => handleDirectStatusToggle(row, newChecked)}
+						statusOptions={statusOptions}
 						ariaLabel={`Toggle status for ${row.role_name}`}
 					/>
 				);
@@ -328,8 +357,18 @@ const RoleListPage: FC = () => {
 										setCurrentPage(1);
 									}}>
 									<option value=''>All Status</option>
-									<option value='active'>Active</option>
-									<option value='inactive'>Inactive</option>
+									{statusOptions.length > 0
+										? statusOptions.map((opt) => (
+												<option key={opt.value} value={opt.value}>
+													{opt.label}
+												</option>
+										  ))
+										: (
+											<>
+												<option value='active'>Active</option>
+												<option value='inactive'>Inactive</option>
+											</>
+										)}
 								</select>
 							</div>
 
@@ -345,9 +384,19 @@ const RoleListPage: FC = () => {
 										setCurrentPage(1);
 									}}>
 									<option value=''>All Types</option>
-									<option value='super_user'>Super User</option>
-									<option value='user'>User</option>
-									<option value='api_user'>API User</option>
+									{roleTypeOptions.length > 0
+										? roleTypeOptions.map((opt) => (
+												<option key={opt.value} value={opt.value}>
+													{opt.label}
+												</option>
+										  ))
+										: (
+											<>
+												<option value='super_user'>Super User</option>
+												<option value='user'>User</option>
+												<option value='api_user'>API User</option>
+											</>
+										)}
 								</select>
 							</div>
 

@@ -12,6 +12,7 @@ import { IPermissionItem } from '../../../type/permission-type';
 import { IRoleDetail } from './type/role-type';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import { getMenuMetadataForPermission } from '../../../config/menu-route.config';
+import constantService from '../../../services/constantService';
 import './css/RoleEditPage.scss';
 
 // ACTION META LOOKUP
@@ -125,7 +126,7 @@ interface IRoleTypeOption {
 	color: TPillBadgeColor;
 }
 
-const ROLE_TYPE_OPTIONS: IRoleTypeOption[] = [
+const DEFAULT_ROLE_TYPE_OPTIONS: IRoleTypeOption[] = [
 	{ value: 'super_user', label: 'Super User', color: 'purple' },
 	{ value: 'user', label: 'User', color: 'indigo' },
 	{ value: 'api_user', label: 'API User', color: 'teal' },
@@ -138,7 +139,7 @@ interface IStatusOption {
 	color: string;
 }
 
-const STATUS_OPTIONS: IStatusOption[] = [
+const DEFAULT_STATUS_OPTIONS: IStatusOption[] = [
 	{ value: 'active', label: 'Active', color: '#10b981' },
 	{ value: 'inactive', label: 'Inactive', color: '#ef4444' },
 ];
@@ -223,7 +224,7 @@ export const RoleForm: FC<IRoleFormProps> = ({
 			const initName = initialRole.role_name || '';
 			const normType = (initialRole.role_type || '').toLowerCase().trim();
 			const matchedType =
-				ROLE_TYPE_OPTIONS.find((opt) => opt.value === normType)?.value || 'user';
+				DEFAULT_ROLE_TYPE_OPTIONS.find((opt) => opt.value === normType)?.value || normType || 'user';
 			const initStatus: 'active' | 'inactive' =
 				(initialRole.status || '').toLowerCase() === 'inactive' ? 'inactive' : 'active';
 
@@ -382,17 +383,61 @@ export const RoleForm: FC<IRoleFormProps> = ({
 		};
 	}, []);
 
+	const [statusOptions, setStatusOptions] = useState<IStatusOption[]>(DEFAULT_STATUS_OPTIONS);
+	const [roleTypeOptions, setRoleTypeOptions] = useState<IRoleTypeOption[]>(DEFAULT_ROLE_TYPE_OPTIONS);
+
+	// Load dynamic status & role type constants
+	useEffect(() => {
+		const loadDynamicConstants = async () => {
+			try {
+				const [sOpts, rOpts] = await Promise.all([
+					constantService.getStatusConstants(),
+					constantService.getRoleConstants(),
+				]);
+
+				if (sOpts && sOpts.length > 0) {
+					setStatusOptions(
+						sOpts.map((opt) => ({
+							value: opt.value as 'active' | 'inactive',
+							label: opt.label,
+							color: opt.value === 'active' ? '#10b981' : '#ef4444',
+						})),
+					);
+				}
+
+				if (rOpts && rOpts.length > 0) {
+					setRoleTypeOptions(
+						rOpts.map((opt) => {
+							let badgeColor: TPillBadgeColor = 'indigo';
+							if (opt.value === 'super_user') {
+								badgeColor = 'purple';
+							} else if (opt.value === 'api_user') {
+								badgeColor = 'teal';
+							}
+							return {
+								value: opt.value,
+								label: opt.label,
+								color: badgeColor,
+							};
+						}),
+					);
+				}
+			} catch (err) {}
+		};
+		loadDynamicConstants();
+	}, []);
+
 	const selectedRoleTypeOption = useMemo<IRoleTypeOption>(() => {
-		const found = ROLE_TYPE_OPTIONS.find((opt) => opt.value === roleType);
+		const found = roleTypeOptions.find((opt) => opt.value === roleType);
 		if (found) return found;
-		return ROLE_TYPE_OPTIONS[0];
-	}, [roleType]);
+		return roleTypeOptions[0] || { value: roleType, label: roleType, color: 'indigo' };
+	}, [roleType, roleTypeOptions]);
 
 	const selectedStatusOption = useMemo<IStatusOption>(() => {
-		const found = STATUS_OPTIONS.find((opt) => opt.value === roleStatus);
+		const found = statusOptions.find((opt) => opt.value === roleStatus);
 		if (found) return found;
-		return STATUS_OPTIONS[0];
-	}, [roleStatus]);
+		return statusOptions[0];
+	}, [roleStatus, statusOptions]);
 
 	// BUILD HIERARCHICAL PERMISSION TREE WITH DISPLAY ORDER
 	const permissionTree = useMemo<ITreePermissionNode[]>(() => {
@@ -858,7 +903,7 @@ export const RoleForm: FC<IRoleFormProps> = ({
 
 								{isRoleTypeDropdownOpen && (
 									<div className='custom-react-select-menu'>
-										{ROLE_TYPE_OPTIONS.map((opt) => (
+										{roleTypeOptions.map((opt) => (
 											<button
 												key={opt.value}
 												type='button'
@@ -907,7 +952,7 @@ export const RoleForm: FC<IRoleFormProps> = ({
 
 								{isStatusDropdownOpen && (
 									<div className='custom-react-select-menu'>
-										{STATUS_OPTIONS.map((opt) => (
+										{statusOptions.map((opt) => (
 											<button
 												key={opt.value}
 												type='button'

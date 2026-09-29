@@ -115,12 +115,57 @@ export const PERMISSION_ENDPOINTS = {
 	},
 } as const;
 
+// DOCUMENT TYPE ENDPOINTS
+export const DOCUMENT_TYPE_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/master/document-type',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/master/document-type/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/master/document-type/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/master/document-type/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/master/document-type/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/master/document-type/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
+// CONSTANT ENDPOINTS
+export const CONSTANT_ENDPOINTS = {
+	GET_BY_TYPE: (type: string) => ({
+		url: `/api/constant/${type}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
 	ROLE: ROLE_ENDPOINTS,
 	ROLE_ACCESS: ROLE_ACCESS_ENDPOINTS,
 	PERMISSIONS: PERMISSION_ENDPOINTS,
+	DOCUMENT_TYPE: DOCUMENT_TYPE_ENDPOINTS,
+	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 
 export default API_ENDPOINTS;

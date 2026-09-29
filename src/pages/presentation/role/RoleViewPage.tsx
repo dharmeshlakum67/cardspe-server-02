@@ -22,6 +22,7 @@ import { decryptId, encryptId } from '../../../helpers/routeEncryption';
 import { formatDate } from '../../../helpers/dateUtils';
 import usePermission from '../../../hooks/usePermission';
 import { getRoleTypeDetails } from './util/roleUtils';
+import constantService, { IConstantOption } from '../../../services/constantService';
 import './css/RoleViewPage.scss';
 
 export interface IDynamicActionItem {
@@ -132,10 +133,27 @@ const RoleViewPage: FC = () => {
 	const [allSystemPermissions, setAllSystemPermissions] = useState<IPermissionItem[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [searchQuery, setSearchQuery] = useState<string>('');
+	const [roleTypeOptions, setRoleTypeOptions] = useState<IConstantOption[]>([]);
 
 	// DELETE MODAL STATES
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+	useEffect(() => {
+		let isMounted = true;
+		const loadConstants = async () => {
+			try {
+				const opts = await constantService.getRoleConstants();
+				if (isMounted && opts && opts.length > 0) {
+					setRoleTypeOptions(opts);
+				}
+			} catch (err) {}
+		};
+		loadConstants();
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
 	// REF TO PREVENT DUPLICATE API CALLS
 	const fetchedIdRef = useRef<string>('');
@@ -760,8 +778,13 @@ const RoleViewPage: FC = () => {
 
 	// ROLE TYPE DETAILS
 	const roleTypeMeta = useMemo(() => {
-		return getRoleTypeDetails(role?.role_type || '');
-	}, [role?.role_type]);
+		const details = getRoleTypeDetails(role?.role_type || '');
+		const matchedOpt = roleTypeOptions.find((opt) => opt.value === role?.role_type);
+		if (matchedOpt) {
+			return { label: matchedOpt.label, color: details.color };
+		}
+		return details;
+	}, [role?.role_type, roleTypeOptions]);
 
 	// LOADING SPINNER
 	if (isLoading) {

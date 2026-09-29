@@ -19,6 +19,12 @@ export const PAGE_ROUTES = {
 	ROLES_ADD: 'roles/add',
 	ROLES_VIEW: 'roles/view/:id',
 	ROLES_EDIT: 'roles/edit/:id',
+
+	// MASTER / DOCUMENT TYPE
+	DOCUMENT_TYPE: 'master/document-type',
+	DOCUMENT_TYPE_ADD: 'master/document-type/add',
+	DOCUMENT_TYPE_VIEW: 'master/document-type/view/:id',
+	DOCUMENT_TYPE_EDIT: 'master/document-type/edit/:id',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

@@ -57,6 +57,11 @@ export const roleService = {
 		});
 	},
 
+	// FETCH ACTIVE ROLES FOR DROPDOWNS / ASSIGNMENTS
+	getActiveRoles: async (): Promise<{ success: boolean; data: IRoleItem[] }> => {
+		return apiClient<{ success: boolean; data: IRoleItem[] }>(ROLE_ENDPOINTS.GET_ACTIVE);
+	},
+
 	// DELETE ROLE
 	deleteRole: async (id: number | string): Promise<{ success: boolean; message: string }> => {
 		return apiClient<{ success: boolean; message: string }>(ROLE_ENDPOINTS.DELETE(id));

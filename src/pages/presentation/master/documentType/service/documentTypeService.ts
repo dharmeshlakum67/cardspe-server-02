@@ -1,0 +1,70 @@
+import apiClient from '../../../../../services/apiClient';
+import { DOCUMENT_TYPE_ENDPOINTS } from '../../../../../constants/apiEndpoints';
+import {
+	IDocumentTypeListResponse,
+	IDocumentTypeDetailResponse,
+	IDocumentTypeQueryParams,
+	ICreateDocumentTypePayload,
+	IUpdateDocumentTypePayload,
+	IDocumentTypeItem,
+} from '../type/document-type';
+
+export const documentTypeService = {
+	// GET ALL DOCUMENT TYPES (LIST WITH FILTERS & PAGINATION)
+	getDocumentTypes: async (params?: IDocumentTypeQueryParams): Promise<IDocumentTypeListResponse> => {
+		return apiClient<IDocumentTypeListResponse>(DOCUMENT_TYPE_ENDPOINTS.GET_ALL, {
+			params: params as Record<string, string | number | boolean | undefined>,
+		});
+	},
+
+	// GET SINGLE DOCUMENT TYPE BY ID
+	getDocumentTypeById: async (id: number | string): Promise<IDocumentTypeDetailResponse> => {
+		return apiClient<IDocumentTypeDetailResponse>(DOCUMENT_TYPE_ENDPOINTS.GET_ONE(id));
+	},
+
+	// CREATE DOCUMENT TYPE
+	createDocumentType: async (
+		payload: ICreateDocumentTypePayload,
+	): Promise<{ success: boolean; statusCode?: number; message?: string; data: IDocumentTypeItem }> => {
+		return apiClient<{ success: boolean; statusCode?: number; message?: string; data: IDocumentTypeItem }>(
+			DOCUMENT_TYPE_ENDPOINTS.CREATE,
+			{
+				body: payload,
+			},
+		);
+	},
+
+	// UPDATE DOCUMENT TYPE
+	updateDocumentType: async (
+		id: number | string,
+		payload: IUpdateDocumentTypePayload,
+	): Promise<{ success: boolean; statusCode?: number; message?: string; data: any }> => {
+		return apiClient<{ success: boolean; statusCode?: number; message?: string; data: any }>(
+			DOCUMENT_TYPE_ENDPOINTS.UPDATE(id),
+			{
+				body: payload,
+			},
+		);
+	},
+
+	// UPDATE DOCUMENT TYPE STATUS ONLY
+	updateDocumentTypeStatus: async (
+		id: number | string,
+		status: 'active' | 'inactive' | string,
+	): Promise<{ success: boolean; statusCode?: number; message?: string; data?: any }> => {
+		return apiClient(DOCUMENT_TYPE_ENDPOINTS.UPDATE_STATUS(id), {
+			body: { status },
+		});
+	},
+
+	// DELETE DOCUMENT TYPE
+	deleteDocumentType: async (
+		id: number | string,
+	): Promise<{ success: boolean; statusCode?: number; message?: string }> => {
+		return apiClient<{ success: boolean; statusCode?: number; message?: string }>(
+			DOCUMENT_TYPE_ENDPOINTS.DELETE(id),
+		);
+	},
+};
+
+export default documentTypeService;

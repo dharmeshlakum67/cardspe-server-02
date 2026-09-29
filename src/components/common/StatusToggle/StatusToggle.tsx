@@ -7,7 +7,7 @@ import Spinner from '../../bootstrap/Spinner';
 import './StatusToggle.scss';
 
 export interface IStatusOption {
-	value: number;
+	value: string | number;
 	label: string;
 }
 
@@ -36,12 +36,16 @@ export const StatusToggle: FC<IStatusToggleProps> = ({
 }) => {
 	const activeLabel =
 		onText ||
-		statusOptions?.find((opt) => opt.value === 1)?.label ||
+		statusOptions?.find(
+			(opt) => String(opt.value).toLowerCase() === 'active' || opt.value === 1,
+		)?.label ||
 		'Active';
 
 	const inactiveLabel =
 		offText ||
-		statusOptions?.find((opt) => opt.value === 0)?.label ||
+		statusOptions?.find(
+			(opt) => String(opt.value).toLowerCase() === 'inactive' || opt.value === 0,
+		)?.label ||
 		'Inactive';
 
 	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -91,7 +95,7 @@ export const StatusToggle: FC<IStatusToggleProps> = ({
 	offText: PropTypes.string,
 	statusOptions: PropTypes.arrayOf(
 		PropTypes.shape({
-			value: PropTypes.number.isRequired,
+			value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 			label: PropTypes.string.isRequired,
 		}),
 	),

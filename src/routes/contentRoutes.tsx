@@ -13,6 +13,19 @@ const RoleAddPage = lazy(() => import('../pages/presentation/role/RoleAddPage'))
 const RoleViewPage = lazy(() => import('../pages/presentation/role/RoleViewPage'));
 const RoleEditPage = lazy(() => import('../pages/presentation/role/RoleEditPage'));
 
+const DocumentTypeListPage = lazy(
+	() => import('../pages/presentation/master/documentType/DocumentTypeListPage'),
+);
+const DocumentTypeAddPage = lazy(
+	() => import('../pages/presentation/master/documentType/DocumentTypeAddPage'),
+);
+const DocumentTypeViewPage = lazy(
+	() => import('../pages/presentation/master/documentType/DocumentTypeViewPage'),
+);
+const DocumentTypeEditPage = lazy(
+	() => import('../pages/presentation/master/documentType/DocumentTypeEditPage'),
+);
+
 const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.LOGIN,
@@ -49,6 +62,22 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.ROLES_EDIT,
 		element: <RoleEditPage />,
+	},
+	{
+		path: PAGE_ROUTES.DOCUMENT_TYPE,
+		element: <DocumentTypeListPage />,
+	},
+	{
+		path: PAGE_ROUTES.DOCUMENT_TYPE_ADD,
+		element: <DocumentTypeAddPage />,
+	},
+	{
+		path: PAGE_ROUTES.DOCUMENT_TYPE_VIEW,
+		element: <DocumentTypeViewPage />,
+	},
+	{
+		path: PAGE_ROUTES.DOCUMENT_TYPE_EDIT,
+		element: <DocumentTypeEditPage />,
 	},
 	{
 		path: '*',

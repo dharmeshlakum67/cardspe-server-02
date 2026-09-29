@@ -7,6 +7,8 @@ export const PERMISSION_KEYS = {
 	ROLE: 'role',
 	ROLES: 'roles',
 	LOGIN_HISTORY: 'login_history',
+	MASTER: 'master',
+	DOCUMENT_TYPE: 'document_type',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

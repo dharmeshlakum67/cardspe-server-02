@@ -38,6 +38,22 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Roles',
 		subMenu: null,
 	},
+
+	// MASTER PARENT
+	master: {
+		path: null,
+		icon: 'Layers',
+		text: 'Master',
+		subMenu: null,
+	},
+
+	// DOCUMENT TYPE CHILD MODULE
+	document_type: {
+		path: PAGE_ROUTES.DOCUMENT_TYPE,
+		icon: 'Description',
+		text: 'Document Type',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY
