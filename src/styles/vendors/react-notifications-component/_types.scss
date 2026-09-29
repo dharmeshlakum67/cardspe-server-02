@@ -1,0 +1,49 @@
+@import 'variables';
+
+.rnc__notification-item--danger {
+	background-color: #E24438;
+
+	.rnc__notification-content::before {
+		color: #E24438;
+		content: '!';
+	}
+}
+
+.rnc__notification-item--success {
+	background-color: #00A82D;
+
+	.rnc__notification-content::before {
+		color: #00A82D;
+		content: '\2713';
+	}
+}
+
+.rnc__notification-item--warning {
+	background-color: #e67e22;
+
+	.rnc__notification-content::before {
+		color: #e67e22;
+		content: '!';
+	}
+}
+
+.rnc__notification-item--info,
+.rnc__notification-item--awesome {
+	background-color: #0E5F98;
+
+	.rnc__notification-content::before {
+		color: #0E5F98;
+		content: 'i';
+		font-family: serif;
+	}
+}
+
+.rnc__notification-item--default {
+	background-color: #343a40;
+
+	.rnc__notification-content::before {
+		color: #343a40;
+		content: 'i';
+		font-family: serif;
+	}
+}

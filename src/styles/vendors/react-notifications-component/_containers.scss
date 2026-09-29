@@ -1,0 +1,97 @@
+.rnc__notification-container--top-center,
+.rnc__notification-container--top-left,
+.rnc__notification-container--top-right,
+.rnc__notification-container--bottom-center,
+.rnc__notification-container--bottom-left,
+.rnc__notification-container--bottom-right,
+.rnc__notification-container--center,
+.rnc__notification-container--top-full,
+.rnc__notification-container--bottom-full {
+	position: fixed !important;
+	z-index: 99999999 !important;
+	min-width: $notification-min-width;
+	pointer-events: all;
+}
+
+.rnc__notification-container--center,
+.rnc__notification-container--top-center,
+.rnc__notification-container--bottom-center {
+	left: calc(50% - (#{$notification-max-width} / 2));
+	display: flex;
+	max-width: $notification-max-width;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.rnc__notification-container--center {
+	top: 1.5rem;
+	height: 100%;
+	pointer-events: none;
+}
+
+.rnc__notification-container--top-full,
+.rnc__notification-container--bottom-full {
+	width: 100%;
+	min-width: 100%;
+}
+
+.rnc__notification-container--bottom-full {
+	bottom: 0;
+}
+
+.rnc__util--flex-center {
+	display: flex;
+	min-width: $notification-min-width;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	pointer-events: all;
+}
+
+.rnc__notification-container--top-center {
+	top: 1.5rem;
+}
+
+.rnc__notification-container--bottom-center {
+	bottom: 1.5rem;
+}
+
+.rnc__notification-container--top-left {
+	top: 1.5rem;
+	left: 1.5rem;
+}
+
+.rnc__notification-container--top-right {
+	top: 1.5rem;
+	right: 1.5rem;
+}
+
+.rnc__notification-container--bottom-left {
+	bottom: 1.5rem;
+	left: 1.5rem;
+}
+
+.rnc__notification-container--bottom-right {
+	right: 1.5rem;
+	bottom: 1.5rem;
+}
+
+.rnc__notification-container--mobile-top,
+.rnc__notification-container--mobile-bottom {
+	position: absolute;
+	pointer-events: all;
+}
+
+.rnc__notification-container--mobile-top {
+	top: 1.5rem;
+	right: 1.5rem;
+	left: 1.5rem;
+}
+
+.rnc__notification-container--mobile-bottom {
+	right: 1.5rem;
+	bottom: 1.5rem;
+	left: 1.5rem;
+	margin-bottom: 1rem;
+}

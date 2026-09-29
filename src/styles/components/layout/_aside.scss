@@ -1,0 +1,171 @@
+//
+//  Aside
+//
+
+@use 'sass:map';
+
+.aside {
+	position: fixed;
+	z-index: $zindex-aside;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	border-right: map.get($aside, border-size) solid map.get($aside, border-color);
+	background-color: map.get($aside, background-color);
+	background-image: linear-gradient(180deg, #0A4570 0%, #062B46 50%, #021422 100%);
+	color: #ffffff;
+	transition: $transition-base;
+
+	// Mobile Status
+	@include media-breakpoint-down(map.get($aside, mobile-breakpoint)) {
+		&:not(.open) {
+			left: calc((#{map-deep-get($aside, width)} + #{if(
+ map.get($aside, border-size)==0,
+					#{0px},
+					#{map.get($aside, border-size)})
+			}) * -1) !important;
+	}
+
+	&.open {
+		left: 0 !important;
+	}
+
+	width: map.get($aside, width);
+}
+
+// Desktop Hover & Status
+@include media-breakpoint-up(map.get($aside, mobile-breakpoint)) {
+
+	&.open,
+	&:hover {
+		width: map.get($aside, width);
+	}
+
+	&:not(.open):hover {
+		@include backdrop-filter-blur(map-deep-get($aside, hover, blur));
+		background-color: rgba(map.get($aside, background-color),
+				map-deep-get($aside, hover, opacity));
+	}
+}
+
+&-head {
+	@include padding(map-deep-get($aside, head, padding-y) map-deep-get($aside, head, padding-x));
+}
+
+&-search {
+	@include padding(($spacer * 0.25) ($spacer * 0.75) 0);
+
+	@include aside-close {
+		display: none;
+	}
+
+	.form-control {
+		height: 2.75rem;
+		border: none;
+		border-radius: 0.75rem;
+		background-color: #ffffff;
+		color: #1f2128;
+		font-size: 0.875rem;
+		font-weight: 500;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+		padding-left: 1rem;
+		padding-right: 2.25rem;
+
+		&::placeholder {
+			color: #757575;
+			font-size: 0.875rem;
+			font-weight: 400;
+		}
+
+		&:focus {
+			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+			background-color: #ffffff;
+			color: #1f2128;
+		}
+	}
+}
+
+&-body {
+	@include padding(0 map-deep-get($aside, body, padding-x) map-deep-get($aside, body, padding-y));
+
+	display: flex;
+	overflow: auto;
+	height: 100%;
+	flex-direction: column;
+	-ms-overflow-style: none;
+	/* IE and Edge */
+	scrollbar-width: none;
+	/* Firefox */
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+&-foot {
+	@include padding(map-deep-get($aside, foot, padding-y) map-deep-get($aside, foot, padding-x) 0);
+
+	&::before {
+		@include box-shadow($box-shadow);
+
+		position: relative;
+		top: -0.125rem;
+		display: block;
+		width: 50%;
+		height: 0.25rem;
+		margin-right: auto;
+		margin-left: auto;
+		background-color: if(map-deep-get($navigation, item, background-color)==null,
+				rgba(color-contrast(auto-shade-tint(map-deep-get($aside, background-color), 8%)),
+					0.3),
+				rgba(color-contrast(map-deep-get($navigation, item, background-color),
+						map-deep-get($navigation, item, color-dark),
+						map-deep-get($navigation, item, color-light)),
+					0.3));
+		border-radius: 0.5rem;
+		content: '';
+	}
+}
+}
+
+.aside-touch {
+	@include dark-mode {
+		background-color: rgba($light, 0.5);
+	}
+
+	position: fixed;
+	top: calc(50% - 5rem);
+	left: map.get($aside, width) + $modern-design-size + $modern-design-size * 0.5;
+	width: 0.5rem;
+	height: 10rem;
+	background-color: rgba($dark, 0.5);
+	border-radius: $border-radius;
+	box-shadow: $box-shadow-lg;
+	cursor: pointer;
+}
+
+.aside-drag-area {
+	position: absolute;
+	top: 0;
+	left: $modern-design-size * 0.5;
+	width: map.get($aside, width) + $modern-design-size + $modern-design-size * 0.5 - 0.25rem;
+	height: 100vh;
+}
+
+// stylelint-disable no-descending-specificity
+.modern-design .aside {
+	@include aside-modern {
+		@include margin($modern-design-size);
+		@include border-radius($modern-design-radius);
+
+		@if map-deep-get($aside, shadow) {
+			@include box-shadow($modern-design-shadow);
+		}
+
+		overflow: hidden;
+	}
+}
+
+// stylelint-enable no-descending-specificity

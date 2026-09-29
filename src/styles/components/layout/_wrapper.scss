@@ -1,0 +1,76 @@
+//
+//  Wrapper
+//
+
+@use 'sass:map';
+
+.wrapper {
+	display: flex;
+	flex: 1 auto;
+	flex-direction: column;
+	transition: $transition-base;
+
+	padding-left: 0;
+
+	// Default closed aside padding on desktop
+	.aside~& {
+		@include media-breakpoint-up(map-get($aside, mobile-breakpoint)) {
+			padding-left: map-deep-get($aside, minimize, width);
+		}
+	}
+
+	@include media-breakpoint-down(map-get($aside, mobile-breakpoint)) {
+		padding-left: 0;
+		left: 0;
+	}
+
+	// Standard open aside
+	.aside.open~& {
+		@include media-breakpoint-up(map-get($aside, mobile-breakpoint)) {
+			padding-left: map.get($aside, width);
+		}
+	}
+
+	// Modern design when aside is closed (floating minimized bar)
+	.modern-design .aside:not(.open)~& {
+		@include aside-modern {
+			padding-left: calc(#{map-deep-get($aside, minimize, width)} + #{$modern-design-size * 2});
+		}
+	}
+
+	// Modern design when aside is open (floating expanded bar)
+	.modern-design .aside.open~& {
+		@include aside-modern {
+			padding-left: calc(#{map.get($aside, width)} + #{$modern-design-size * 2});
+		}
+	}
+
+	// Modern design when aside is open but slid off-screen via touch drag bar
+	.aside.open.aside-touch-bar-close~&,
+	.modern-design .aside.open.aside-touch-bar-close~& {
+		@include aside-modern {
+			padding-left: 0 !important;
+		}
+	}
+
+	// Right Panel
+	&.wrapper-right-panel-active {
+		width: calc(100% - #{$offcanvas-horizontal-width});
+	}
+}
+
+.wrapper-overlay {
+	@include backdrop-filter-blur($overlay-backdrop-filter);
+
+	position: fixed;
+	z-index: $zindex-fixed;
+	width: 100vw;
+	height: 100vh;
+	animation: fadeIn 0.2s;
+	animation-fill-mode: forwards;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in-out;
+	background: rgba($overlay-background-color, $overlay-background-opacity);
+	opacity: 0;
+	transition: $transition-base;
+}

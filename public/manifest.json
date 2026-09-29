@@ -1,0 +1,15 @@
+{
+	"short_name": "cardspe",
+	"name": "cardspe",
+	"icons": [
+		{
+			"src": "Fav.svg",
+			"sizes": "any",
+			"type": "image/svg+xml"
+		}
+	],
+	"start_url": ".",
+	"display": "standalone",
+	"theme_color": "#1f2128",
+	"background_color": "#ffffff"
+}

@@ -1,0 +1,164 @@
+.pill-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	transition: all 0.15s ease-in-out;
+	user-select: none;
+
+	// SIZES
+	&.size-sm {
+		font-size: 0.7rem;
+		padding: 0.15rem 0.6rem;
+		height: 22px;
+	}
+
+	&.size-md {
+		font-size: 0.775rem;
+		padding: 0.25rem 0.85rem;
+		height: 26px;
+	}
+
+	&.size-lg {
+		font-size: 0.875rem;
+		padding: 0.35rem 1.1rem;
+		height: 32px;
+	}
+
+	// RADIUS OPTIONS
+	&.is-pill {
+		border-radius: 2rem;
+	}
+
+	&.is-rect {
+		border-radius: 0.4rem;
+	}
+
+	// CLICKABLE HOVER EFFECT
+	&.is-clickable {
+		cursor: pointer;
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+		}
+	}
+
+	// COLOR VARIANTS (SOFT STYLE)
+	&.color-purple {
+		background-color: #f5f3ff;
+		border: 1px solid #ddd6fe;
+		color: #6d28d9;
+	}
+
+	&.color-indigo {
+		background-color: #eef2ff;
+		border: 1px solid #c7d2fe;
+		color: #4338ca;
+	}
+
+	&.color-teal {
+		background-color: #f0fdfa;
+		border: 1px solid #99f6e4;
+		color: #0f766e;
+	}
+
+	&.color-blue,
+	&.color-primary {
+		background-color: #eff6ff;
+		border: 1px solid #bfdbfe;
+		color: #1d4ed8;
+	}
+
+	&.color-success,
+	&.color-green {
+		background-color: #f0fdf4;
+		border: 1px solid #bbf7d0;
+		color: #15803d;
+	}
+
+	&.color-warning,
+	&.color-orange,
+	&.color-amber {
+		background-color: #fffbeb;
+		border: 1px solid #fde68a;
+		color: #b45309;
+	}
+
+	&.color-danger,
+	&.color-rose,
+	&.color-red {
+		background-color: #fff1f2;
+		border: 1px solid #fecdd3;
+		color: #be123c;
+	}
+
+	&.color-pink {
+		background-color: #fdf2f8;
+		border: 1px solid #fbcfe8;
+		color: #be185d;
+	}
+
+	&.color-cyan,
+	&.color-info {
+		background-color: #ecfeff;
+		border: 1px solid #a5f3fc;
+		color: #0e7490;
+	}
+
+	&.color-gray,
+	&.color-secondary {
+		background-color: #f8fafc;
+		border: 1px solid #e2e8f0;
+		color: #475569;
+	}
+
+	&.color-dark {
+		background-color: #1e293b;
+		border: 1px solid #0f172a;
+		color: #ffffff;
+	}
+
+	// SOLID VARIANTS
+	&.variant-solid {
+		&.color-purple {
+			background-color: #7c3aed;
+			color: #ffffff;
+			border-color: #7c3aed;
+		}
+		&.color-indigo {
+			background-color: #4f46e5;
+			color: #ffffff;
+			border-color: #4f46e5;
+		}
+		&.color-teal {
+			background-color: #0d9488;
+			color: #ffffff;
+			border-color: #0d9488;
+		}
+		&.color-primary,
+		&.color-blue {
+			background-color: #2563eb;
+			color: #ffffff;
+			border-color: #2563eb;
+		}
+		&.color-success {
+			background-color: #16a34a;
+			color: #ffffff;
+			border-color: #16a34a;
+		}
+		&.color-warning {
+			background-color: #d97706;
+			color: #ffffff;
+			border-color: #d97706;
+		}
+		&.color-danger {
+			background-color: #e11d48;
+			color: #ffffff;
+			border-color: #e11d48;
+		}
+	}
+}
