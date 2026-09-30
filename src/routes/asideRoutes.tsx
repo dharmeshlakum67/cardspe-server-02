@@ -15,6 +15,8 @@ const asides: RouteProps[] = [
 	{ path: authPagesMenu.page404.path, element: <DefaultAsideWithAuth /> },
 	{ path: 'auth-pages/*', element: null },
 	{ path: 'auth-pages', element: null },
+	{ path: 'auth/*', element: null },
+	{ path: 'auth', element: null },
 	{ path: 'resetpassword/*', element: null },
 	{ path: 'reset-password/*', element: null },
 	{ path: '*', element: <DefaultAsideWithAuth /> },

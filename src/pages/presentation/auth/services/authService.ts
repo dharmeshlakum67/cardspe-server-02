@@ -17,6 +17,8 @@ import {
 	IVerifyOTPResponse,
 	IResendOTPPayload,
 	IResendOTPResponse,
+	ITokenDetailsResponse,
+	IVerifyEmailTokenResponse,
 } from '../types/authTypes';
 
 // Re-export all auth types for convenience
@@ -109,6 +111,15 @@ export const authService = {
 		return response.data;
 	},
 
+	// SEND VERIFICATION EMAIL
+	async sendVerificationEmail(email_address: string): Promise<{ success: boolean; message: string }> {
+		return apiClient<{ success: boolean; message: string }>(AUTH_ENDPOINTS.SEND_VERIFICATION_EMAIL, {
+			method: AUTH_ENDPOINTS.SEND_VERIFICATION_EMAIL.method,
+			body: { email_address },
+			requiresAuth: true,
+		});
+	},
+
 	// FORGOT PASSWORD
 	async forgotPassword(payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
 		return apiClient<IForgotPasswordResponse>(AUTH_ENDPOINTS.FORGOT_PASSWORD, {
@@ -122,6 +133,22 @@ export const authService = {
 	async resetPassword(token: string, payload: IResetPasswordPayload): Promise<IResetPasswordResponse> {
 		return apiClient<IResetPasswordResponse>(AUTH_ENDPOINTS.RESET_PASSWORD(token), {
 			body: payload,
+			requiresAuth: false,
+		});
+	},
+
+	// GET TOKEN DETAILS (INSPECT TOKEN VERIFICATION PREVIEW)
+	async getTokenDetails(token: string): Promise<ITokenDetailsResponse> {
+		return apiClient<ITokenDetailsResponse>(AUTH_ENDPOINTS.GET_TOKEN_DETAILS(token), {
+			method: AUTH_ENDPOINTS.GET_TOKEN_DETAILS(token).method,
+			requiresAuth: false,
+		});
+	},
+
+	// VERIFY EMAIL ADDRESS TOKEN
+	async verifyEmailToken(token: string): Promise<IVerifyEmailTokenResponse> {
+		return apiClient<IVerifyEmailTokenResponse>(AUTH_ENDPOINTS.VERIFY_EMAIL_TOKEN(token), {
+			method: AUTH_ENDPOINTS.VERIFY_EMAIL_TOKEN(token).method,
 			requiresAuth: false,
 		});
 	},

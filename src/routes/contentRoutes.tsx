@@ -5,6 +5,7 @@ import Login from '../pages/presentation/auth/Login';
 import Signup from '../pages/presentation/auth/Signup';
 import ForgotPassword from '../pages/presentation/auth/ForgotPassword';
 import ResetPassword from '../pages/presentation/auth/ResetPassword';
+import VerifyEmail from '../pages/presentation/auth/VerifyEmail';
 import Page404 from '../pages/presentation/auth/Page404';
 
 const DashboardPage = lazy(() => import('../pages/presentation/dashboard/DashboardPage'));
@@ -25,6 +26,7 @@ const DocumentTypeViewPage = lazy(
 const DocumentTypeEditPage = lazy(
 	() => import('../pages/presentation/master/documentType/DocumentTypeEditPage'),
 );
+const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 
 const contents: RouteProps[] = [
 	{
@@ -44,8 +46,16 @@ const contents: RouteProps[] = [
 		element: <ResetPassword />,
 	},
 	{
+		path: PAGE_ROUTES.VERIFY_EMAIL,
+		element: <VerifyEmail />,
+	},
+	{
 		path: PAGE_ROUTES.DASHBOARD,
 		element: <DashboardPage />,
+	},
+	{
+		path: PAGE_ROUTES.PROFILE,
+		element: <ProfilePage />,
 	},
 	{
 		path: PAGE_ROUTES.ROLES,

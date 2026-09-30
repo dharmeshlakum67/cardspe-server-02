@@ -23,6 +23,8 @@ const headers: RouteProps[] = [
 	{ path: authPagesMenu.page404.path, element: <DefaultHeaderWithAuth /> },
 	{ path: 'auth-pages/*', element: null },
 	{ path: 'auth-pages', element: null },
+	{ path: 'auth/*', element: null },
+	{ path: 'auth', element: null },
 	{ path: 'resetpassword/*', element: null },
 	{ path: 'reset-password/*', element: null },
 	{ path: dashboardPagesMenu.dashboard.path, element: <DashboardHeaderWithAuth /> },

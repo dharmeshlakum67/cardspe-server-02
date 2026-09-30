@@ -11,6 +11,34 @@ export const VERIFICATION_SERVICE_OPTIONS: {
 	{ label: 'Custom + Quick KYC', value: 'custom_quick_kyc' },
 ];
 
+export type DocumentFieldType =
+	| 'text'
+	| 'number'
+	| 'select'
+	| 'date'
+	| 'file'
+	| 'textarea'
+	| 'radio'
+	| 'checkbox';
+
+export interface IDocumentFieldOption {
+	label: string;
+	value: string;
+}
+
+export interface IDocumentField {
+	id?: number;
+	document_id?: number;
+	field_name: string;
+	field_code: string;
+	field_type: DocumentFieldType;
+	is_required: boolean;
+	display_order: number;
+	placeholder?: string;
+	options?: IDocumentFieldOption[] | string[] | null;
+	status: 'active' | 'inactive';
+}
+
 export interface IDocumentRoleRequirementInput {
 	role_id: number;
 	is_required: boolean;
@@ -24,6 +52,7 @@ export interface IDocumentTypeItem {
 	required_files_count: number;
 	verification_service?: VerificationServiceType;
 	status: TDocumentTypeStatus | string;
+	fields?: IDocumentField[];
 	created_at: string;
 	updated_at?: string;
 }
@@ -44,6 +73,7 @@ export interface IRoleDocumentRequirementDetail {
 
 export interface IDocumentTypeDetail extends IDocumentTypeItem {
 	role_document_requirements?: IRoleDocumentRequirementDetail[];
+	fields?: IDocumentField[];
 }
 
 export interface IDocumentTypeQueryParams {
@@ -81,6 +111,7 @@ export interface ICreateDocumentTypePayload {
 	verification_service?: VerificationServiceType;
 	status: TDocumentTypeStatus | string;
 	roles?: IDocumentRoleRequirementInput[];
+	fields?: IDocumentField[];
 }
 
 export interface IUpdateDocumentTypePayload {
@@ -91,4 +122,5 @@ export interface IUpdateDocumentTypePayload {
 	verification_service?: VerificationServiceType;
 	status?: TDocumentTypeStatus | string;
 	roles?: IDocumentRoleRequirementInput[];
+	fields?: IDocumentField[];
 }

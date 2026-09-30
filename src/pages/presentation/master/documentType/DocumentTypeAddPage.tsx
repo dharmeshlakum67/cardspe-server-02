@@ -37,6 +37,7 @@ const DocumentTypeAddPage: FC = () => {
 				verification_service: values.verification_service,
 				status: values.status,
 				roles: values.roles,
+				fields: values.fields,
 			});
 
 			showNotification(

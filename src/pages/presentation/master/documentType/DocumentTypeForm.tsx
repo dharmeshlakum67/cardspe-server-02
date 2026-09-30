@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable jsx-a11y/label-has-associated-control, react/require-default-props */
+/* eslint-disable jsx-a11y/label-has-associated-control, react/require-default-props, react/no-array-index-key */
 import React, { FC, useEffect, useRef, useState } from 'react';
 import Icon from '../../../../components/icon/Icon';
 import roleService from '../../role/service/roleService';
@@ -8,6 +8,9 @@ import {
 	IDocumentRoleRequirementInput,
 	VerificationServiceType,
 	VERIFICATION_SERVICE_OPTIONS,
+	DocumentFieldType,
+	IDocumentField,
+	IDocumentFieldOption,
 } from './type/document-type';
 import { getRoleTypeDetails } from '../../role/util/roleUtils';
 import showNotification from '../../../../components/extras/showNotification';
@@ -25,6 +28,7 @@ export interface IDocumentTypeFormValues {
 	verification_service: VerificationServiceType;
 	status: 'active' | 'inactive';
 	roles: IDocumentRoleRequirementInput[];
+	fields: IDocumentField[];
 }
 
 interface IDocumentTypeFormProps {
@@ -51,6 +55,25 @@ const MANDATORY_OPTIONS: Array<{
 	{ value: true, label: 'Mandatory' },
 	{ value: false, label: 'Optional' },
 ];
+
+const FIELD_TYPE_OPTIONS: Array<{ value: DocumentFieldType; label: string }> = [
+	{ value: 'text', label: 'Text Input' },
+	{ value: 'number', label: 'Number Input' },
+	{ value: 'select', label: 'Dropdown Select' },
+	{ value: 'date', label: 'Date Picker' },
+	{ value: 'file', label: 'File Upload' },
+	{ value: 'textarea', label: 'Text Area' },
+	{ value: 'radio', label: 'Radio Buttons' },
+	{ value: 'checkbox', label: 'Checkboxes' },
+];
+
+const slugifyCode = (str: string): string => {
+	return str
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, '_')
+		.replace(/^_+|_+$/g, '');
+};
 
 export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 	initialValues,
@@ -79,6 +102,11 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 		);
 	const [status, setStatus] = useState<'active' | 'inactive'>(
 		initialValues?.status || 'active',
+	);
+
+	// DYNAMIC DOCUMENT FIELDS LIST STATE
+	const [fieldsList, setFieldsList] = useState<IDocumentField[]>(
+		initialValues?.fields || [],
 	);
 
 	const [statusOptions, setStatusOptions] = useState(DEFAULT_STATUS_OPTIONS);
@@ -182,7 +210,14 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 		}
 	}, [initialValues]);
 
-	// FETCH ACTIVE ROLES VIA api/role/get-active (CALLED ONCE ONLY)
+	// Initialize fields list state from initialValues
+	useEffect(() => {
+		if (initialValues?.fields && Array.isArray(initialValues.fields)) {
+			setFieldsList(initialValues.fields);
+		}
+	}, [initialValues]);
+
+	// FETCH ACTIVE ROLES VIA api/role/get-active
 	useEffect(() => {
 		if (fetchedActiveRolesRef.current) return;
 		fetchedActiveRolesRef.current = true;
@@ -239,6 +274,103 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 		});
 	};
 
+	// DYNAMIC FIELDS BUILDER HANDLERS
+	const handleAddField = () => {
+		setFieldsList((prev) => [
+			...prev,
+			{
+				field_name: '',
+				field_code: '',
+				field_type: 'text',
+				is_required: false,
+				display_order: prev.length + 1,
+				placeholder: '',
+				options: [],
+				status: 'active',
+			},
+		]);
+	};
+
+	const handleRemoveField = (index: number) => {
+		setFieldsList((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const handleFieldChange = (index: number, key: keyof IDocumentField, value: any) => {
+		setFieldsList((prev) => {
+			const updated = [...prev];
+			const item = { ...updated[index] };
+			(item as any)[key] = value;
+
+			// Auto generate field_code from field_name
+			if (key === 'field_name' && typeof value === 'string') {
+				const autoCode = slugifyCode(value);
+				const prevNameCode = slugifyCode(prev[index]?.field_name || '');
+				if (!item.field_code || item.field_code === prevNameCode) {
+					item.field_code = autoCode;
+				}
+			}
+
+			updated[index] = item;
+			return updated;
+		});
+	};
+
+	const handleAddOption = (fieldIndex: number) => {
+		setFieldsList((prev) => {
+			const updated = [...prev];
+			const item = { ...updated[fieldIndex] };
+			const opts = Array.isArray(item.options) ? [...item.options] : [];
+			opts.push({ label: '', value: '' });
+			item.options = opts as IDocumentFieldOption[];
+			updated[fieldIndex] = item;
+			return updated;
+		});
+	};
+
+	const handleOptionChange = (
+		fieldIndex: number,
+		optionIndex: number,
+		key: 'label' | 'value',
+		val: string,
+	) => {
+		setFieldsList((prev) => {
+			const updated = [...prev];
+			const item = { ...updated[fieldIndex] };
+			const rawOpts = Array.isArray(item.options) ? item.options : [];
+			const opts: IDocumentFieldOption[] = rawOpts.map((o) =>
+				typeof o === 'string' ? { label: o, value: slugifyCode(o) } : { ...o },
+			);
+
+			const opt = { ...opts[optionIndex] };
+			opt[key] = val;
+
+			if (key === 'label') {
+				const autoVal = slugifyCode(val);
+				const prevLabelVal = slugifyCode(opts[optionIndex]?.label || '');
+				if (!opt.value || opt.value === prevLabelVal) {
+					opt.value = autoVal;
+				}
+			}
+
+			opts[optionIndex] = opt;
+			item.options = opts;
+			updated[fieldIndex] = item;
+			return updated;
+		});
+	};
+
+	const handleRemoveOption = (fieldIndex: number, optionIndex: number) => {
+		setFieldsList((prev) => {
+			const updated = [...prev];
+			const item = { ...updated[fieldIndex] };
+			const rawOpts = Array.isArray(item.options) ? item.options : [];
+			const opts = rawOpts.filter((_, i) => i !== optionIndex);
+			item.options = opts as any;
+			updated[fieldIndex] = item;
+			return updated;
+		});
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -261,6 +393,19 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 			return;
 		}
 
+		// VALIDATE DYNAMIC FIELDS
+		for (let i = 0; i < fieldsList.length; i += 1) {
+			const f = fieldsList[i];
+			if (!f.field_name || !f.field_name.trim()) {
+				showNotification('Validation Error', `Field #${i + 1} requires a Field Name`, 'warning');
+				return;
+			}
+			if (!f.field_code || !f.field_code.trim()) {
+				showNotification('Validation Error', `Field #${i + 1} requires a Field Code`, 'warning');
+				return;
+			}
+		}
+
 		const rolesPayload: IDocumentRoleRequirementInput[] = Object.entries(
 			selectedRoleRequirements,
 		)
@@ -278,6 +423,10 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 			verification_service: verificationService,
 			status,
 			roles: rolesPayload,
+			fields: fieldsList.map((f, idx) => ({
+				...f,
+				display_order: f.display_order !== undefined ? Number(f.display_order) : idx + 1,
+			})),
 		});
 	};
 
@@ -406,7 +555,7 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 							/>
 						</div>
 
-						{/* CUSTOM REACT-SELECT STYLED MANDATORY DROPDOWN */}
+						{/* MANDATORY DROPDOWN */}
 						<div className="col-12 col-md-3" ref={mandatoryDropdownRef}>
 							<span className="form-label fw-bold d-block">Document Requirement</span>
 							<div className="custom-react-select-wrapper">
@@ -516,7 +665,7 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 							</div>
 						</div>
 
-						{/* CUSTOM REACT-SELECT STYLED STATUS DROPDOWN */}
+						{/* STATUS DROPDOWN */}
 						<div className="col-12 col-md-3" ref={statusDropdownRef}>
 							<span className="form-label fw-bold d-block">Status</span>
 							<div className="custom-react-select-wrapper">
@@ -582,7 +731,284 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 				</div>
 			</div>
 
-			{/* CARD 2: ROLE REQUIREMENTS */}
+			{/* CARD 2: DYNAMIC DOCUMENT FIELDS BUILDER */}
+			<div className="doc-card">
+				<div className="card-header-bar">
+					<div className="header-left">
+						<div className="card-header-icon">
+							<Icon icon="Tune" />
+						</div>
+						<div>
+							<h3 className="card-header-title">Document Fields</h3>
+							<p className="card-header-subtitle">
+								Configure dynamic input fields and options for this document type
+							</p>
+						</div>
+					</div>
+					<button
+						type="button"
+						className="btn-add-field-action"
+						onClick={handleAddField}>
+						<Icon icon="Add" size="sm" />
+						<span>Add Field</span>
+					</button>
+				</div>
+
+				<div className="card-body-content">
+					{fieldsList.length === 0 ? (
+						<div className="p-4 text-center text-muted border rounded-3 bg-light">
+							<Icon icon="ListAlt" size="2x" className="mb-2 opacity-50" />
+							<p className="mb-0 fw-medium">No dynamic fields configured yet.</p>
+							<small>Click <strong>"+ Add Field"</strong> above to configure custom document fields.</small>
+						</div>
+					) : (
+						<div className="fields-builder-container">
+							{fieldsList.map((field, index) => {
+								const hasOptions =
+									field.field_type === 'select' ||
+									field.field_type === 'radio' ||
+									field.field_type === 'checkbox';
+
+								const fieldOptions: IDocumentFieldOption[] = Array.isArray(field.options)
+									? field.options.map((o) =>
+											typeof o === 'string'
+												? { label: o, value: slugifyCode(o) }
+												: o,
+									  )
+									: [];
+
+								return (
+									<div key={field.field_code || field.id || `field_${index}`} className="field-item-card">
+										{/* FIELD ITEM HEADER */}
+										<div className="field-card-header">
+											<div className="d-flex align-items-center gap-2">
+												<span className="field-index-badge">Field #{index + 1}</span>
+												<span className="field-header-title">
+													{field.field_name || 'Untitled Field'}
+												</span>
+												{field.is_required && (
+													<span className="badge bg-danger ms-1" style={{ fontSize: '0.7rem' }}>
+														Required
+													</span>
+												)}
+											</div>
+											<button
+												type="button"
+												className="btn-delete-field"
+												onClick={() => handleRemoveField(index)}>
+												<Icon icon="Delete" size="sm" />
+												<span>Remove Field</span>
+											</button>
+										</div>
+
+										{/* FIELD ROW 1: NAME, CODE, TYPE, ORDER */}
+										<div className="row g-3 mb-3">
+											<div className="col-12 col-md-3">
+												<label className="form-label fw-bold small mb-1">
+													Field Name <span className="text-danger">*</span>
+												</label>
+												<input
+													type="text"
+													className="form-control role-name-input"
+													placeholder="e.g. PAN Number"
+													value={field.field_name}
+													onChange={(e) =>
+														handleFieldChange(index, 'field_name', e.target.value)
+													}
+													required
+												/>
+											</div>
+
+											<div className="col-12 col-md-3">
+												<label className="form-label fw-bold small mb-1">
+													Field Code <span className="text-danger">*</span>
+												</label>
+												<input
+													type="text"
+													className="form-control role-name-input"
+													placeholder="e.g. pan_number"
+													value={field.field_code}
+													onChange={(e) =>
+														handleFieldChange(index, 'field_code', e.target.value)
+													}
+													required
+												/>
+											</div>
+
+											<div className="col-12 col-md-3">
+												<label className="form-label fw-bold small mb-1">
+													Field Type <span className="text-danger">*</span>
+												</label>
+												<select
+													className="form-select role-name-input"
+													value={field.field_type}
+													onChange={(e) =>
+														handleFieldChange(
+															index,
+															'field_type',
+															e.target.value as DocumentFieldType,
+														)
+													}>
+													{FIELD_TYPE_OPTIONS.map((opt) => (
+														<option key={opt.value} value={opt.value}>
+															{opt.label}
+														</option>
+													))}
+												</select>
+											</div>
+
+											<div className="col-12 col-md-3">
+												<label className="form-label fw-bold small mb-1">
+													Display Order
+												</label>
+												<input
+													type="number"
+													min="1"
+													className="form-control role-name-input"
+													value={field.display_order || index + 1}
+													onChange={(e) =>
+														handleFieldChange(
+															index,
+															'display_order',
+															Number(e.target.value),
+														)
+													}
+												/>
+											</div>
+										</div>
+
+										{/* FIELD ROW 2: PLACEHOLDER, REQUIRED TOGGLE, STATUS */}
+										<div className="row g-3 align-items-center">
+											<div className="col-12 col-md-5">
+												<label className="form-label fw-bold small mb-1">
+													Placeholder
+												</label>
+												<input
+													type="text"
+													className="form-control role-name-input"
+													placeholder="e.g. Enter 10-digit PAN"
+													value={field.placeholder || ''}
+													onChange={(e) =>
+														handleFieldChange(index, 'placeholder', e.target.value)
+													}
+												/>
+											</div>
+
+											<div className="col-12 col-md-3">
+												<label className="form-label fw-bold small mb-1 d-block">
+													Required Field
+												</label>
+												<div className="form-check form-switch pt-1">
+													<input
+														className="form-check-input custom-checkbox-styled"
+														type="checkbox"
+														id={`isRequiredSwitch_${index}`}
+														checked={field.is_required}
+														onChange={(e) =>
+															handleFieldChange(
+																index,
+																'is_required',
+																e.target.checked,
+															)
+														}
+													/>
+													<label
+														className="form-check-label ms-2 small fw-semibold"
+														htmlFor={`isRequiredSwitch_${index}`}>
+														{field.is_required ? 'Required' : 'Optional'}
+													</label>
+												</div>
+											</div>
+
+											<div className="col-12 col-md-4">
+												<label className="form-label fw-bold small mb-1">
+													Field Status
+												</label>
+												<select
+													className="form-select role-name-input"
+													value={field.status || 'active'}
+													onChange={(e) =>
+														handleFieldChange(index, 'status', e.target.value)
+													}>
+													<option value="active">Active</option>
+													<option value="inactive">Inactive</option>
+												</select>
+											</div>
+										</div>
+
+										{/* OPTIONS BUILDER (FOR SELECT, RADIO, CHECKBOX) */}
+										{hasOptions && (
+											<div className="options-builder-box">
+												<div className="options-box-header">
+													<div className="options-box-title">
+														<Icon icon="List" size="sm" className="me-1" />
+														Options Config (for {field.field_type})
+													</div>
+													<button
+														type="button"
+														className="btn-add-option-pill"
+														onClick={() => handleAddOption(index)}>
+														<Icon icon="Add" size="sm" />
+														<span>Add Option</span>
+													</button>
+												</div>
+
+												{fieldOptions.length === 0 ? (
+													<p className="text-muted small mb-0 fst-italic">
+														No options added yet. Click "+ Add Option" to configure dropdown/radio values.
+													</p>
+												) : (
+													fieldOptions.map((opt, optIdx) => (
+														<div key={opt.value || `opt_${optIdx}`} className="option-row-item">
+															<input
+																type="text"
+																className="form-control form-control-sm role-name-input"
+																placeholder="Option Label (e.g. Individual)"
+																value={opt.label}
+																onChange={(e) =>
+																	handleOptionChange(
+																		index,
+																		optIdx,
+																		'label',
+																		e.target.value,
+																	)
+																}
+															/>
+															<input
+																type="text"
+																className="form-control form-control-sm role-name-input"
+																placeholder="Option Value (e.g. individual)"
+																value={opt.value}
+																onChange={(e) =>
+																	handleOptionChange(
+																		index,
+																		optIdx,
+																		'value',
+																		e.target.value,
+																	)
+																}
+															/>
+															<button
+																type="button"
+																className="btn-delete-option"
+																title="Remove Option"
+																onClick={() => handleRemoveOption(index, optIdx)}>
+																<Icon icon="Close" size="sm" />
+															</button>
+														</div>
+													))
+												)}
+											</div>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* CARD 3: ROLE REQUIREMENTS */}
 			<div className="doc-card">
 				<div className="card-header-bar">
 					<div className="header-left">
@@ -608,67 +1034,67 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 						}
 						return (
 							<div className="table-responsive">
-							<table className="roles-requirement-table">
-								<thead>
-									<tr>
-										<th style={{ width: '60px' }}>Enable</th>
-										<th>Role Name</th>
-										<th>Role Type</th>
-										<th style={{ width: '150px' }}>Requirement Level</th>
-									</tr>
-								</thead>
-								<tbody>
-									{allRoles.map((r) => {
-										const rReq = selectedRoleRequirements[r.id];
-										const isSelected = Boolean(rReq?.selected);
-										const isReq = Boolean(rReq?.is_required);
-										const roleTypeMeta = getRoleTypeDetails(r.role_type);
+								<table className="roles-requirement-table">
+									<thead>
+										<tr>
+											<th style={{ width: '60px' }}>Enable</th>
+											<th>Role Name</th>
+											<th>Role Type</th>
+											<th style={{ width: '150px' }}>Requirement Level</th>
+										</tr>
+									</thead>
+									<tbody>
+										{allRoles.map((r) => {
+											const rReq = selectedRoleRequirements[r.id];
+											const isSelected = Boolean(rReq?.selected);
+											const isReq = Boolean(rReq?.is_required);
+											const roleTypeMeta = getRoleTypeDetails(r.role_type);
 
-										return (
-											<tr key={r.id}>
-												<td className="text-center">
-													<input
-														type="checkbox"
-														className="custom-checkbox-styled"
-														checked={isSelected}
-														onChange={() => handleRoleSelectionToggle(r.id)}
-													/>
-												</td>
-												<td>
-													<strong style={{ color: '#0f172a' }}>
-														{r.role_name}
-													</strong>
-												</td>
-												<td>
-													<PillBadge color={roleTypeMeta.color}>
-														{roleTypeMeta.label}
-													</PillBadge>
-												</td>
-												<td>
-													{isSelected ? (
-														<button
-															type="button"
-															className={`btn btn-sm ${
-																isReq ? 'btn-danger' : 'btn-outline-secondary'
-															}`}
-															onClick={() => handleRoleIsRequiredToggle(r.id)}
-															style={{
-																fontSize: '0.75rem',
-																fontWeight: 600,
-																padding: '0.2rem 0.6rem',
-															}}>
-															{isReq ? 'Mandatory' : 'Optional'}
-														</button>
-													) : (
-														<span className="text-muted small">N/A</span>
-													)}
-												</td>
-											</tr>
-										);
-									})}
-								</tbody>
-							</table>
-						</div>
+											return (
+												<tr key={r.id}>
+													<td className="text-center">
+														<input
+															type="checkbox"
+															className="custom-checkbox-styled"
+															checked={isSelected}
+															onChange={() => handleRoleSelectionToggle(r.id)}
+														/>
+													</td>
+													<td>
+														<strong style={{ color: '#0f172a' }}>
+															{r.role_name}
+														</strong>
+													</td>
+													<td>
+														<PillBadge color={roleTypeMeta.color}>
+															{roleTypeMeta.label}
+														</PillBadge>
+													</td>
+													<td>
+														{isSelected ? (
+															<button
+																type="button"
+																className={`btn btn-sm ${
+																	isReq ? 'btn-danger' : 'btn-outline-secondary'
+																}`}
+																onClick={() => handleRoleIsRequiredToggle(r.id)}
+																style={{
+																	fontSize: '0.75rem',
+																	fontWeight: 600,
+																	padding: '0.2rem 0.6rem',
+																}}>
+																{isReq ? 'Mandatory' : 'Optional'}
+															</button>
+														) : (
+															<span className="text-muted small">N/A</span>
+														)}
+													</td>
+												</tr>
+											);
+										})}
+									</tbody>
+								</table>
+							</div>
 						);
 					})()}
 				</div>

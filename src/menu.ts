@@ -48,6 +48,12 @@ export const authPagesMenu = {
 		path: 'auth-pages/reset-password/:token',
 		icon: 'Key',
 	},
+	verifyEmail: {
+		id: 'verifyEmail',
+		text: 'Verify Email',
+		path: 'auth/verify-email/:confirmationToken',
+		icon: 'MarkEmailRead',
+	},
 };
 
 // Aliases for compatibility

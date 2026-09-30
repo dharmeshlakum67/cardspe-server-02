@@ -103,6 +103,7 @@ const DocumentTypeEditPage: FC = () => {
 				verification_service: values.verification_service,
 				status: values.status,
 				roles: values.roles,
+				fields: values.fields,
 			});
 
 			showNotification(
@@ -149,6 +150,7 @@ const DocumentTypeEditPage: FC = () => {
 				role_id: req.role_id,
 				is_required: req.is_required,
 			})) || [],
+		fields: docDetail.fields || [],
 	};
 
 	return (

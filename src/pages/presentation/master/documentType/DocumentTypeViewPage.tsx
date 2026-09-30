@@ -300,6 +300,86 @@ const DocumentTypeViewPage: FC = () => {
 						</div>
 					</div>
 
+					{/* DYNAMIC DOCUMENT FIELDS CARD */}
+					<div className="doc-card">
+						<div className="card-header-bar">
+							<div className="header-left">
+								<div className="card-header-icon">
+									<Icon icon="Tune" />
+								</div>
+								<div>
+									<h3 className="card-header-title">Configured Document Fields</h3>
+									<p className="card-header-subtitle">
+										Dynamic fields required for this document type
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div className="card-body-content">
+							{!docDetail.fields || docDetail.fields.length === 0 ? (
+								<p className="text-muted mb-0">No dynamic fields configured.</p>
+							) : (
+								<div className="table-responsive">
+									<table className="roles-requirement-table">
+										<thead>
+											<tr>
+												<th style={{ width: '60px' }}>Order</th>
+												<th>Field Name</th>
+												<th>Field Code</th>
+												<th>Field Type</th>
+												<th>Required</th>
+												<th>Options</th>
+												<th>Status</th>
+											</tr>
+										</thead>
+										<tbody>
+											{docDetail.fields.map((f, idx) => {
+												const optionsStr = Array.isArray(f.options)
+													? f.options
+															.map((o) => (typeof o === 'string' ? o : o.label))
+															.join(', ')
+													: '-';
+
+												return (
+													<tr key={f.id || idx}>
+														<td>
+															<span className="badge bg-light text-dark border">
+																#{f.display_order || idx + 1}
+															</span>
+														</td>
+														<td>
+															<strong>{f.field_name}</strong>
+														</td>
+														<td>
+															<code>{f.field_code}</code>
+														</td>
+														<td>
+															<PillBadge color="info">{f.field_type}</PillBadge>
+														</td>
+														<td>
+															<PillBadge color={f.is_required ? 'danger' : 'gray'}>
+																{f.is_required ? 'Required' : 'Optional'}
+															</PillBadge>
+														</td>
+														<td>
+															<small className="text-muted">{optionsStr || '-'}</small>
+														</td>
+														<td>
+															<PillBadge color={f.status === 'active' ? 'success' : 'gray'}>
+																{f.status || 'active'}
+															</PillBadge>
+														</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							)}
+						</div>
+					</div>
+
 					{/* ROLE REQUIREMENTS CARD */}
 					<div className="doc-card">
 						<div className="card-header-bar">

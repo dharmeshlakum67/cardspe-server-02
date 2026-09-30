@@ -9,6 +9,8 @@ export const PAGE_ROUTES = {
 	SIGNUP: 'auth-pages/signup',
 	FORGOT_PASSWORD: 'auth-pages/forgot-password',
 	RESET_PASSWORD: 'auth-pages/reset-password/:token',
+	VERIFY_EMAIL: 'auth/verify-email/:confirmationToken',
+	VERIFY_EMAIL_ALT: 'auth-pages/verify-email/:confirmationToken',
 	PAGE_404: 'auth-pages/404',
 
 	// ADMIN & PROFILE

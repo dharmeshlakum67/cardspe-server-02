@@ -46,6 +46,21 @@ export const AUTH_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	SEND_VERIFICATION_EMAIL: {
+		url: '/api/auth/send-verification-email',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	GET_TOKEN_DETAILS: (token: string) => ({
+		url: `/api/auth/get-token/${token}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: false,
+	}),
+	VERIFY_EMAIL_TOKEN: (token: string) => ({
+		url: `/api/auth/verify-email/${token}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: false,
+	}),
 } as const;
 
 // ROLE ENDPOINTS
