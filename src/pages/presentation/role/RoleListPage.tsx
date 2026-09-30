@@ -222,7 +222,7 @@ const RoleListPage: FC = () => {
 	if (searchTerm) activeFilterCount += 1;
 	if (statusFilter) activeFilterCount += 1;
 	if (roleTypeFilter) activeFilterCount += 1;
-	if (startDate && endDate) activeFilterCount += 1;
+	if (startDate || endDate) activeFilterCount += 1;
 
 	// TABLE COLUMNS CONFIGURATION WITH DYNAMIC HEADER DIFFERENTIATION & PILL BADGES
 	const columns: IListingColumn<IRoleItem>[] = [
@@ -421,8 +421,8 @@ const RoleListPage: FC = () => {
 							<div>
 								<button
 									type='button'
-									className='btn btn-outline-secondary d-flex align-items-center gap-1'
-									style={{ height: '38px' }}
+									className='btn-reset-filters'
+									disabled={activeFilterCount === 0}
 									onClick={handleResetFilters}>
 									<Icon icon='Refresh' size='sm' />
 									<span>Reset</span>

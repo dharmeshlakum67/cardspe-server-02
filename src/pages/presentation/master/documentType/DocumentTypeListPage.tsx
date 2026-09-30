@@ -268,7 +268,7 @@ const DocumentTypeListPage: FC = () => {
 	if (statusFilter) activeFilterCount += 1;
 	if (mandatoryFilter) activeFilterCount += 1;
 	if (verificationServiceFilter) activeFilterCount += 1;
-	if (startDate && endDate) activeFilterCount += 1;
+	if (startDate || endDate) activeFilterCount += 1;
 
 	// TABLE COLUMNS CONFIGURATION MATCHING ROLE STYLE
 	const columns: IListingColumn<IDocumentTypeItem>[] = [
@@ -521,11 +521,11 @@ const DocumentTypeListPage: FC = () => {
 							{/* RESET FILTER BUTTON */}
 							<div>
 								<button
-									type="button"
-									className="btn btn-outline-secondary d-flex align-items-center gap-1"
-									style={{ height: '38px' }}
+									type='button'
+									className='btn-reset-filters'
+									disabled={activeFilterCount === 0}
 									onClick={handleResetFilters}>
-									<Icon icon="Refresh" size="sm" />
+									<Icon icon='Refresh' size='sm' />
 									<span>Reset</span>
 								</button>
 							</div>
