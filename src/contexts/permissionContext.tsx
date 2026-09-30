@@ -58,6 +58,9 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 	const [isFetchingPermissions, setIsFetchingPermissions] = useState<boolean>(false);
 	const [hasFetchedOnce, setHasFetchedOnce] = useState<boolean>(false);
 
+	const userRoleId = authUser?.role?.id || (authUser as any)?.role_id;
+	const isUserLoggedIn = Boolean(authUser);
+
 	// FETCH PERMISSIONS DIRECTLY FROM /api/v1/permission (CONTAINS ACCESS OBJECT & TREE)
 	const refetchPermissions = useCallback(async () => {
 		const token = authService.getToken();
@@ -68,7 +71,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			return;
 		}
 
-		if (!authUser) {
+		if (!isUserLoggedIn) {
 			return;
 		}
 
@@ -83,7 +86,8 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			setIsFetchingPermissions(false);
 			setHasFetchedOnce(true);
 		}
-	}, [authUser]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isUserLoggedIn, userRoleId]);
 
 	useEffect(() => {
 		refetchPermissions();
@@ -384,7 +388,8 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 		}
 
 		return menuObj;
-	}, [authUser, permissions, canRead]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isUserLoggedIn, userRoleId, permissions, canRead]);
 
 	const value: IPermissionContextProps = useMemo(
 		() => ({

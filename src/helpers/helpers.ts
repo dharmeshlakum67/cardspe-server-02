@@ -99,7 +99,7 @@ export const debounce = (func: (arg0: any) => void, wait = 1000) => {
 	};
 };
 
-// GET COMPLETE IMAGE URL
+// RESOLVE FULL PUBLIC / S3 / LOCAL STORAGE FILE URL
 export const getImageUrl = (path?: any, fallback = ''): string => {
 	if (!path) {
 		return fallback;
@@ -126,10 +126,14 @@ export const getImageUrl = (path?: any, fallback = ''): string => {
 		return trimmed;
 	}
 
-	const rawBaseUrl = ENV.API_BASE_URL || 'http://localhost:5000/api';
-	const baseUrl = rawBaseUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+	const rawBaseUrl = ENV.API_BASE_URL || 'http://localhost:5000';
+	const baseUrl = rawBaseUrl.replace(/\/api(\/v\d+)?\/?$/i, '').replace(/\/+$/, '');
 	const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 
 	return `${baseUrl}${cleanPath}`;
 };
+
+// COMMON FILE PATH EXTENDER ALIAS
+export const resolveFilePath = getImageUrl;
+export const getFileUrl = getImageUrl;
 

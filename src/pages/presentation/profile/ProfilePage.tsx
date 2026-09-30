@@ -11,10 +11,13 @@ import authService from '../auth/services/authService';
 import Modal, { ModalHeader, ModalTitle, ModalBody, ModalFooter } from '../../../components/bootstrap/Modal';
 import Button from '../../../components/bootstrap/Button';
 import Spinner from '../../../components/bootstrap/Spinner';
+import EditProfileModal from './EditProfileModal';
+import { getImageUrl } from '../../../helpers/helpers';
+import USERS from '../../../common/data/userDummyData';
 import './ProfilePage.scss';
 
 const ProfilePage: FC = () => {
-	const { authUser, userData } = useContext(AuthContext);
+	const { authUser, userData, refetchMe } = useContext(AuthContext);
 
 	// REAL USER DETAILS WITH DESTRUCTURING FROM API RESPONSE
 	const name = authUser?.name || userData?.name || '';
@@ -23,7 +26,12 @@ const ProfilePage: FC = () => {
 	const mobile = authUser?.mobile_number || '';
 	const company = authUser?.company_name || '';
 	const roleName = authUser?.role?.role_name || (userData as any)?.position || '';
-	const profilePic = (authUser as any)?.profile_picture || (authUser as any)?.profile_image || userData?.src;
+	const rawPic =
+		authUser?.profile_picture ||
+		authUser?.profile_image ||
+		(authUser as any)?.profileImage ||
+		userData?.src;
+	const profilePic = rawPic ? getImageUrl(rawPic, USERS.JOHN.src) : '';
 
 	// BALANCE & KYC & VERIFICATION STATUS FIELDS FROM API
 	const currentBalance =
@@ -33,6 +41,15 @@ const ProfilePage: FC = () => {
 	const kycStatus = authUser?.kyc_status || 'Pending';
 	const isEmailVerified = authUser?.is_email_verified ?? false;
 	const isMobileVerified = authUser?.is_mobile_verified ?? false;
+
+	// PROFILE & ADDRESS DETAILS FROM API
+	const profile = authUser?.profile || (authUser as any)?.user?.profile;
+	const address = profile?.address?.trim() || '-';
+	const stateName = (profile?.state?.name || (typeof profile?.state === 'string' ? profile.state : ''))?.trim() || '-';
+	const postalCode = profile?.postal_code?.trim() || '-';
+
+	// EDIT PROFILE MODAL STATE
+	const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState<boolean>(false);
 
 	// EMAIL VERIFICATION MODAL STATE
 	const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
@@ -84,9 +101,9 @@ const ProfilePage: FC = () => {
 
 					{/* 1. TOP MAIN PROFILE HEADER CARD */}
 					<div className='profile-card profile-header-card'>
-						<div className='d-flex align-items-center justify-content-between flex-wrap gap-4'>
-							{/* LEFT: AVATAR & USER DETAILS */}
-							<div className='d-flex align-items-center gap-4 flex-wrap'>
+						{/* TOP ROW: AVATAR, NAME, BADGE, AND ACTION */}
+						<div className='profile-header-top'>
+							<div className='profile-header-user'>
 								<div className='profile-avatar-wrapper'>
 									{profilePic ? (
 										<img
@@ -101,7 +118,7 @@ const ProfilePage: FC = () => {
 									)}
 								</div>
 
-								<div className='profile-header-details d-flex flex-column gap-1'>
+								<div className='profile-user-info'>
 									<div className='d-flex align-items-center gap-2 flex-wrap'>
 										<h3 className='profile-name mb-0'>{name || 'User Profile'}</h3>
 										{roleName && (
@@ -111,42 +128,63 @@ const ProfilePage: FC = () => {
 											</span>
 										)}
 									</div>
-									{username && <div className='profile-handle mb-1'>@{username}</div>}
+									{username && <div className='profile-handle'>@{username}</div>}
+								</div>
+							</div>
 
-									<div className='d-flex flex-column gap-1 mt-1'>
-										{mobile && (
-											<div className='profile-info-item'>
-												<Icon icon='Phone' className='info-icon' />
-												<span>{mobile}</span>
-											</div>
-										)}
-										{email && (
-											<div className='profile-info-item'>
-												<Icon icon='Mail' className='info-icon' />
-												<span>{email}</span>
-											</div>
-										)}
-										{company && (
-											<div className='profile-info-item'>
-												<Icon icon='Business' className='info-icon' />
-												<span>{company}</span>
-											</div>
-										)}
+							<button
+								type='button'
+								className='btn-edit-profile'
+								onClick={() => setIsEditProfileModalOpen(true)}>
+								<Icon icon='Edit' size='sm' />
+								<span>Edit Profile</span>
+							</button>
+						</div>
+
+						{/* BOTTOM GRID: CONTACT & ADDRESS DETAILS */}
+						<div className='profile-header-body'>
+							{/* CONTACT INFORMATION */}
+							<div className='profile-details-col'>
+								<div className='profile-col-heading'>
+									<Icon icon='ContactPhone' className='col-heading-icon' />
+									<span>Contact Information</span>
+								</div>
+								<div className='profile-info-list'>
+									<div className='profile-info-item'>
+										<Icon icon='Phone' className='info-icon' />
+										<span>{mobile || '-'}</span>
+									</div>
+									<div className='profile-info-item'>
+										<Icon icon='Mail' className='info-icon' />
+										<span>{email || '-'}</span>
+									</div>
+									<div className='profile-info-item'>
+										<Icon icon='Business' className='info-icon' />
+										<span>{company || '-'}</span>
 									</div>
 								</div>
 							</div>
 
-							{/* RIGHT: EDIT PROFILE ACTION BUTTON */}
-							<div>
-								<button
-									type='button'
-									className='btn-edit-profile'
-									onClick={() =>
-										showNotification('Edit Profile', 'Opening profile settings modal...', 'info')
-									}>
-									<Icon icon='Edit' size='sm' />
-									<span>Edit Profile</span>
-								</button>
+							{/* ADDRESS DETAILS */}
+							<div className='profile-details-col'>
+								<div className='profile-col-heading'>
+									<Icon icon='HomeWork' className='col-heading-icon' />
+									<span>Address Details</span>
+								</div>
+								<div className='profile-info-list'>
+									<div className='profile-info-item'>
+										<Icon icon='Home' className='info-icon' />
+										<span title={address}>{address}</span>
+									</div>
+									<div className='profile-info-item'>
+										<Icon icon='Public' className='info-icon' />
+										<span>State: {stateName}</span>
+									</div>
+									<div className='profile-info-item'>
+										<Icon icon='PinDrop' className='info-icon' />
+										<span>PIN Code: {postalCode}</span>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -376,6 +414,16 @@ const ProfilePage: FC = () => {
 					</Button>
 				</ModalFooter>
 			</Modal>
+
+			{/* EDIT PROFILE MODAL */}
+			<EditProfileModal
+				isOpen={isEditProfileModalOpen}
+				setIsOpen={setIsEditProfileModalOpen}
+				authUser={authUser || null}
+				onProfileUpdated={async () => {
+					await refetchMe?.();
+				}}
+			/>
 		</PageWrapper>
 	);
 };

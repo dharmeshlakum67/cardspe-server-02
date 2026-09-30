@@ -29,6 +29,9 @@ const DocumentTypeEditPage = lazy(
 const StateListPage = lazy(
 	() => import('../pages/presentation/master/state/StateListPage'),
 );
+const ServiceCategoryListPage = lazy(
+	() => import('../pages/presentation/service-management/service-category/ServiceCategoryListPage'),
+);
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 
 const contents: RouteProps[] = [
@@ -95,6 +98,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.STATE,
 		element: <StateListPage />,
+	},
+	{
+		path: PAGE_ROUTES.SERVICE_CATEGORY,
+		element: <ServiceCategoryListPage />,
 	},
 	{
 		path: '*',

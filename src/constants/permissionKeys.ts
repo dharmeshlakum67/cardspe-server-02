@@ -10,6 +10,8 @@ export const PERMISSION_KEYS = {
 	MASTER: 'master',
 	DOCUMENT_TYPE: 'document_type',
 	STATE: 'state',
+	SERVICE_MANAGEMENT: 'service_management',
+	SERVICE_CATEGORY: 'service_category',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

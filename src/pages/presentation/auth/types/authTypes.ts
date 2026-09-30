@@ -10,6 +10,18 @@ export interface IRole {
 	role_type: string;
 }
 
+export interface IAdminProfileState {
+	id: number;
+	name: string;
+}
+
+export interface IAdminProfile {
+	id: number;
+	address?: string | null;
+	postal_code?: string | null;
+	state?: IAdminProfileState | null;
+}
+
 export interface IAuthUser {
 	id: number;
 	name: string;
@@ -26,6 +38,17 @@ export interface IAuthUser {
 	current_balance?: string | number;
 	created_at?: string;
 	role?: IRole;
+	profile?: IAdminProfile | null;
+}
+
+export interface IUpdateProfilePayload {
+	name?: string;
+	username?: string;
+	email_address?: string;
+	company_name?: string | null;
+	address?: string | null;
+	state_id?: number | null;
+	postal_code?: string | null;
 }
 
 export interface ILoginResponse {

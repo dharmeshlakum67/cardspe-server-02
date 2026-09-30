@@ -32,9 +32,22 @@ export const stateService = {
 		});
 	},
 
-	// GET ACTIVE STATES FOR DROPDOWNS
+	// GET ACTIVE STATES FOR DROPDOWNS (RAW / ACTIVE)
 	getActiveStates: async (): Promise<IActiveStatesResponse> => {
 		return apiClient<IActiveStatesResponse>(STATE_ENDPOINTS.GET_ACTIVE);
+	},
+
+	// GET ALL ACTIVE STATES (WITH PAGINATION AND SEARCH SUPPORT)
+	getAllActiveStates: async (params?: { page?: number; limit?: number; search?: string }): Promise<IStateListResponse> => {
+		const apiParams: Record<string, any> = {};
+		if (params) {
+			if (params.page !== undefined) apiParams.page = params.page;
+			if (params.limit !== undefined) apiParams.limit = params.limit;
+			if (params.search) apiParams.search = params.search;
+		}
+		return apiClient<IStateListResponse>(STATE_ENDPOINTS.GET_ALL_ACTIVE, {
+			params: apiParams,
+		});
 	},
 
 	// GET SINGLE STATE BY ID

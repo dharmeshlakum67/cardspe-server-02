@@ -68,6 +68,22 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'State',
 		subMenu: null,
 	},
+
+	// SERVICE MANAGEMENT PARENT (EXPANDABLE GROUP)
+	service_management: {
+		path: null,
+		icon: 'Build',
+		text: 'Service Management',
+		subMenu: null,
+	},
+
+	// SERVICE CATEGORY CHILD MODULE
+	service_category: {
+		path: PAGE_ROUTES.SERVICE_CATEGORY,
+		icon: 'Category',
+		text: 'Service Category',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

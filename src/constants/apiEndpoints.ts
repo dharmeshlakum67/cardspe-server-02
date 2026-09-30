@@ -61,6 +61,16 @@ export const AUTH_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: false,
 	}),
+	EDIT_PROFILE: {
+		url: '/api/auth/edit-profile',
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	},
+	UPDATE_PROFILE_IMAGE: {
+		url: '/api/auth/update-profile-image',
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	},
 } as const;
 
 // ROLE ENDPOINTS
@@ -133,32 +143,32 @@ export const PERMISSION_ENDPOINTS = {
 // DOCUMENT TYPE ENDPOINTS
 export const DOCUMENT_TYPE_ENDPOINTS = {
 	GET_ALL: {
-		url: '/api/master/document-type',
+		url: '/api/document-type',
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
 	GET_ONE: (id: string | number) => ({
-		url: `/api/master/document-type/get-one/${id}`,
+		url: `/api/document-type/get-one/${id}`,
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	}),
 	CREATE: {
-		url: '/api/master/document-type/create',
+		url: '/api/document-type/create',
 		method: HTTP_METHODS.POST,
 		requiresAuth: true,
 	},
 	UPDATE: (id: string | number) => ({
-		url: `/api/master/document-type/update/${id}`,
+		url: `/api/document-type/update/${id}`,
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
 	UPDATE_STATUS: (id: string | number) => ({
-		url: `/api/master/document-type/update-status/${id}`,
+		url: `/api/document-type/update-status/${id}`,
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
 	DELETE: (id: string | number) => ({
-		url: `/api/master/document-type/delete/${id}`,
+		url: `/api/document-type/delete/${id}`,
 		method: HTTP_METHODS.DELETE,
 		requiresAuth: true,
 	}),
@@ -182,6 +192,11 @@ export const STATE_ENDPOINTS = {
 	},
 	GET_ACTIVE: {
 		url: '/api/state/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL_ACTIVE: {
+		url: '/api/state/get-active',
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
@@ -212,6 +227,50 @@ export const STATE_ENDPOINTS = {
 	}),
 } as const;
 
+// SERVICE CATEGORY ENDPOINTS
+export const SERVICE_CATEGORY_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/service-category/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/service-category/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL_ACTIVE: {
+		url: '/api/service-category/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/service-category/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/service-category/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/service-category/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/service-category/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/service-category/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -220,6 +279,7 @@ export const API_ENDPOINTS = {
 	PERMISSIONS: PERMISSION_ENDPOINTS,
 	DOCUMENT_TYPE: DOCUMENT_TYPE_ENDPOINTS,
 	STATE: STATE_ENDPOINTS,
+	SERVICE_CATEGORY: SERVICE_CATEGORY_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 

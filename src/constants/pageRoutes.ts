@@ -29,6 +29,9 @@ export const PAGE_ROUTES = {
 	DOCUMENT_TYPE_EDIT: 'master/document-type/edit/:id',
 	STATE: 'master/state',
 	STATE_ALT: 'state',
+
+	// SERVICE MANAGEMENT / SERVICE CATEGORY
+	SERVICE_CATEGORY: 'service-management/service-category',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

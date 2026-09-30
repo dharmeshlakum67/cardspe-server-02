@@ -1,0 +1,40 @@
+.category-image-preview-thumbnail {
+	cursor: pointer;
+	position: relative;
+	transition: all 0.2s ease;
+
+	&:hover {
+		transform: scale(1.06);
+		border-color: #0284c7 !important;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+		.image-hover-overlay {
+			opacity: 1 !important;
+		}
+	}
+
+	.image-hover-overlay {
+		background-color: rgba(15, 23, 42, 0.65);
+		opacity: 0;
+		transition: opacity 0.2s ease;
+		pointer-events: none;
+	}
+}
+
+.modal-image-preview-wrapper {
+	position: relative;
+	overflow: hidden;
+	border-radius: 0.5rem;
+
+	&:hover {
+		.modal-image-hover-actions {
+			opacity: 1 !important;
+		}
+	}
+
+	.modal-image-hover-actions {
+		background-color: rgba(15, 23, 42, 0.55);
+		opacity: 0;
+		transition: opacity 0.2s ease;
+	}
+}

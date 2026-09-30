@@ -193,6 +193,7 @@ export const StateModal: FC<IStateModalProps> = ({
 StateModal.propTypes = {
 	isOpen: PropTypes.bool.isRequired,
 	setIsOpen: PropTypes.func.isRequired,
+	// eslint-disable-next-line react/forbid-prop-types
 	stateData: PropTypes.any,
 	onSubmit: PropTypes.func.isRequired,
 	isSubmitting: PropTypes.bool.isRequired,

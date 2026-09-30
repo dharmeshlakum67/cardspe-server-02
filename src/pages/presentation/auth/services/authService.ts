@@ -19,6 +19,7 @@ import {
 	IResendOTPResponse,
 	ITokenDetailsResponse,
 	IVerifyEmailTokenResponse,
+	IUpdateProfilePayload,
 } from '../types/authTypes';
 
 // Re-export all auth types for convenience
@@ -109,6 +110,24 @@ export const authService = {
 		});
 
 		return response.data;
+	},
+
+	// EDIT / UPDATE PROFILE
+	async updateProfile(payload: IUpdateProfilePayload): Promise<IMeResponse> {
+		return apiClient<IMeResponse>(AUTH_ENDPOINTS.EDIT_PROFILE, {
+			method: AUTH_ENDPOINTS.EDIT_PROFILE.method,
+			body: payload,
+			requiresAuth: true,
+		});
+	},
+
+	// UPDATE PROFILE IMAGE
+	async updateProfileImage(formData: FormData): Promise<{ success: boolean; message: string; data?: any }> {
+		return apiClient(AUTH_ENDPOINTS.UPDATE_PROFILE_IMAGE, {
+			method: AUTH_ENDPOINTS.UPDATE_PROFILE_IMAGE.method,
+			body: formData,
+			requiresAuth: true,
+		});
 	},
 
 	// SEND VERIFICATION EMAIL
