@@ -74,7 +74,7 @@ const DocumentTypeAddPage: FC = () => {
 					mode="add"
 					isSubmitting={isSubmitting}
 					onSubmit={handleFormSubmit}
-					onCancel={() => navigate(`/${PAGE_ROUTES.DOCUMENT_TYPE}`)}
+					onCancel={() => navigate(-1)}
 				/>
 			</Page>
 		</PageWrapper>

@@ -173,6 +173,45 @@ export const CONSTANT_ENDPOINTS = {
 	}),
 } as const;
 
+// STATE ENDPOINTS
+export const STATE_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/state/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/state/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/state/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/state/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/state/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/state/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/state/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -180,6 +219,7 @@ export const API_ENDPOINTS = {
 	ROLE_ACCESS: ROLE_ACCESS_ENDPOINTS,
 	PERMISSIONS: PERMISSION_ENDPOINTS,
 	DOCUMENT_TYPE: DOCUMENT_TYPE_ENDPOINTS,
+	STATE: STATE_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 

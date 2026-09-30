@@ -17,6 +17,21 @@ export const adminPagesMenu = {
 	},
 };
 
+export const masterPagesMenu = {
+	documentType: {
+		id: 'documentType',
+		text: 'Document Type',
+		path: 'master/document-type',
+		icon: 'Description',
+	},
+	state: {
+		id: 'state',
+		text: 'State',
+		path: 'master/state',
+		icon: 'AddLocation',
+	},
+};
+
 export const authPagesMenu = {
 	login: {
 		id: 'login',

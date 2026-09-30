@@ -45,6 +45,13 @@ interface IPermissionContextProviderProps {
 	children: ReactNode;
 }
 
+// GLOBAL EVENT DISPATCHER FOR REAL-TIME PERMISSIONS REFETCH
+export const triggerPermissionsRefetch = () => {
+	if (typeof window !== 'undefined') {
+		window.dispatchEvent(new CustomEvent('REFETCH_PERMISSIONS'));
+	}
+};
+
 export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({ children }) => {
 	const { authUser, isLoading: isAuthLoading } = useContext(AuthContext);
 	const [permissions, setPermissions] = useState<IPermissionItem[]>([]);
@@ -80,6 +87,21 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 
 	useEffect(() => {
 		refetchPermissions();
+	}, [refetchPermissions]);
+
+	// LISTEN FOR GLOBAL REAL-TIME REFETCH EVENTS (E.G. AFTER ROLE ACCESS UPDATE)
+	useEffect(() => {
+		const handleRefreshEvent = () => {
+			refetchPermissions();
+		};
+		window.addEventListener('REFETCH_PERMISSIONS', handleRefreshEvent);
+		window.addEventListener('ROLE_UPDATED', handleRefreshEvent);
+		window.addEventListener('USER_UPDATED', handleRefreshEvent);
+		return () => {
+			window.removeEventListener('REFETCH_PERMISSIONS', handleRefreshEvent);
+			window.removeEventListener('ROLE_UPDATED', handleRefreshEvent);
+			window.removeEventListener('USER_UPDATED', handleRefreshEvent);
+		};
 	}, [refetchPermissions]);
 
 	const token = authService.getToken();

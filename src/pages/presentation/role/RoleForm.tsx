@@ -171,7 +171,7 @@ export interface IRoleFormProps {
 	initialRole?: IRoleDetail | null;
 	allSystemPermissions: IPermissionItem[];
 	isSaving: boolean;
-	onSubmit: (formData: IRoleFormData) => Promise<void>;
+	onSubmit: (formData: IRoleFormData, hasAccessesChanged?: boolean) => Promise<void>;
 	onDeleteClick?: () => void;
 	canDelete?: boolean;
 }
@@ -764,7 +764,7 @@ export const RoleForm: FC<IRoleFormProps> = ({
 				role_type: roleType,
 				accesses: accessesPayload,
 			};
-			await onSubmit(payload);
+			await onSubmit(payload, false);
 		} else {
 			if (!hasAnyChange) {
 				showNotification('Info', 'No changes were made to update', 'info');
@@ -780,7 +780,7 @@ export const RoleForm: FC<IRoleFormProps> = ({
 				accesses: accessesPayload,
 			};
 
-			await onSubmit(payload);
+			await onSubmit(payload, hasAccessesChanged);
 		}
 	};
 

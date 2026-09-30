@@ -54,6 +54,20 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Document Type',
 		subMenu: null,
 	},
+
+	// STATE CHILD MODULE
+	state: {
+		path: PAGE_ROUTES.STATE,
+		icon: 'AddLocation',
+		text: 'State',
+		subMenu: null,
+	},
+	states: {
+		path: PAGE_ROUTES.STATE,
+		icon: 'AddLocation',
+		text: 'State',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

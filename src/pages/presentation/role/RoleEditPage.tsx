@@ -20,7 +20,7 @@ import type { IRoleFormData } from './RoleForm';
 const RoleEditPage: FC = () => {
 	const { id: rawId } = useParams<{ id: string }>();
 	const navigate = useNavigate();
-	const { canUpdate, canRead, canDelete, isLoadingPermissions } = usePermission();
+	const { canUpdate, canRead, canDelete, isLoadingPermissions, refetchPermissions } = usePermission();
 
 	const decryptedId = useMemo(() => decryptId(rawId), [rawId]);
 
@@ -135,7 +135,7 @@ const RoleEditPage: FC = () => {
 	}, [isLoadingPermissions, canUpdate, decryptedId, fetchData]);
 
 	// UPDATE ROLE HANDLER
-	const handleUpdateRole = async (formData: IRoleFormData) => {
+	const handleUpdateRole = async (formData: IRoleFormData, hasAccessesChanged?: boolean) => {
 		const targetRoleId = role?.id || decryptedId;
 		if (!targetRoleId) return;
 
@@ -148,6 +148,10 @@ const RoleEditPage: FC = () => {
 				res?.message || `Role "${displayName}" updated successfully`,
 				'success',
 			);
+			// ONLY RE-FETCH GLOBAL PERMISSIONS IF PERMISSIONS / ACCESSES ACTUALLY CHANGED
+			if (hasAccessesChanged && refetchPermissions) {
+				await refetchPermissions();
+			}
 			navigate(-1);
 		} catch (error: any) {
 			showNotification(

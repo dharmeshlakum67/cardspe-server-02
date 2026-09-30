@@ -26,6 +26,9 @@ const DocumentTypeViewPage = lazy(
 const DocumentTypeEditPage = lazy(
 	() => import('../pages/presentation/master/documentType/DocumentTypeEditPage'),
 );
+const StateListPage = lazy(
+	() => import('../pages/presentation/master/state/StateListPage'),
+);
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 
 const contents: RouteProps[] = [
@@ -88,6 +91,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.DOCUMENT_TYPE_EDIT,
 		element: <DocumentTypeEditPage />,
+	},
+	{
+		path: PAGE_ROUTES.STATE,
+		element: <StateListPage />,
 	},
 	{
 		path: '*',

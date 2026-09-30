@@ -111,7 +111,7 @@ const DocumentTypeEditPage: FC = () => {
 				res?.message || 'Document type updated successfully.',
 				'success',
 			);
-			navigate(`/${PAGE_ROUTES.DOCUMENT_TYPE}`);
+			navigate(-1);
 		} catch (error: any) {
 			showNotification(
 				'Error',
@@ -163,7 +163,7 @@ const DocumentTypeEditPage: FC = () => {
 					initialValues={initialFormValues}
 					isSubmitting={isSubmitting}
 					onSubmit={handleFormSubmit}
-					onCancel={() => navigate(`/${PAGE_ROUTES.DOCUMENT_TYPE}`)}
+					onCancel={() => navigate(-1)}
 				/>
 			</Page>
 		</PageWrapper>
