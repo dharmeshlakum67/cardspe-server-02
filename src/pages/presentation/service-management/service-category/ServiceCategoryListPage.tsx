@@ -108,9 +108,8 @@ export const ServiceCategoryListPage: FC = () => {
 			}
 
 			const isDateRangeValid = Boolean(startDate && endDate);
-			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${
-				isDateRangeValid ? `${startDate}_${endDate}` : ''
-			}_${currentPage}_${perPage}`;
+			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''
+				}_${currentPage}_${perPage}`;
 
 			if (!force && (isFetchingRef.current || lastFetchKeyRef.current === currentFetchKey)) {
 				return;
@@ -380,6 +379,26 @@ export const ServiceCategoryListPage: FC = () => {
 					{item.slug || '-'}
 				</span>
 			),
+		},
+		{
+			key: 'display_order',
+			header: 'Display Order',
+			align: 'center',
+			headerAlign: 'center',
+			width: '100px',
+			minWidth: '100px',
+			render: (item) => {
+				if (item.display_order !== null && item.display_order !== undefined) {
+					return (
+						<span
+							className='badge bg-light text-dark font-monospace border px-2 py-1'
+							style={{ fontSize: '0.8rem', letterSpacing: '0.02em' }}>
+							{item.display_order}
+						</span>
+					);
+				}
+				return <span className='text-muted'>-</span>;
+			},
 		},
 		{
 			key: 'status',

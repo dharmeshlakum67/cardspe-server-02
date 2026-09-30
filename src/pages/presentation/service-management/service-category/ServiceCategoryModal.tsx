@@ -35,6 +35,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 }) => {
 	const isEdit = Boolean(categoryData);
 	const [name, setName] = useState<string>('');
+	const [displayOrder, setDisplayOrder] = useState<string>('');
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string>('');
 	const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
@@ -70,6 +71,11 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 	useEffect(() => {
 		if (categoryData && isOpen) {
 			setName(categoryData.name || '');
+			setDisplayOrder(
+				categoryData.display_order !== null && categoryData.display_order !== undefined
+					? String(categoryData.display_order)
+					: '',
+			);
 			setSelectedFile(null);
 			setIsDeleteIcon(false);
 			const rawIcon = categoryData.icon || '';
@@ -77,6 +83,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 			setStatus(categoryData.status || 'active');
 		} else if (isOpen) {
 			setName('');
+			setDisplayOrder('');
 			setSelectedFile(null);
 			setIsDeleteIcon(false);
 			setImagePreview('');
@@ -131,6 +138,10 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 		const formData = new FormData();
 		formData.append('name', name.trim());
 		formData.append('status', status);
+
+		if (displayOrder.trim() !== '') {
+			formData.append('display_order', displayOrder.trim());
+		}
 
 		if (selectedFile) {
 			formData.append('icon', selectedFile);
@@ -307,8 +318,29 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 							</div>
 						</div>
 
-						{/* RIGHT COLUMN: STATUS (& SLUG IN EDIT MODE) */}
+						{/* RIGHT COLUMN: DISPLAY ORDER & STATUS (& SLUG IN EDIT MODE) */}
 						<div className='col-12 col-md-6 d-flex flex-column justify-content-start'>
+							<div className='mb-2'>
+								<label htmlFor='categoryDisplayOrderInput' className='form-label fw-semibold small mb-1'>
+									Display Order <span className='text-muted fw-normal'>(Optional)</span>
+								</label>
+								<input
+									id='categoryDisplayOrderInput'
+									type='number'
+									min='0'
+									className='form-control role-name-input'
+									placeholder='e.g. 1, 2, 10'
+									value={displayOrder}
+									onChange={(e) => setDisplayOrder(e.target.value)}
+									style={{
+										height: '42px',
+										borderRadius: '0.5rem',
+										border: '1px solid #cbd5e1',
+										fontSize: '0.9rem',
+									}}
+								/>
+							</div>
+
 							<div>
 								<label htmlFor='categoryStatusSelect' className='form-label fw-semibold small mb-1'>
 									Status <span className='text-danger'>*</span>

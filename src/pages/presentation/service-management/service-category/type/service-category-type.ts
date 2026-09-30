@@ -5,6 +5,7 @@ export interface IServiceCategory {
 	name: string;
 	icon?: string | null;
 	slug: string;
+	display_order?: number | null;
 	status: ServiceCategoryStatusType;
 	created_at?: string;
 	updated_at?: string;
@@ -15,6 +16,7 @@ export interface IActiveServiceCategoryItem {
 	name: string;
 	icon?: string | null;
 	slug: string;
+	display_order?: number | null;
 }
 
 export type CreateServiceCategoryPayload =
@@ -22,6 +24,7 @@ export type CreateServiceCategoryPayload =
 	| {
 			name: string;
 			icon?: string | null | File;
+			display_order?: number | null;
 			status?: ServiceCategoryStatusType;
 	  };
 
@@ -30,6 +33,7 @@ export type UpdateServiceCategoryPayload =
 	| {
 			name?: string;
 			icon?: string | null | File;
+			display_order?: number | null;
 			status?: ServiceCategoryStatusType;
 	  };
 
