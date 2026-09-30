@@ -30,8 +30,10 @@ export const PAGE_ROUTES = {
 	STATE: 'master/state',
 	STATE_ALT: 'state',
 
-	// SERVICE MANAGEMENT / SERVICE CATEGORY
+	// SERVICE MANAGEMENT / SERVICE CATEGORY & MOBILE PLAN TYPE
 	SERVICE_CATEGORY: 'service-management/service-category',
+	MOBILE_PLAN_TYPE: 'service-management/mobile-plan-type',
+	MOBILE_PLAN_TYPE_MASTER: 'master/mobile-plan-type',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

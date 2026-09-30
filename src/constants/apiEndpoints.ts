@@ -271,6 +271,50 @@ export const SERVICE_CATEGORY_ENDPOINTS = {
 	}),
 } as const;
 
+// MOBILE PLAN TYPE ENDPOINTS
+export const MOBILE_PLAN_TYPE_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/mobile-plan-type/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/mobile-plan-type/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL_ACTIVE: {
+		url: '/api/mobile-plan-type/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/mobile-plan-type/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/mobile-plan-type/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/mobile-plan-type/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/mobile-plan-type/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/mobile-plan-type/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -280,8 +324,10 @@ export const API_ENDPOINTS = {
 	DOCUMENT_TYPE: DOCUMENT_TYPE_ENDPOINTS,
 	STATE: STATE_ENDPOINTS,
 	SERVICE_CATEGORY: SERVICE_CATEGORY_ENDPOINTS,
+	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 
 export default API_ENDPOINTS;
+
 

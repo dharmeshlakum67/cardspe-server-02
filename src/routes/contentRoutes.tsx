@@ -32,6 +32,9 @@ const StateListPage = lazy(
 const ServiceCategoryListPage = lazy(
 	() => import('../pages/presentation/service-management/service-category/ServiceCategoryListPage'),
 );
+const MobilePlanTypeListPage = lazy(
+	() => import('../pages/presentation/service-management/mobile-plan-type/MobilePlanTypeListPage'),
+);
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 
 const contents: RouteProps[] = [
@@ -102,6 +105,14 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.SERVICE_CATEGORY,
 		element: <ServiceCategoryListPage />,
+	},
+	{
+		path: PAGE_ROUTES.MOBILE_PLAN_TYPE,
+		element: <MobilePlanTypeListPage />,
+	},
+	{
+		path: PAGE_ROUTES.MOBILE_PLAN_TYPE_MASTER,
+		element: <MobilePlanTypeListPage />,
 	},
 	{
 		path: '*',

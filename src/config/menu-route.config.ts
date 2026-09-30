@@ -84,6 +84,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Service Category',
 		subMenu: null,
 	},
+
+	// MOBILE PLAN TYPE CHILD MODULE
+	mobile_plan_type: {
+		path: PAGE_ROUTES.MOBILE_PLAN_TYPE,
+		icon: 'PhoneAndroid',
+		text: 'Mobile Plan Type',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY
