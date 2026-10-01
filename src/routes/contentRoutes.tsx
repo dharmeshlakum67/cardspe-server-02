@@ -39,6 +39,7 @@ const PaymentModeListPage = lazy(
 	() => import('../pages/presentation/service-management/payment-mode/PaymentModeListPage'),
 );
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
+const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
 
 const contents: RouteProps[] = [
 	{
@@ -68,6 +69,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.PROFILE,
 		element: <ProfilePage />,
+	},
+	{
+		path: PAGE_ROUTES.KYC,
+		element: <KycPage />,
 	},
 	{
 		path: PAGE_ROUTES.ROLES,

@@ -1,0 +1,313 @@
+.kyc-page-wrapper {
+	padding: 0.5rem 0 2rem;
+
+	.kyc-top-bar {
+		margin-bottom: 1.25rem;
+	}
+
+	.kyc-header-card {
+		background: #ffffff;
+		border-radius: 0.875rem;
+		border: 1px solid #e2e8f0;
+		padding: 1.25rem 1.5rem;
+		margin-bottom: 1.75rem;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+		.kyc-header-icon {
+			width: 48px;
+			height: 48px;
+			border-radius: 0.75rem;
+			background: #e0f2fe;
+			color: #0284c7;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+		}
+	}
+
+	.kyc-loading-state {
+		background: #ffffff;
+		border-radius: 0.875rem;
+		border: 1px solid #e2e8f0;
+		padding: 3.5rem 1.5rem;
+	}
+
+	// INDIVIDUAL DOCUMENT CARD ITEM
+	.kyc-doc-card-item {
+		background: #ffffff;
+		border-radius: 0.875rem;
+		border: 1px solid #e2e8f0;
+		padding: 1.5rem;
+		transition: all 0.25s ease-in-out;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+
+		&:hover {
+			border-color: #cbd5e1;
+			box-shadow: 0 8px 24px rgba(14, 95, 152, 0.08);
+			transform: translateY(-2px);
+		}
+
+		// DEFAULT ANIMATED THEME BLUE BORDER (PENDING / NOT SUBMITTED)
+		&.card-default {
+			border: 1.5px solid #5c56b6;
+			animation: pulseBlueBorder 2.5s infinite ease-in-out;
+
+			&:hover {
+				border-color: #4f46e5;
+				box-shadow: 0 8px 24px rgba(92, 86, 182, 0.18);
+				transform: translateY(-2px);
+			}
+		}
+
+		// APPROVED GREEN BORDER
+		&.card-approved {
+			border: 1.5px solid #10b981;
+			background: #ffffff;
+			animation: none;
+
+			&:hover {
+				border-color: #059669;
+				box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+				transform: translateY(-2px);
+			}
+		}
+
+		// REJECTED RED BORDER
+		&.card-rejected {
+			border: 1.5px solid #ef4444;
+			background: #ffffff;
+			animation: none;
+
+			&:hover {
+				border-color: #dc2626;
+				box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
+				transform: translateY(-2px);
+			}
+		}
+
+		.kyc-doc-icon-box {
+			width: 48px;
+			height: 48px;
+			border-radius: 0.75rem;
+			background: #f1f5f9;
+			color: #334155;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+
+			&.icon-approved {
+				background: #ecfdf5;
+				color: #059669;
+			}
+			&.icon-rejected {
+				background: #fee2e2;
+				color: #dc2626;
+			}
+			&.icon-submitted {
+				background: #e0f2fe;
+				color: #0284c7;
+			}
+		}
+
+		.kyc-doc-title {
+			font-size: 1.05rem;
+			font-weight: 600;
+			color: #0f172a;
+			line-height: 1.3;
+		}
+
+		.kyc-doc-code {
+			font-size: 0.75rem;
+			color: #64748b;
+			letter-spacing: 0.04em;
+		}
+
+		.kyc-service-tag {
+			font-size: 0.75rem;
+			color: #475569;
+			background: #f8fafc;
+			padding: 0.125rem 0.5rem;
+			border-radius: 0.375rem;
+			border: 1px solid #e2e8f0;
+			text-transform: capitalize;
+		}
+
+		.kyc-rejection-banner {
+			background: #fef2f2;
+			border: 1px solid #fecaca;
+			color: #991b1b;
+			border-radius: 0.5rem;
+			padding: 0.625rem 0.875rem;
+			display: flex;
+			align-items: flex-start;
+			gap: 0.5rem;
+		}
+
+		.kyc-info-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 0.75rem;
+
+			.kyc-info-box {
+				background: #f8fafc;
+				border: 1px solid #f1f5f9;
+				border-radius: 0.5rem;
+				padding: 0.625rem 0.75rem;
+				display: flex;
+				flex-direction: column;
+
+				.info-label {
+					font-size: 0.7rem;
+					text-transform: uppercase;
+					letter-spacing: 0.05em;
+					color: #94a3b8;
+					font-weight: 600;
+				}
+
+				.info-value {
+					font-size: 0.8125rem;
+					font-weight: 600;
+					color: #334155;
+					margin-top: 0.125rem;
+				}
+			}
+		}
+
+		.kyc-fields-preview {
+			background: #fafafa;
+			border-radius: 0.5rem;
+			border: 1px dashed #e2e8f0;
+			padding: 0.625rem 0.75rem;
+
+			.field-preview-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.5rem;
+				font-size: 0.75rem;
+				padding: 0.2rem 0;
+
+				&:not(:last-child) {
+					border-bottom: 1px dotted #e2e8f0;
+				}
+
+				.field-name {
+					color: #64748b;
+					white-space: nowrap;
+				}
+
+				.field-val {
+					text-align: right;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					max-width: 60%;
+				}
+			}
+		}
+
+		.kyc-card-footer {
+			border-color: #f1f5f9 !important;
+		}
+	}
+
+	// CUSTOM BADGES
+	.kyc-badge {
+		font-size: 0.75rem;
+		font-weight: 600;
+		padding: 0.25rem 0.625rem;
+		border-radius: 9999px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		line-height: 1.2;
+
+		&.kyc-badge-required {
+			background: #fef2f2;
+			color: #ef4444;
+			border: 1px solid #fecaca;
+		}
+
+		&.kyc-badge-approved {
+			background: #ecfdf5;
+			color: #059669;
+			border: 1px solid #a7f3d0;
+		}
+
+		&.kyc-badge-rejected {
+			background: #fef2f2;
+			color: #dc2626;
+			border: 1px solid #fecaca;
+		}
+
+		&.kyc-badge-pending {
+			background: #e0f2fe;
+			color: #0284c7;
+			border: 1px solid #bae6fd;
+		}
+
+		&.kyc-badge-not-submitted {
+			background: #f8fafc;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+		}
+	}
+}
+
+// MODAL DATEPICKER FORM OVERRIDE
+.kyc-modal-datepicker {
+	.datepicker-input {
+		border-radius: 0.5rem !important;
+		border: 1px solid #cbd5e1 !important;
+		height: 38px !important;
+		font-size: 0.9rem !important;
+		text-align: left !important;
+		padding: 0.4rem 2rem 0.4rem 2.25rem !important;
+		background-color: #ffffff !important;
+
+		&:focus,
+		&.is-open {
+			border-color: #5c56b6 !important;
+			box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.15) !important;
+		}
+	}
+
+	.datepicker-start-icon {
+		left: 10px !important;
+	}
+}
+
+// HIDE DEFAULT SPINNER ARROWS ON NUMBER INPUTS
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+// KEYFRAME ANIMATIONS
+@keyframes pulseBlueBorder {
+	0% {
+		border-color: #5c56b6;
+		box-shadow: 0 0 0 0 rgba(92, 86, 182, 0.28);
+	}
+	50% {
+		border-color: #818cf8;
+		box-shadow: 0 0 0 5px rgba(92, 86, 182, 0.12);
+	}
+	100% {
+		border-color: #5c56b6;
+		box-shadow: 0 0 0 0 rgba(92, 86, 182, 0.28);
+	}
+}

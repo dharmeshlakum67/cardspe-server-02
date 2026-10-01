@@ -210,10 +210,15 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 		}
 	}, [initialValues]);
 
-	// Initialize fields list state from initialValues
+	// Initialize fields list state from initialValues with stable uid
 	useEffect(() => {
 		if (initialValues?.fields && Array.isArray(initialValues.fields)) {
-			setFieldsList(initialValues.fields);
+			setFieldsList(
+				initialValues.fields.map((f, i) => ({
+					...f,
+					_uid: (f as any)._uid || (f.id ? `fid_${f.id}` : `finit_${i}_${Date.now()}`),
+				})),
+			);
 		}
 	}, [initialValues]);
 
@@ -275,20 +280,27 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 	};
 
 	// DYNAMIC FIELDS BUILDER HANDLERS
-	const handleAddField = () => {
-		setFieldsList((prev) => [
-			...prev,
-			{
-				field_name: '',
-				field_code: '',
-				field_type: 'text',
-				is_required: false,
-				display_order: prev.length + 1,
-				placeholder: '',
-				options: [],
-				status: 'active',
-			},
-		]);
+	const handleAddField = (insertAfterIndex?: number) => {
+		const newField: IDocumentField & { _uid?: string } = {
+			_uid: `field_uid_${Date.now()}_${Math.random()}`,
+			field_name: '',
+			field_code: '',
+			field_type: 'text',
+			is_required: false,
+			display_order: fieldsList.length + 1,
+			placeholder: '',
+			options: [],
+			status: 'active',
+		};
+
+		setFieldsList((prev) => {
+			if (typeof insertAfterIndex === 'number' && insertAfterIndex >= 0) {
+				const next = [...prev];
+				next.splice(insertAfterIndex + 1, 0, newField);
+				return next.map((f, i) => ({ ...f, display_order: i + 1 }));
+			}
+			return [...prev, newField];
+		});
 	};
 
 	const handleRemoveField = (index: number) => {
@@ -748,7 +760,7 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 					<button
 						type="button"
 						className="btn-add-field-action"
-						onClick={handleAddField}>
+						onClick={() => handleAddField()}>
 						<Icon icon="Add" size="sm" />
 						<span>Add Field</span>
 					</button>
@@ -777,8 +789,12 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 									  )
 									: [];
 
+								const fieldKey =
+									(field as any)._uid ||
+									(field.id ? `field_id_${field.id}` : `field_item_${index}`);
+
 								return (
-									<div key={field.field_code || field.id || `field_${index}`} className="field-item-card">
+									<div key={fieldKey} className="field-item-card">
 										{/* FIELD ITEM HEADER */}
 										<div className="field-card-header">
 											<div className="d-flex align-items-center gap-2">
@@ -792,13 +808,23 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 													</span>
 												)}
 											</div>
-											<button
-												type="button"
-												className="btn-delete-field"
-												onClick={() => handleRemoveField(index)}>
-												<Icon icon="Delete" size="sm" />
-												<span>Remove Field</span>
-											</button>
+											<div className="d-flex align-items-center gap-2">
+												<button
+													type="button"
+													className="btn-add-field-below"
+													title="Insert new field after this one"
+													onClick={() => handleAddField(index)}>
+													<Icon icon="Add" size="sm" />
+													<span>Add Below</span>
+												</button>
+												<button
+													type="button"
+													className="btn-delete-field"
+													onClick={() => handleRemoveField(index)}>
+													<Icon icon="Delete" size="sm" />
+													<span>Remove</span>
+												</button>
+											</div>
 										</div>
 
 										{/* FIELD ROW 1: NAME, CODE, TYPE, ORDER */}
@@ -959,7 +985,7 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 													</p>
 												) : (
 													fieldOptions.map((opt, optIdx) => (
-														<div key={opt.value || `opt_${optIdx}`} className="option-row-item">
+														<div key={`f_${index}_opt_${optIdx}`} className="option-row-item">
 															<input
 																type="text"
 																className="form-control form-control-sm role-name-input"

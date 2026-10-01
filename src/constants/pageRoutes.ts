@@ -15,6 +15,7 @@ export const PAGE_ROUTES = {
 
 	// ADMIN & PROFILE
 	PROFILE: 'admin/profile',
+	KYC: 'profile/kyc',
 
 	// USER MANAGEMENT / ROLES
 	ROLES: 'roles',

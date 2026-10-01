@@ -1,6 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import React, { FC, useContext, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
 import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
@@ -13,6 +14,7 @@ import Button from '../../../components/bootstrap/Button';
 import Spinner from '../../../components/bootstrap/Spinner';
 import EditProfileModal from './EditProfileModal';
 import { getImageUrl } from '../../../helpers/helpers';
+import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import USERS from '../../../common/data/userDummyData';
 import './ProfilePage.scss';
 
@@ -224,14 +226,19 @@ const ProfilePage: FC = () => {
 											<div className='metric-title mb-0'>KYC</div>
 											<span className='kyc-status-pill'>{kycStatus}</span>
 										</div>
-										<a href='#/kyc' className='metric-link link-purple mt-3'>
+										<Link
+											to={`/${PAGE_ROUTES.KYC}`}
+											className='metric-link link-purple mt-3'>
 											Complete KYC
-										</a>
+										</Link>
 									</div>
 								</div>
-								<div className='metric-arrow-btn' title='Complete KYC'>
+								<Link
+									to={`/${PAGE_ROUTES.KYC}`}
+									className='metric-arrow-btn'
+									title='Complete KYC'>
 									<Icon icon='ChevronRight' />
-								</div>
+								</Link>
 							</div>
 						</div>
 					</div>
