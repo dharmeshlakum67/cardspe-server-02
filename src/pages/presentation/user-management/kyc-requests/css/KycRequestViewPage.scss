@@ -1,0 +1,108 @@
+.kyc-request-view-page {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	font-family: inherit;
+
+	// TOP NAVIGATION & ACTIONS HEADER
+	.kyc-view-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 1.25rem;
+		margin-bottom: 1.5rem;
+
+		.kyc-header-actions {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+
+			.btn-back-action {
+				background-color: #64748b;
+				border: 1px solid #64748b;
+				color: #ffffff;
+				border-radius: 0.5rem;
+				padding: 0.55rem 1.35rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				cursor: pointer;
+				box-shadow: 0 1px 3px rgba(100, 116, 139, 0.2);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover {
+					background-color: #475569;
+					border-color: #475569;
+					color: #ffffff;
+					transform: translateY(-1px);
+				}
+			}
+
+			.btn-reject-action {
+				background-color: #fee2e2;
+				border: 1px solid #fca5a5;
+				color: #dc2626;
+				border-radius: 0.5rem;
+				padding: 0.55rem 1.35rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				cursor: pointer;
+				box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover:not(:disabled) {
+					background-color: #fecaca;
+					border-color: #f87171;
+					color: #b91c1c;
+					transform: translateY(-1px);
+					box-shadow: 0 3px 8px rgba(220, 38, 38, 0.2);
+				}
+
+				&:disabled {
+					opacity: 0.6;
+					cursor: not-allowed;
+				}
+			}
+
+			.btn-approve-action {
+				background-color: #16a34a;
+				border: 1px solid #16a34a;
+				color: #ffffff;
+				border-radius: 0.5rem;
+				padding: 0.55rem 1.45rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				cursor: pointer;
+				box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+				transition: all 0.2s ease-in-out;
+				font-family: inherit;
+
+				&:hover:not(:disabled) {
+					background-color: #15803d;
+					border-color: #15803d;
+					color: #ffffff;
+					transform: translateY(-1px);
+					box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+				}
+
+				&:disabled {
+					opacity: 0.6;
+					cursor: not-allowed;
+				}
+			}
+		}
+	}
+}
+

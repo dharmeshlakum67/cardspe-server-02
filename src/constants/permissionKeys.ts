@@ -6,6 +6,7 @@ export const PERMISSION_KEYS = {
 	USERS: 'users',
 	ROLE: 'role',
 	ROLES: 'roles',
+	KYC_REQUEST: 'kyc_request',
 	LOGIN_HISTORY: 'login_history',
 	MASTER: 'master',
 	DOCUMENT_TYPE: 'document_type',

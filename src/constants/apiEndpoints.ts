@@ -147,6 +147,11 @@ export const DOCUMENT_TYPE_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	GET_ACTIVE: {
+		url: '/api/document-type/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 	GET_ONE: (id: string | number) => ({
 		url: `/api/document-type/get-one/${id}`,
 		method: HTTP_METHODS.GET,
@@ -371,6 +376,21 @@ export const KYC_ENDPOINTS = {
 		method: HTTP_METHODS.POST,
 		requiresAuth: true,
 	},
+	GET_ALL_REQUESTS: {
+		url: '/api/kyc/request/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE_REQUEST: (id: string | number) => ({
+		url: `/api/kyc/request/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	UPDATE_REQUEST_STATUS: (id: string | number) => ({
+		url: `/api/kyc/request/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
 } as const;
 
 // SETTING ENDPOINTS

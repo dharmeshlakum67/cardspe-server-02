@@ -39,6 +39,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// KYC REQUESTS MODULE (CHILD OF USER MANAGEMENT)
+	kyc_request: {
+		path: PAGE_ROUTES.KYC_REQUESTS,
+		icon: 'VerifiedUser',
+		text: 'KYC Requests',
+		subMenu: null,
+	},
+
 	// MASTER PARENT
 	master: {
 		path: null,

@@ -41,6 +41,12 @@ const PaymentModeListPage = lazy(
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
 const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
+const KycRequestListPage = lazy(
+	() => import('../pages/presentation/user-management/kyc-requests/KycRequestListPage'),
+);
+const KycRequestViewPage = lazy(
+	() => import('../pages/presentation/user-management/kyc-requests/KycRequestViewPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -90,6 +96,14 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.ROLES_EDIT,
 		element: <RoleEditPage />,
+	},
+	{
+		path: PAGE_ROUTES.KYC_REQUESTS,
+		element: <KycRequestListPage />,
+	},
+	{
+		path: PAGE_ROUTES.KYC_REQUESTS_VIEW,
+		element: <KycRequestViewPage />,
 	},
 	{
 		path: PAGE_ROUTES.DOCUMENT_TYPE,

@@ -684,11 +684,37 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 						<>
 							{/* REJECTION REASON ALERT */}
 							{status === 'rejected' && document.rejection_reason && (
-								<div className='alert alert-danger d-flex align-items-start gap-2 mb-3'>
-									<Icon icon='WarningAmber' size='sm' className='mt-1' />
-									<div>
-										<strong>Submission Rejected:</strong>
-										<div className='small'>{document.rejection_reason}</div>
+								<div
+									className='d-flex align-items-start gap-3 p-3 rounded-3 mb-4'
+									style={{
+										backgroundColor: '#fef2f2',
+										border: '1px solid #fecaca',
+									}}>
+									<div
+										className='d-flex align-items-center justify-content-center rounded-2 flex-shrink-0'
+										style={{
+											width: '32px',
+											height: '32px',
+											backgroundColor: '#fee2e2',
+											color: '#dc2626',
+										}}>
+										<Icon icon='WarningAmber' size='md' />
+									</div>
+									<div className='flex-grow-1'>
+										<div
+											className='fw-bold mb-1'
+											style={{ fontSize: '0.875rem', color: '#991b1b' }}>
+											Submission Rejected
+										</div>
+										<div
+											style={{
+												fontSize: '0.8125rem',
+												color: '#7f1d1d',
+												lineHeight: 1.5,
+												wordBreak: 'break-word',
+											}}>
+											{document.rejection_reason}
+										</div>
 									</div>
 								</div>
 							)}

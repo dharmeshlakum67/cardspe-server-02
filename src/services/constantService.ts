@@ -64,6 +64,14 @@ export const constantService = {
 						{ label: 'Custom & Quick KYC', value: 'custom_quick_kyc' },
 					];
 				}
+				if (key === PERMISSION_KEYS.KYC_REQUEST || key === 'kyc_request') {
+					return [
+						{ label: 'Pending', value: 'pending' },
+						{ label: 'Verified', value: 'verified' },
+						{ label: 'Failed', value: 'failed' },
+						{ label: 'Rejected', value: 'rejected' },
+					];
+				}
 				return [
 					{ label: 'Active', value: 'active' },
 					{ label: 'Inactive', value: 'inactive' },
@@ -82,6 +90,14 @@ export const constantService = {
 						{ label: 'Custom', value: 'custom' },
 						{ label: 'Quick KYC', value: 'quick_kyc' },
 						{ label: 'Custom & Quick KYC', value: 'custom_quick_kyc' },
+					];
+				}
+				if (key === PERMISSION_KEYS.KYC_REQUEST || key === 'kyc_request') {
+					return [
+						{ label: 'Pending', value: 'pending' },
+						{ label: 'Verified', value: 'verified' },
+						{ label: 'Failed', value: 'failed' },
+						{ label: 'Rejected', value: 'rejected' },
 					];
 				}
 				return [
@@ -108,6 +124,11 @@ export const constantService = {
 	// GET DOCUMENT TYPE CONSTANTS
 	getDocumentTypeConstants: async (): Promise<IConstantOption[]> => {
 		return constantService.getConstantByType(PERMISSION_KEYS.DOCUMENT_TYPE);
+	},
+
+	// GET KYC REQUEST STATUS CONSTANTS
+	getKycRequestConstants: async (): Promise<IConstantOption[]> => {
+		return constantService.getConstantByType(PERMISSION_KEYS.KYC_REQUEST);
 	},
 };
 

@@ -17,11 +17,13 @@ export const PAGE_ROUTES = {
 	PROFILE: 'admin/profile',
 	KYC: 'profile/kyc',
 
-	// USER MANAGEMENT / ROLES
+	// USER MANAGEMENT / ROLES & KYC REQUESTS
 	ROLES: 'roles',
 	ROLES_ADD: 'roles/add',
 	ROLES_VIEW: 'roles/view/:id',
 	ROLES_EDIT: 'roles/edit/:id',
+	KYC_REQUESTS: 'kyc-requests',
+	KYC_REQUESTS_VIEW: 'kyc-requests/view/:id',
 
 	// MASTER / DOCUMENT TYPE & STATE
 	DOCUMENT_TYPE: 'master/document-type',

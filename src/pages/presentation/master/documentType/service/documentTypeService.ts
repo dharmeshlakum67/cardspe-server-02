@@ -17,6 +17,13 @@ export const documentTypeService = {
 		});
 	},
 
+	// GET ACTIVE DOCUMENT TYPES FOR DROPDOWNS
+	getActiveDocumentTypes: async (): Promise<{ success: boolean; data: { id: number; document_name: string }[] }> => {
+		return apiClient<{ success: boolean; data: { id: number; document_name: string }[] }>(
+			DOCUMENT_TYPE_ENDPOINTS.GET_ACTIVE,
+		);
+	},
+
 	// GET SINGLE DOCUMENT TYPE BY ID
 	getDocumentTypeById: async (id: number | string): Promise<IDocumentTypeDetailResponse> => {
 		return apiClient<IDocumentTypeDetailResponse>(DOCUMENT_TYPE_ENDPOINTS.GET_ONE(id));

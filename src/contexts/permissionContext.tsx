@@ -32,6 +32,7 @@ export interface IPermissionContextProps {
 	canRead: (permissionKeyOrName: string) => boolean;
 	canCreate: (permissionKeyOrName: string) => boolean;
 	canUpdate: (permissionKeyOrName: string) => boolean;
+	canReview: (permissionKeyOrName: string) => boolean;
 	canDelete: (permissionKeyOrName: string) => boolean;
 	canResetPassword: (permissionKeyOrName: string) => boolean;
 	refetchPermissions: () => Promise<void>;
@@ -154,8 +155,12 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			const updateVal = Boolean(
 				accessObj.update ||
 					accessObj.edit ||
+					accessObj.review ||
+					accessObj.approve ||
 					(p as any).update ||
 					(p as any).edit ||
+					(p as any).review ||
+					(p as any).approve ||
 					accessObj.write ||
 					(p as any).write,
 			);
@@ -257,6 +262,14 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 
 	const canUpdate = useCallback(
 		(permissionKeyOrName: string): boolean => hasPermission(permissionKeyOrName, 'update'),
+		[hasPermission],
+	);
+
+	const canReview = useCallback(
+		(permissionKeyOrName: string): boolean =>
+			hasPermission(permissionKeyOrName, 'review') ||
+			hasPermission(permissionKeyOrName, 'update') ||
+			hasPermission(permissionKeyOrName, 'approve'),
 		[hasPermission],
 	);
 
@@ -402,6 +415,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canRead,
 			canCreate,
 			canUpdate,
+			canReview,
 			canDelete,
 			canResetPassword,
 			refetchPermissions,
@@ -415,6 +429,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canRead,
 			canCreate,
 			canUpdate,
+			canReview,
 			canDelete,
 			canResetPassword,
 			refetchPermissions,
