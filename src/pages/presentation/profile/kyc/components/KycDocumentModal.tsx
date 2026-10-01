@@ -15,47 +15,61 @@ import showNotification from '../../../../../components/extras/showNotification'
 import { DateRangePicker, ImagePreviewModal } from '../../../../../components/common';
 import { IKycDocumentItem, IKycDocumentField } from '../type/kyc-type';
 import { getImageUrl } from '../../../../../helpers/helpers';
+import kycService from '../service/kycService';
 
 interface IKycDocumentModalProps {
 	isOpen: boolean;
 	setIsOpen: (isOpen: boolean) => void;
 	document: IKycDocumentItem | null;
-	onSubmit?: (formData: FormData) => Promise<void>;
-	isSubmitting?: boolean;
+	onSuccess?: () => void;
 }
 
 export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 	isOpen,
 	setIsOpen,
 	document,
-	onSubmit,
-	isSubmitting = false,
+	onSuccess,
 }) => {
+	const [step, setStep] = useState<'FORM' | 'OTP'>('FORM');
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [formValues, setFormValues] = useState<Record<string, any>>({});
 	const [existingFiles, setExistingFiles] = useState<string[]>([]);
 	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 	const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-	const [previewModal, setPreviewModal] = useState<{ isOpen: boolean; imageUrl: string; title: string }>({
-		isOpen: false,
-		imageUrl: '',
-		title: '',
-	});
+	const [requestId, setRequestId] = useState<string>('');
+	const [otp, setOtp] = useState<string>('');
+	const [loading, setLoading] = useState<boolean>(false);
+	const [previewModal, setPreviewModal] = useState<{
+		isOpen: boolean;
+		imageUrl: string;
+		title: string;
+	}>({ isOpen: false, imageUrl: '', title: '' });
+
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const otpInputRef = useRef<HTMLInputElement>(null);
+
+	// AUTO FOCUS OTP INPUT ON OTP STEP
+	useEffect(() => {
+		if (step === 'OTP') {
+			otpInputRef.current?.focus();
+		}
+	}, [step]);
 
 	// INITIALIZE FORM VALUES AND PREVIEWS WHEN MODAL OPENS
 	useEffect(() => {
 		if (isOpen && document) {
+			setStep('FORM');
+			setOtp('');
+			setRequestId('');
+
 			const initialValues: Record<string, any> = {};
 
-			// Seed with document.field_values if present
 			if (document.field_values && typeof document.field_values === 'object') {
 				Object.entries(document.field_values).forEach(([k, v]) => {
 					initialValues[k] = v ?? '';
 				});
 			}
 
-			// Also ensure each field in schema has an initial value
 			if (document.fields && Array.isArray(document.fields)) {
 				document.fields.forEach((field) => {
 					const code = field.field_code || field.code || '';
@@ -70,13 +84,10 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 			setSelectedFiles([]);
 			setPreviewUrls([]);
 
-			// If document is already submitted and not rejected, open in View Mode (isEditMode: false)
-			// If not submitted or rejected, open directly in Edit Mode (isEditMode: true)
 			const currentStatus = (document.status || 'not_submitted').toLowerCase();
 			const isAlreadySubmitted =
 				document.is_submitted ||
 				['submitted', 'pending', 'in_review', 'approved'].includes(currentStatus);
-
 			setIsEditMode(!isAlreadySubmitted);
 		}
 	}, [isOpen, document]);
@@ -87,23 +98,27 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 	const isApproved = status === 'approved';
 	const isSubmitted = document.is_submitted || status === 'submitted' || status === 'pending';
 	const isReadOnly = isApproved || !isEditMode;
+	const isQuickKyc = document.verification_service?.toLowerCase() === 'quick_kyc';
+
+	// CLOSE AND RESET MODAL
+	const handleClose = () => {
+		setStep('FORM');
+		setOtp('');
+		setRequestId('');
+		setIsOpen(false);
+	};
 
 	// HANDLE FIELD VALUE CHANGE
 	const handleInputChange = (fieldCode: string, value: any) => {
-		setFormValues((prev) => ({
-			...prev,
-			[fieldCode]: value,
-		}));
+		setFormValues((prev) => ({ ...prev, [fieldCode]: value }));
 	};
 
 	// HANDLE FILE SELECTION
 	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { files } = e.target;
 		if (!files || files.length === 0) return;
-
 		const newFiles: File[] = Array.from(files);
 		const maxAllowed = document.required_files_count > 0 ? document.required_files_count : 10;
-
 		const totalCount = existingFiles.length + selectedFiles.length + newFiles.length;
 		if (totalCount > maxAllowed) {
 			showNotification(
@@ -113,61 +128,48 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 			);
 			return;
 		}
-
-		// Validate file types and sizes (max 10MB per file)
 		for (const file of newFiles) {
 			if (file.size > 10 * 1024 * 1024) {
-				showNotification(
-					'File Too Large',
-					`"${file.name}" exceeds the 10MB file size limit.`,
-					'warning',
-				);
+				showNotification('File Too Large', `"${file.name}" exceeds the 10MB file size limit.`, 'warning');
 				return;
 			}
 		}
-
 		setSelectedFiles((prev) => [...prev, ...newFiles]);
-
-		// Generate local object preview URLs
 		const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
 		setPreviewUrls((prev) => [...prev, ...newPreviews]);
 	};
 
-	// REMOVE NEWLY SELECTED FILE
 	const handleRemoveSelectedFile = (index: number) => {
 		setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
 		setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	// REMOVE PREVIOUSLY UPLOADED FILE
 	const handleRemoveExistingFile = (index: number) => {
 		setExistingFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	// SUBMIT HANDLER
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		// Validate all required fields
+	// VALIDATE REQUIRED FIELDS
+	const validateRequiredFields = (): boolean => {
 		if (document.fields && Array.isArray(document.fields)) {
 			for (const field of document.fields) {
 				const isReq = Boolean(field.is_required);
 				const code = field.field_code || field.code || '';
 				const name = field.field_name || field.name || 'Field';
 				const val = formValues[code];
-
 				if (isReq && (val === undefined || val === null || String(val).trim() === '')) {
-					showNotification(
-						'Validation Error',
-						`Please fill in required field: "${name}"`,
-						'warning',
-					);
-					return;
+					showNotification('Validation Error', `Please fill in required field: "${name}"`, 'warning');
+					return false;
 				}
 			}
 		}
+		return true;
+	};
 
-		// Validate required files
+	// STEP 1: INITIAL FORM SUBMIT
+	const handleFormSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!validateRequiredFields()) return;
+
 		const totalFiles = existingFiles.length + selectedFiles.length;
 		if (document.required_files_count > 0 && totalFiles < document.required_files_count) {
 			showNotification(
@@ -178,18 +180,109 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 			return;
 		}
 
-		// CONSTRUCT FORM DATA
-		const formData = new FormData();
-		formData.append('document_id', String(document.document_id));
-		formData.append('document_code', document.document_code);
-		formData.append('field_values', JSON.stringify(formValues));
-		formData.append('existing_file_urls', JSON.stringify(existingFiles));
-		selectedFiles.forEach((file) => {
-			formData.append('files', file);
-		});
+		setLoading(true);
+		try {
+			const formData = new FormData();
+			formData.append('document_id', String(document.document_id));
 
-		if (onSubmit) {
-			await onSubmit(formData);
+			// Dynamic form fields appended directly
+			Object.entries(formValues).forEach(([key, val]) => {
+				if (val !== undefined && val !== null) {
+					formData.append(key, String(val));
+				}
+			});
+
+			// Append files
+			selectedFiles.forEach((file) => {
+				formData.append('files', file);
+			});
+
+			// Append existing file URLs
+			formData.append('existing_file_urls', JSON.stringify(existingFiles));
+
+			const response = await kycService.submitKycDocument(formData);
+			const responseData = (response as any)?.data?.data || (response as any)?.data || response;
+
+			if (responseData?.requires_otp) {
+				// Switch modal to OTP step
+				setRequestId(responseData.request_id || '');
+				setStep('OTP');
+				showNotification(
+					'OTP Sent',
+					responseData.message || (response as any)?.message || 'OTP has been sent to your registered mobile number.',
+					'info',
+				);
+			} else {
+				// Non-OTP submission complete or auto-approved
+				showNotification(
+					'Success',
+					responseData?.message || (response as any)?.message || 'KYC document has been submitted successfully.',
+					'success',
+				);
+				handleClose();
+				onSuccess?.();
+			}
+		} catch (err: any) {
+			const errorMsg =
+				err?.data?.message ||
+				err?.response?.data?.message ||
+				err?.message ||
+				'Failed to submit document.';
+			showNotification('Submission Error', errorMsg, 'danger');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// STEP 2: VERIFY OTP SUBMISSION
+	const handleOtpSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!otp || otp.trim().length !== 6) {
+			showNotification('Validation Error', 'Please enter a valid 6-digit OTP.', 'warning');
+			return;
+		}
+
+		setLoading(true);
+		try {
+			const formData = new FormData();
+			formData.append('document_id', String(document.document_id));
+			formData.append('request_id', requestId);
+			formData.append('otp', otp.trim());
+
+			// Re-append dynamic form fields
+			Object.entries(formValues).forEach(([key, val]) => {
+				if (val !== undefined && val !== null) {
+					formData.append(key, String(val));
+				}
+			});
+
+			// Re-append existing file URLs
+			formData.append('existing_file_urls', JSON.stringify(existingFiles));
+
+			// Re-append files if any
+			selectedFiles.forEach((file) => {
+				formData.append('files', file);
+			});
+
+			const response = await kycService.submitKycDocument(formData);
+			const responseData = (response as any)?.data?.data || (response as any)?.data || response;
+
+			showNotification(
+				'Verified!',
+				responseData?.message || (response as any)?.message || 'Aadhaar verified and approved successfully!',
+				'success',
+			);
+			handleClose();
+			onSuccess?.();
+		} catch (err: any) {
+			const errorMsg =
+				err?.data?.message ||
+				err?.response?.data?.message ||
+				err?.message ||
+				'Invalid OTP. Please try again.';
+			showNotification('Verification Error', errorMsg, 'danger');
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -203,8 +296,6 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 		const options = Array.isArray(field.options) ? field.options : [];
 		const currentValue = formValues[fieldCode] ?? '';
 		const inputId = `kyc_field_${fieldCode}_${index}`;
-
-		// FULL WIDTH ONLY FOR TEXTAREA
 		const isFullWidth = fieldType === 'textarea';
 		const colClass = isFullWidth ? 'col-12' : 'col-12 col-md-6';
 
@@ -214,7 +305,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					{fieldName} {isReq && <span className='text-danger'>*</span>}
 				</label>
 
-				{/* 1. TEXT / EMAIL / TEL / URL INPUT */}
+				{/* TEXT / EMAIL / TEL / URL */}
 				{(fieldType === 'text' || fieldType === 'email' || fieldType === 'tel' || fieldType === 'url') && (
 					<input
 						id={inputId}
@@ -229,7 +320,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					/>
 				)}
 
-				{/* 2. NUMBER INPUT */}
+				{/* NUMBER */}
 				{fieldType === 'number' && (
 					<input
 						id={inputId}
@@ -241,17 +332,14 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 						disabled={isReadOnly}
 						onWheel={(e) => (e.target as HTMLInputElement).blur()}
 						onKeyDown={(e) => {
-							if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
-								e.preventDefault();
-							}
+							if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') e.preventDefault();
 						}}
 						onChange={(e) => {
 							const rawVal = e.target.value;
 							if (rawVal === '') {
 								handleInputChange(fieldCode, '');
 							} else {
-								const sanitized = rawVal.replace(/[^0-9]/g, '');
-								handleInputChange(fieldCode, sanitized);
+								handleInputChange(fieldCode, rawVal.replace(/[^0-9]/g, ''));
 							}
 						}}
 						required={isReq}
@@ -259,9 +347,9 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					/>
 				)}
 
-				{/* 3. COMMON DATE PICKER (AS IN FILTERS) */}
-				{fieldType === 'date' && (
-					isReadOnly ? (
+				{/* DATE */}
+				{fieldType === 'date' &&
+					(isReadOnly ? (
 						<input
 							id={inputId}
 							type='text'
@@ -278,10 +366,9 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 							placeholder={placeholder || 'Select Date'}
 							onChange={({ startDate }) => handleInputChange(fieldCode, startDate)}
 						/>
-					)
-				)}
+					))}
 
-				{/* 4. TEXTAREA */}
+				{/* TEXTAREA */}
 				{fieldType === 'textarea' && (
 					<textarea
 						id={inputId}
@@ -296,7 +383,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					/>
 				)}
 
-				{/* 5. DROPDOWN SELECT */}
+				{/* SELECT */}
 				{fieldType === 'select' && (
 					<select
 						id={inputId}
@@ -315,7 +402,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					</select>
 				)}
 
-				{/* 6. RADIO BUTTONS GROUP */}
+				{/* RADIO */}
 				{fieldType === 'radio' && (
 					<div className='d-flex align-items-center flex-wrap gap-3' style={{ minHeight: '38px' }}>
 						{options.map((opt, optIdx) => {
@@ -343,7 +430,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					</div>
 				)}
 
-				{/* 7. CHECKBOX GROUP */}
+				{/* CHECKBOX */}
 				{fieldType === 'checkbox' && (
 					<div className='d-flex align-items-center flex-wrap gap-3' style={{ minHeight: '38px' }}>
 						{options.length > 0 ? (
@@ -352,7 +439,6 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 								const isChecked = Array.isArray(currentValue)
 									? currentValue.includes(opt.value)
 									: String(currentValue) === String(opt.value);
-
 								return (
 									<div key={opt.value || optIdx} className='form-check mb-0'>
 										<input
@@ -399,29 +485,127 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 		);
 	};
 
+	// RENDER FOOTER BUTTONS
+	const renderFooter = () => {
+		if (step === 'OTP') {
+			return (
+				<>
+					<Button
+						type='button'
+						color='light'
+						className='px-4 py-2'
+						isDisable={loading}
+						onClick={() => setStep('FORM')}>
+						Back
+					</Button>
+					<Button
+						type='submit'
+						color='success'
+						className='px-4 py-2 d-inline-flex align-items-center gap-2'
+						isDisable={loading || otp.trim().length !== 6}>
+						{loading ? (
+							<>
+								<Spinner isSmall inButton isGrow className='me-1' />
+								Verifying...
+							</>
+						) : (
+							<>
+								<Icon icon='VerifiedUser' />
+								<span>Verify OTP</span>
+							</>
+						)}
+					</Button>
+				</>
+			);
+		}
+
+		if (isApproved) {
+			return (
+				<Button type='button' color='light' className='px-4 py-2' onClick={handleClose}>
+					Close
+				</Button>
+			);
+		}
+
+		if (!isApproved && !isEditMode) {
+			return (
+				<>
+					<Button type='button' color='light' className='px-4 py-2' onClick={handleClose}>
+						Close
+					</Button>
+					<Button
+						type='button'
+						color='primary'
+						className='px-4 py-2 d-inline-flex align-items-center gap-2'
+						onClick={() => setIsEditMode(true)}>
+						<Icon icon='Edit' />
+						<span>Edit Submission</span>
+					</Button>
+				</>
+			);
+		}
+
+		return (
+			<>
+				<Button
+					type='button'
+					color='light'
+					className='px-4 py-2'
+					isDisable={loading}
+					onClick={() => {
+						if (isSubmitted) {
+							setIsEditMode(false);
+						} else {
+							handleClose();
+						}
+					}}>
+					Cancel
+				</Button>
+				<Button
+					type='submit'
+					color='primary'
+					className='px-4 py-2 d-inline-flex align-items-center gap-2'
+					isDisable={loading}>
+					{loading ? (
+						<>
+							<Spinner isSmall inButton isGrow className='me-1' />
+							Submitting...
+						</>
+					) : (
+						<>
+							<Icon icon={isQuickKyc ? 'VerifiedUser' : 'Send'} />
+							<span>{isSubmitted ? 'Update Submission' : 'Submit Document'}</span>
+						</>
+					)}
+				</Button>
+			</>
+		);
+	};
+
 	return (
 		<Modal isOpen={isOpen} setIsOpen={setIsOpen} isCentered size='lg'>
 			{/* MODAL HEADER */}
-			<ModalHeader setIsOpen={setIsOpen} className='border-bottom-0 pb-0 pt-4 px-4'>
+			<ModalHeader setIsOpen={handleClose} className='border-bottom-0 pb-0 pt-4 px-4'>
 				<ModalTitle id='kyc-document-modal-title'>
 					<div className='d-flex align-items-center gap-3'>
 						<div
 							className='d-flex align-items-center justify-content-center rounded-3'
-							style={{
-								width: '44px',
-								height: '44px',
-								backgroundColor: '#e0f2fe',
-								color: '#0284c7',
-								flexShrink: 0,
-							}}>
-							<Icon icon='VerifiedUser' size='lg' />
+							style={{ width: '44px', height: '44px', backgroundColor: '#e0f2fe', color: '#0284c7', flexShrink: 0 }}>
+							<Icon icon={step === 'OTP' ? 'PhoneIphone' : 'VerifiedUser'} size='lg' />
 						</div>
 						<div>
 							<div className='d-flex align-items-center gap-2 flex-wrap'>
-								<h5 className='fw-bold mb-0 text-dark'>{document.document_name}</h5>
+								<h5 className='fw-bold mb-0 text-dark'>
+									{step === 'OTP' ? 'Enter Aadhaar OTP' : document.document_name}
+								</h5>
 								{document.is_mandatory && (
 									<span className='badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1'>
 										Required
+									</span>
+								)}
+								{isQuickKyc && (
+									<span className='badge px-2 py-1 bg-info-subtle text-info border border-info-subtle'>
+										Quick KYC
 									</span>
 								)}
 								<span
@@ -445,251 +629,172 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 				</ModalTitle>
 			</ModalHeader>
 
-			{/* FORM BODY */}
-			<form onSubmit={handleSubmit}>
+			{/* FORM */}
+			<form onSubmit={step === 'OTP' ? handleOtpSubmit : handleFormSubmit}>
 				<ModalBody className='px-4 py-3'>
-					{/* REJECTION REASON ALERT (IF REJECTED) */}
-					{status === 'rejected' && document.rejection_reason && (
-						<div className='alert alert-danger d-flex align-items-start gap-2 mb-3'>
-							<Icon icon='WarningAmber' size='sm' className='mt-1' />
-							<div>
-								<strong>Submission Rejected:</strong>
-								<div className='small'>{document.rejection_reason}</div>
-							</div>
-						</div>
-					)}
+					{/* STEP 2: OTP VIEW */}
+					{step === 'OTP' ? (
+						<div className='py-3'>
+							<div className='p-4 rounded-3 border text-center' style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
+								<div
+									className='rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3 shadow-sm'
+									style={{ width: 64, height: 64, background: '#eff6ff', color: '#2563eb' }}>
+									<Icon icon='Fingerprint' size='2x' />
+								</div>
+								<h5 className='fw-bold text-dark mb-1'>Aadhaar OTP Verification</h5>
+								<p className='text-muted mb-4 mx-auto' style={{ maxWidth: 440, fontSize: '0.875rem' }}>
+									A 6-digit OTP has been sent to your Aadhaar-linked mobile number. Enter the code below to complete instant auto-verification.
+								</p>
 
-					<div className='row g-3'>
-						{/* DYNAMIC FIELDS GENERATION */}
-						{document.fields && document.fields.length > 0 ? (
-							document.fields.map((field, idx) => renderDynamicField(field, idx))
-						) : (
-							<div className='col-12'>
-								<div className='p-3 text-center text-muted border rounded-3 bg-light'>
-									<p className='small mb-0'>No specific input fields configured for this document.</p>
+								<div className='d-flex justify-content-center mb-3'>
+									<input
+										ref={otpInputRef}
+										type='text'
+										maxLength={6}
+										inputMode='numeric'
+										className='form-control text-center fw-bold shadow-sm'
+										placeholder='------'
+										value={otp}
+										onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+										style={{
+											height: '56px',
+											fontSize: '1.75rem',
+											letterSpacing: '0.6rem',
+											borderRadius: '0.75rem',
+											border: '2px solid #93c5fd',
+											maxWidth: '260px',
+										}}
+										required
+									/>
+								</div>
+
+								<div className='text-muted small mt-2'>
+									Didn't receive the OTP or made a typo?{' '}
+									<button
+										type='button'
+										className='btn btn-link btn-sm p-0 text-primary fw-semibold'
+										onClick={() => setStep('FORM')}>
+										Go back to edit details
+									</button>
 								</div>
 							</div>
-						)}
-
-						{/* ATTACHMENTS / FILE UPLOADS SECTION */}
-						<div className='col-12 mt-4 pt-2 border-top'>
-							<div className='d-flex align-items-center justify-content-between mb-2'>
-								<label className='form-label fw-bold small mb-0'>
-									Document Attachments{' '}
-									{document.required_files_count > 0 && (
-										<span className='text-danger'>* ({document.required_files_count} Required)</span>
-									)}
-								</label>
-								<span className='text-muted small'>Max 5MB per file (PNG, JPG, PDF)</span>
-							</div>
-
-							{/* EXISTING UPLOADED FILES PREVIEW */}
-							{existingFiles && existingFiles.length > 0 && (
-								<div className='mb-3'>
-									<span className='small text-muted d-block mb-2 fw-semibold'>
-										Previously Uploaded ({existingFiles.length}):
-									</span>
-									<div className='row g-3'>
-										{existingFiles.map((fileUrl, idx) => {
-											const fullUrl = getImageUrl(fileUrl);
-											const isPdf = /\.pdf$/i.test(fileUrl);
-
-											return (
-												<div key={`uploaded_${idx}`} className='col-6 col-sm-4 col-md-3'>
-													<div className='card h-100 border shadow-sm rounded-3 overflow-hidden position-relative'>
-														{/* REMOVE EXISTING FILE BUTTON (IF NOT READONLY) */}
-														{!isReadOnly && (
-															<button
-																type='button'
-																className='btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-0 rounded-circle d-flex align-items-center justify-content-center shadow'
-																style={{ width: '24px', height: '24px', zIndex: 10 }}
-																onClick={(e) => {
-																	e.stopPropagation();
-																	handleRemoveExistingFile(idx);
-																}}
-																title='Remove File'>
-																<Icon icon='Close' size='sm' />
-															</button>
-														)}
-
-														<div
-															role='button'
-															tabIndex={0}
-															className='d-flex align-items-center justify-content-center bg-light cursor-pointer'
-															style={{ height: '110px', overflow: 'hidden' }}
-															onClick={() => {
-																if (!isPdf) {
-																	setPreviewModal({
-																		isOpen: true,
-																		imageUrl: fullUrl,
-																		title: `${document.document_name} - Attachment #${idx + 1}`,
-																	});
-																} else {
-																	window.open(fullUrl, '_blank');
-																}
-															}}>
-															{!isPdf ? (
-																<img
-																	src={fullUrl}
-																	alt={`Attachment #${idx + 1}`}
-																	className='w-100 h-100 object-fit-cover'
-																/>
-															) : (
-																<div className='text-center p-2'>
-																	<Icon icon='PictureAsPdf' size='2x' className='text-danger' />
-																	<span className='d-block small text-muted font-monospace mt-1' style={{ fontSize: '0.7rem' }}>
-																		PDF Document
-																	</span>
-																</div>
-															)}
-														</div>
-														<div className='p-2 bg-white border-top d-flex align-items-center justify-content-between'>
-															<span className='small text-truncate fw-semibold text-dark' style={{ fontSize: '0.75rem' }}>
-																Attachment #{idx + 1}
-															</span>
-															<span
-																role='button'
-																className='text-primary d-inline-flex align-items-center gap-1 small cursor-pointer'
-																style={{ fontSize: '0.7rem' }}
-																onClick={() => {
-																	if (!isPdf) {
-																		setPreviewModal({
-																			isOpen: true,
-																			imageUrl: fullUrl,
-																			title: `${document.document_name} - Attachment #${idx + 1}`,
-																		});
-																	} else {
-																		window.open(fullUrl, '_blank');
-																	}
-																}}>
-																<Icon icon='Visibility' size='sm' /> View
-															</span>
-														</div>
-													</div>
-												</div>
-											);
-										})}
+						</div>
+					) : (
+						/* STEP 1: FORM VIEW */
+						<>
+							{/* REJECTION REASON ALERT */}
+							{status === 'rejected' && document.rejection_reason && (
+								<div className='alert alert-danger d-flex align-items-start gap-2 mb-3'>
+									<Icon icon='WarningAmber' size='sm' className='mt-1' />
+									<div>
+										<strong>Submission Rejected:</strong>
+										<div className='small'>{document.rejection_reason}</div>
 									</div>
 								</div>
 							)}
 
-							{/* NEW FILE UPLOAD UPLOADER (IF NOT READONLY) */}
-							{!isReadOnly && (
-								<>
-									<input
-										ref={fileInputRef}
-										type='file'
-										accept='image/*,.pdf'
-										multiple={document.required_files_count > 1}
-										className='d-none'
-										onChange={handleFileSelect}
-									/>
-
-									<div
-										role='button'
-										tabIndex={0}
-										className='p-4 text-center border border-2 border-dashed rounded-3 bg-light d-flex flex-column align-items-center justify-content-center cursor-pointer'
-										onClick={() => fileInputRef.current?.click()}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter' || e.key === ' ') {
-												fileInputRef.current?.click();
-											}
-										}}
-										style={{ cursor: 'pointer', transition: 'background 0.2s' }}>
-										<div
-											className='rounded-circle bg-white p-3 shadow-sm text-primary mb-2'
-											style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-											<Icon icon='CloudUpload' size='lg' />
+							<div className='row g-3'>
+								{/* DYNAMIC FIELDS */}
+								{document.fields && document.fields.length > 0 ? (
+									document.fields.map((field, idx) => renderDynamicField(field, idx))
+								) : (
+									<div className='col-12'>
+										<div className='p-3 text-center text-muted border rounded-3 bg-light'>
+											<p className='small mb-0'>No specific input fields configured for this document.</p>
 										</div>
-										<p className='fw-semibold mb-1 text-dark small'>
-											Click to browse or drag & drop document files
-										</p>
-										<span className='text-muted' style={{ fontSize: '0.75rem' }}>
-											PNG, JPG, SVG, WEBP or PDF (max 5MB each)
-										</span>
+									</div>
+								)}
+
+								{/* ATTACHMENTS SECTION */}
+								<div className='col-12 mt-4 pt-2 border-top'>
+									<div className='d-flex align-items-center justify-content-between mb-2'>
+										<label className='form-label fw-bold small mb-0'>
+											Document Attachments{' '}
+											{document.required_files_count > 0 && (
+												<span className='text-danger'>* ({document.required_files_count} Required)</span>
+											)}
+										</label>
+										<span className='text-muted small'>Max 10MB per file (PNG, JPG, PDF)</span>
 									</div>
 
-									{/* NEWLY SELECTED FILES PREVIEWS (IMAGE THUMBNAILS & CARDS) */}
-									{selectedFiles.length > 0 && (
-										<div className='mt-3'>
+									{/* EXISTING UPLOADED FILES */}
+									{existingFiles && existingFiles.length > 0 && (
+										<div className='mb-3'>
 											<span className='small text-muted d-block mb-2 fw-semibold'>
-												Files to Upload ({selectedFiles.length}):
+												Previously Uploaded ({existingFiles.length}):
 											</span>
 											<div className='row g-3'>
-												{selectedFiles.map((file, idx) => {
-													const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|svg)$/i.test(file.name);
-													const fileUrl = previewUrls[idx] || '';
-													const sizeKb = (file.size / 1024).toFixed(0);
-
+												{existingFiles.map((fileUrl, idx) => {
+													const fullUrl = getImageUrl(fileUrl);
+													const isPdf = /\.pdf$/i.test(fileUrl);
 													return (
-														<div key={`sel_${idx}`} className='col-6 col-sm-4 col-md-3'>
-															<div className='card h-100 border shadow-sm rounded-3 overflow-hidden position-relative group-preview-card'>
-																{/* REMOVE FILE BUTTON */}
-																<button
-																	type='button'
-																	className='btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-0 rounded-circle d-flex align-items-center justify-content-center shadow'
-																	style={{ width: '24px', height: '24px', zIndex: 10 }}
-																	onClick={(e) => {
-																		e.stopPropagation();
-																		handleRemoveSelectedFile(idx);
-																	}}
-																	title='Remove File'>
-																	<Icon icon='Close' size='sm' />
-																</button>
-
-																{/* THUMBNAIL PREVIEW */}
+														<div key={`uploaded_${idx}`} className='col-6 col-sm-4 col-md-3'>
+															<div className='card h-100 border shadow-sm rounded-3 overflow-hidden position-relative'>
+																{!isReadOnly && (
+																	<button
+																		type='button'
+																		className='btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-0 rounded-circle d-flex align-items-center justify-content-center shadow'
+																		style={{ width: '24px', height: '24px', zIndex: 10 }}
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleRemoveExistingFile(idx);
+																		}}
+																		title='Remove File'>
+																		<Icon icon='Close' size='sm' />
+																	</button>
+																)}
 																<div
 																	role='button'
 																	tabIndex={0}
 																	className='d-flex align-items-center justify-content-center bg-light cursor-pointer'
 																	style={{ height: '110px', overflow: 'hidden' }}
 																	onClick={() => {
-																		if (isImage && fileUrl) {
+																		if (!isPdf) {
 																			setPreviewModal({
 																				isOpen: true,
-																				imageUrl: fileUrl,
-																				title: file.name,
+																				imageUrl: fullUrl,
+																				title: `${document.document_name} - Attachment #${idx + 1}`,
 																			});
+																		} else {
+																			window.open(fullUrl, '_blank');
 																		}
 																	}}>
-																	{isImage && fileUrl ? (
+																	{!isPdf ? (
 																		<img
-																			src={fileUrl}
-																			alt={file.name}
+																			src={fullUrl}
+																			alt={`Attachment #${idx + 1}`}
 																			className='w-100 h-100 object-fit-cover'
 																		/>
 																	) : (
 																		<div className='text-center p-2'>
 																			<Icon icon='PictureAsPdf' size='2x' className='text-danger' />
 																			<span className='d-block small text-muted font-monospace mt-1' style={{ fontSize: '0.7rem' }}>
-																				PDF
+																				PDF Document
 																			</span>
 																		</div>
 																	)}
 																</div>
-
-																{/* FILE NAME & SIZE */}
-																<div className='p-2 bg-white border-top'>
-																	<div className='small text-truncate fw-semibold text-dark' title={file.name} style={{ fontSize: '0.75rem' }}>
-																		{file.name}
-																	</div>
-																	<div className='d-flex align-items-center justify-content-between text-muted mt-1' style={{ fontSize: '0.7rem' }}>
-																		<span>{sizeKb} KB</span>
-																		{isImage && (
-																			<span
-																				role='button'
-																				className='text-primary d-inline-flex align-items-center gap-1 cursor-pointer'
-																				onClick={() =>
-																					setPreviewModal({
-																						isOpen: true,
-																						imageUrl: fileUrl,
-																						title: file.name,
-																					})
-																				}>
-																				<Icon icon='Visibility' size='sm' /> View
-																			</span>
-																		)}
-																	</div>
+																<div className='p-2 bg-white border-top d-flex align-items-center justify-content-between'>
+																	<span className='small text-truncate fw-semibold text-dark' style={{ fontSize: '0.75rem' }}>
+																		Attachment #{idx + 1}
+																	</span>
+																	<span
+																		role='button'
+																		className='text-primary d-inline-flex align-items-center gap-1 small cursor-pointer'
+																		style={{ fontSize: '0.7rem' }}
+																		onClick={() => {
+																			if (!isPdf) {
+																				setPreviewModal({
+																					isOpen: true,
+																					imageUrl: fullUrl,
+																					title: `${document.document_name} - Attachment #${idx + 1}`,
+																				});
+																			} else {
+																				window.open(fullUrl, '_blank');
+																			}
+																		}}>
+																		<Icon icon='Visibility' size='sm' /> View
+																	</span>
 																</div>
 															</div>
 														</div>
@@ -698,87 +803,122 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 											</div>
 										</div>
 									)}
-								</>
-							)}
-						</div>
-					</div>
+
+									{/* NEW FILE UPLOAD */}
+									{!isReadOnly && (
+										<>
+											<input
+												ref={fileInputRef}
+												type='file'
+												accept='image/*,.pdf'
+												multiple={document.required_files_count > 1}
+												className='d-none'
+												onChange={handleFileSelect}
+											/>
+											<div
+												role='button'
+												tabIndex={0}
+												className='p-4 text-center border border-2 border-dashed rounded-3 bg-light d-flex flex-column align-items-center justify-content-center cursor-pointer'
+												onClick={() => fileInputRef.current?.click()}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														fileInputRef.current?.click();
+													}
+												}}
+												style={{ cursor: 'pointer', transition: 'background 0.2s' }}>
+												<div
+													className='rounded-circle bg-white p-3 shadow-sm text-primary mb-2'
+													style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+													<Icon icon='CloudUpload' size='lg' />
+												</div>
+												<p className='fw-semibold mb-1 text-dark small'>Click to browse or drag &amp; drop document files</p>
+												<span className='text-muted' style={{ fontSize: '0.75rem' }}>PNG, JPG, SVG, WEBP or PDF (max 10MB each)</span>
+											</div>
+
+											{/* NEWLY SELECTED FILES PREVIEWS */}
+											{selectedFiles.length > 0 && (
+												<div className='mt-3'>
+													<span className='small text-muted d-block mb-2 fw-semibold'>
+														Files to Upload ({selectedFiles.length}):
+													</span>
+													<div className='row g-3'>
+														{selectedFiles.map((file, idx) => {
+															const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|svg)$/i.test(file.name);
+															const fileUrl = previewUrls[idx] || '';
+															const sizeKb = (file.size / 1024).toFixed(0);
+															return (
+																<div key={`sel_${idx}`} className='col-6 col-sm-4 col-md-3'>
+																	<div className='card h-100 border shadow-sm rounded-3 overflow-hidden position-relative group-preview-card'>
+																		<button
+																			type='button'
+																			className='btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-0 rounded-circle d-flex align-items-center justify-content-center shadow'
+																			style={{ width: '24px', height: '24px', zIndex: 10 }}
+																			onClick={(e) => {
+																				e.stopPropagation();
+																				handleRemoveSelectedFile(idx);
+																			}}
+																			title='Remove File'>
+																			<Icon icon='Close' size='sm' />
+																		</button>
+																		<div
+																			role='button'
+																			tabIndex={0}
+																			className='d-flex align-items-center justify-content-center bg-light cursor-pointer'
+																			style={{ height: '110px', overflow: 'hidden' }}
+																			onClick={() => {
+																				if (isImage && fileUrl) {
+																					setPreviewModal({ isOpen: true, imageUrl: fileUrl, title: file.name });
+																				}
+																			}}>
+																			{isImage && fileUrl ? (
+																				<img src={fileUrl} alt={file.name} className='w-100 h-100 object-fit-cover' />
+																			) : (
+																				<div className='text-center p-2'>
+																					<Icon icon='PictureAsPdf' size='2x' className='text-danger' />
+																					<span className='d-block small text-muted font-monospace mt-1' style={{ fontSize: '0.7rem' }}>
+																						PDF
+																					</span>
+																				</div>
+																			)}
+																		</div>
+																		<div className='p-2 bg-white border-top'>
+																			<div className='small text-truncate fw-semibold text-dark' title={file.name} style={{ fontSize: '0.75rem' }}>
+																				{file.name}
+																			</div>
+																			<div className='d-flex align-items-center justify-content-between text-muted mt-1' style={{ fontSize: '0.7rem' }}>
+																				<span>{sizeKb} KB</span>
+																				{isImage && (
+																					<span
+																						role='button'
+																						className='text-primary d-inline-flex align-items-center gap-1 cursor-pointer'
+																						onClick={() => setPreviewModal({ isOpen: true, imageUrl: fileUrl, title: file.name })}>
+																						<Icon icon='Visibility' size='sm' /> View
+																					</span>
+																				)}
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															);
+														})}
+													</div>
+												</div>
+											)}
+										</>
+									)}
+								</div>
+							</div>
+						</>
+					)}
 				</ModalBody>
 
 				{/* MODAL FOOTER */}
 				<ModalFooter className='px-4 py-3 border-top-0'>
-					{/* APPROVED / FULLY READ-ONLY */}
-					{isApproved && (
-						<Button
-							type='button'
-							color='light'
-							className='px-4 py-2'
-							onClick={() => setIsOpen(false)}>
-							Close
-						</Button>
-					)}
-
-					{/* VIEW MODE FOR SUBMITTED / PENDING DOCUMENT */}
-					{!isApproved && !isEditMode && (
-						<>
-							<Button
-								type='button'
-								color='light'
-								className='px-4 py-2'
-								onClick={() => setIsOpen(false)}>
-								Close
-							</Button>
-							<Button
-								type='button'
-								color='primary'
-								className='px-4 py-2 d-inline-flex align-items-center gap-2'
-								onClick={() => setIsEditMode(true)}>
-								<Icon icon='Edit' />
-								<span>Edit Submission</span>
-							</Button>
-						</>
-					)}
-
-					{/* EDIT MODE (OR FIRST-TIME / RE-SUBMISSION) */}
-					{!isApproved && isEditMode && (
-						<>
-							<Button
-								type='button'
-								color='light'
-								className='px-4 py-2'
-								onClick={() => {
-									if (isSubmitted) {
-										setIsEditMode(false);
-									} else {
-										setIsOpen(false);
-									}
-								}}
-								isDisable={isSubmitting}>
-								Cancel
-							</Button>
-
-							<Button
-								type='submit'
-								color='primary'
-								className='px-4 py-2 d-inline-flex align-items-center gap-2'
-								isDisable={isSubmitting}>
-								{isSubmitting ? (
-									<>
-										<Spinner isSmall inButton isGrow className='me-1' />
-										Submitting...
-									</>
-								) : (
-									<>
-										<Icon icon='Send' />
-										<span>{isSubmitted ? 'Update Submission' : 'Submit Document'}</span>
-									</>
-								)}
-							</Button>
-						</>
-					)}
+					{renderFooter()}
 				</ModalFooter>
 			</form>
 
-			{/* FULL IMAGE PREVIEW MODAL */}
+			{/* IMAGE PREVIEW MODAL */}
 			<ImagePreviewModal
 				isOpen={previewModal.isOpen}
 				setIsOpen={(open) => setPreviewModal((prev) => ({ ...prev, isOpen: open }))}
@@ -790,8 +930,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 };
 
 KycDocumentModal.defaultProps = {
-	onSubmit: undefined,
-	isSubmitting: false,
+	onSuccess: undefined,
 };
 
 export default KycDocumentModal;

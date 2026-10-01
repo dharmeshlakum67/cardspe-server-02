@@ -8,7 +8,7 @@ export const kycService = {
 		return apiClient<IKycDetailsApiResponse>(KYC_ENDPOINTS.GET_DATA);
 	},
 
-	// SUBMIT / SAVE SINGLE KYC DOCUMENT
+	// SUBMIT / SAVE SINGLE KYC DOCUMENT (HANDLES INITIAL FORM AND OTP VERIFICATION STEPS)
 	submitKycDocument: async (formData: FormData): Promise<IKycSubmitApiResponse> => {
 		return apiClient<IKycSubmitApiResponse>(KYC_ENDPOINTS.SUBMIT_DOCUMENT, {
 			method: 'POST',

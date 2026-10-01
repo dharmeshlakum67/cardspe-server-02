@@ -40,6 +40,7 @@ const PaymentModeListPage = lazy(
 );
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
+const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
 
 const contents: RouteProps[] = [
 	{
@@ -125,6 +126,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.PAYMENT_MODE,
 		element: <PaymentModeListPage />,
+	},
+	{
+		path: PAGE_ROUTES.SETTING,
+		element: <SettingPage />,
 	},
 	{
 		path: '*',

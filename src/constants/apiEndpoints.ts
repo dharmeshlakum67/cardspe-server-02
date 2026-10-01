@@ -373,6 +373,20 @@ export const KYC_ENDPOINTS = {
 	},
 } as const;
 
+// SETTING ENDPOINTS
+export const SETTING_ENDPOINTS = {
+	GET_SERVICE_CONFIG: {
+		url: '/api/setting/get-service-config',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	UPDATE_SERVICE_CONFIG: {
+		url: '/api/setting/update-service-config',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -385,6 +399,7 @@ export const API_ENDPOINTS = {
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
+	SETTING: SETTING_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 

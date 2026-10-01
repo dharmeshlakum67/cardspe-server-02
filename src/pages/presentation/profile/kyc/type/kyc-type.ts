@@ -59,22 +59,31 @@ export interface IKycDetailsApiResponse {
 }
 
 export interface IKycSubmitResponseData {
-	kyc_id: number;
-	kyc_status: string;
-	all_required_submitted: boolean;
-	document: {
-		id: number;
-		document_type_id: number;
-		document_name: string;
-		document_code: string;
-		file_urls: string[];
-		field_values: Record<string, any>;
-		status: string;
+	requires_otp?: boolean;
+	request_id?: string;
+	kyc_request_id?: number;
+	document_id?: number;
+	document_code?: string;
+	kyc_id?: number;
+	kyc_status?: string;
+	is_auto_verified?: boolean;
+	all_required_submitted?: boolean;
+	message?: string;
+	document?: {
+		id?: number;
+		document_type_id?: number;
+		kyc_request_id?: number;
+		document_name?: string;
+		document_code?: string;
+		file_urls?: string[];
+		field_values?: Record<string, any>;
+		status?: string;
 		verification_service?: string;
 	};
 }
 
 export interface IKycSubmitApiResponse {
+	status?: boolean;
 	statusCode: number;
 	message: string;
 	data: IKycSubmitResponseData;

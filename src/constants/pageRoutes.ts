@@ -36,6 +36,9 @@ export const PAGE_ROUTES = {
 	MOBILE_PLAN_TYPE: 'service-management/mobile-plan-type',
 	MOBILE_PLAN_TYPE_MASTER: 'master/mobile-plan-type',
 	PAYMENT_MODE: 'service-management/payment-mode',
+
+	// SETTINGS
+	SETTING: 'setting',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

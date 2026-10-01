@@ -19,7 +19,6 @@ export const KycPage: FC = () => {
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [activeDocument, setActiveDocument] = useState<IKycDocumentItem | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
 	// REF TO PREVENT DUPLICATE CALLS
 	const isFetchingRef = useRef<boolean>(false);
@@ -58,33 +57,6 @@ export const KycPage: FC = () => {
 	const handleDocumentAction = (doc: IKycDocumentItem) => {
 		setActiveDocument(doc);
 		setIsModalOpen(true);
-	};
-
-	// HANDLE KYC DOCUMENT SUBMISSION
-	const handleDocumentSubmit = async (formData: FormData) => {
-		setIsSubmitting(true);
-		try {
-			const response = await kycService.submitKycDocument(formData);
-			showNotification(
-				'Success',
-				response?.message || 'KYC document has been submitted successfully.',
-				'success',
-			);
-
-			setIsModalOpen(false);
-			setActiveDocument(null);
-
-			// Refresh KYC details
-			await fetchKycData(true);
-		} catch (error: any) {
-			showNotification(
-				'Submission Failed',
-				error?.data?.message || error?.message || 'Failed to submit KYC document.',
-				'danger',
-			);
-		} finally {
-			setIsSubmitting(false);
-		}
 	};
 
 	// EXTRACT DOCUMENTS ARRAY SAFELY
@@ -189,8 +161,9 @@ export const KycPage: FC = () => {
 							if (!open) setActiveDocument(null);
 						}}
 						document={activeDocument}
-						onSubmit={handleDocumentSubmit}
-						isSubmitting={isSubmitting}
+						onSuccess={() => {
+							fetchKycData(true);
+						}}
 					/>
 				</div>
 			</Page>

@@ -100,6 +100,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Payment Mode',
 		subMenu: null,
 	},
+
+	// SETTINGS MODULE (PARENT)
+	setting: {
+		path: PAGE_ROUTES.SETTING,
+		icon: 'Settings',
+		text: 'Settings',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY
