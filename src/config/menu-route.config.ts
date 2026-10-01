@@ -92,6 +92,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Mobile Plan Type',
 		subMenu: null,
 	},
+
+	// PAYMENT MODE CHILD MODULE
+	payment_mode: {
+		path: PAGE_ROUTES.PAYMENT_MODE,
+		icon: 'Payments',
+		text: 'Payment Mode',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

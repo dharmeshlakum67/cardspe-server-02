@@ -13,6 +13,7 @@ export const PERMISSION_KEYS = {
 	SERVICE_MANAGEMENT: 'service_management',
 	SERVICE_CATEGORY: 'service_category',
 	MOBILE_PLAN_TYPE: 'mobile_plan_type',
+	PAYMENT_MODE: 'payment_mode',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

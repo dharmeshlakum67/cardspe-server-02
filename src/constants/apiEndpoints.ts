@@ -315,6 +315,50 @@ export const MOBILE_PLAN_TYPE_ENDPOINTS = {
 	}),
 } as const;
 
+// PAYMENT MODE ENDPOINTS
+export const PAYMENT_MODE_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/payment-mode/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/payment-mode/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL_ACTIVE: {
+		url: '/api/payment-mode/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/payment-mode/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/payment-mode/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/payment-mode/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/payment-mode/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/payment-mode/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -325,6 +369,7 @@ export const API_ENDPOINTS = {
 	STATE: STATE_ENDPOINTS,
 	SERVICE_CATEGORY: SERVICE_CATEGORY_ENDPOINTS,
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
+	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;
 

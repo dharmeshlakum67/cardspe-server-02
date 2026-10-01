@@ -16,6 +16,7 @@ export const ENV = {
 		Number(process.env.REACT_APP_ASIDE_MINIMIZE_BREAKPOINT_SIZE) || 1024,
 	TOKEN_KEY: STORAGE_KEYS.TOKEN,
 	ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY || 'cardspe#SecureKey@2026_Secret!',
+	CRYPTO_ENCRYPTION_KEY: process.env.REACT_APP_ENCRYPTION_KEY,
 	IS_DEV: process.env.NODE_ENV === 'development',
 	IS_PROD: process.env.NODE_ENV === 'production',
 } as const;
