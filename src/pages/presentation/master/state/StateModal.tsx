@@ -13,6 +13,7 @@ import Spinner from '../../../../components/bootstrap/Spinner';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
 import { IState, StateStatusType } from './type/state-type';
+import stateService from './service/stateService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
 
 interface IStateModalProps {
@@ -34,6 +35,7 @@ export const StateModal: FC<IStateModalProps> = ({
 	const [name, setName] = useState<string>('');
 	const [circleId, setCircleId] = useState<string>('');
 	const [status, setStatus] = useState<StateStatusType>('active');
+	const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
 
 	// DYNAMIC CONSTANTS (STATUS)
 	const [statusOptions, setStatusOptions] = useState<IConstantOption[]>([
@@ -60,7 +62,10 @@ export const StateModal: FC<IStateModalProps> = ({
 	}, []);
 
 	useEffect(() => {
-		if (stateData) {
+		let isMounted = true;
+
+		if (stateData && isOpen) {
+			// Populate immediately from list row
 			setName(stateData.name || '');
 			setCircleId(
 				stateData.circle_id !== null && stateData.circle_id !== undefined
@@ -68,11 +73,44 @@ export const StateModal: FC<IStateModalProps> = ({
 					: '',
 			);
 			setStatus(stateData.status || 'active');
-		} else {
+
+			// Fetch fresh record from backend to avoid stale data
+			if (stateData.id) {
+				setIsLoadingDetail(true);
+				stateService
+					.getStateById(stateData.id)
+					.then((res) => {
+						if (!isMounted) return;
+						const fresh = res?.data;
+						if (fresh) {
+							setName(fresh.name || '');
+							setCircleId(
+								fresh.circle_id !== null && fresh.circle_id !== undefined
+									? String(fresh.circle_id)
+									: '',
+							);
+							setStatus(fresh.status || 'active');
+						}
+					})
+					.catch(() => {
+						// Keep optimistic list data on error
+					})
+					.finally(() => {
+						if (isMounted) {
+							setIsLoadingDetail(false);
+						}
+					});
+			}
+		} else if (isOpen) {
 			setName('');
 			setCircleId('');
 			setStatus('active');
+			setIsLoadingDetail(false);
 		}
+
+		return () => {
+			isMounted = false;
+		};
 	}, [stateData, isOpen]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +141,7 @@ export const StateModal: FC<IStateModalProps> = ({
 					<div className="d-flex align-items-center gap-2">
 						<Icon icon={isEdit ? 'Edit' : 'AddLocation'} color="primary" />
 						<span className="fw-bold">{isEdit ? 'Edit State' : 'Add New State'}</span>
+						{isLoadingDetail && <Spinner isSmall className="text-primary ms-2" />}
 					</div>
 				</ModalTitle>
 			</ModalHeader>

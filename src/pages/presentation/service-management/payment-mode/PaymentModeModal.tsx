@@ -22,6 +22,7 @@ import constantService, { IConstantOption } from '../../../../services/constantS
 import usePermission from '../../../../hooks/usePermission';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { decryptAccountInfo } from '../../../../helpers/cryptoUtils';
+import paymentModeService from './service/paymentModeService';
 
 interface IPaymentModeModalProps {
 	isOpen: boolean;
@@ -45,6 +46,7 @@ export const PaymentModeModal: FC<IPaymentModeModalProps> = ({
 	const [paymentAccountInfo, setPaymentAccountInfo] = useState<string>('');
 	const [status, setStatus] = useState<PaymentModeStatusType>('active');
 	const [showCredential, setShowCredential] = useState<boolean>(false);
+	const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
 
 	const { hasPermission } = usePermission();
 	const canViewCredential =
@@ -88,6 +90,7 @@ export const PaymentModeModal: FC<IPaymentModeModalProps> = ({
 	useEffect(() => {
 		let isMounted = true;
 		if (paymentModeData && isOpen) {
+			// Populate immediately from list row
 			setName(paymentModeData.name || '');
 			setCode(paymentModeData.code || '');
 			setIsCodeTouched(true);
@@ -104,6 +107,40 @@ export const PaymentModeModal: FC<IPaymentModeModalProps> = ({
 			} else {
 				setPaymentAccountInfo('');
 			}
+
+			// Fetch fresh record from backend to avoid stale data
+			if (paymentModeData.id) {
+				setIsLoadingDetail(true);
+				paymentModeService
+					.getPaymentModeById(paymentModeData.id)
+					.then((res) => {
+						if (!isMounted) return;
+						const fresh = res?.data;
+						if (fresh) {
+							setName(fresh.name || '');
+							setCode(fresh.code || '');
+							setStatus(fresh.status || 'active');
+							const freshRawInfo = fresh.payment_account_info || '';
+							if (freshRawInfo) {
+								decryptAccountInfo(freshRawInfo).then((decrypted) => {
+									if (isMounted) {
+										setPaymentAccountInfo(decrypted);
+									}
+								});
+							} else {
+								setPaymentAccountInfo('');
+							}
+						}
+					})
+					.catch(() => {
+						// Keep optimistic list data on error
+					})
+					.finally(() => {
+						if (isMounted) {
+							setIsLoadingDetail(false);
+						}
+					});
+			}
 		} else if (isOpen) {
 			setName('');
 			setCode('');
@@ -111,6 +148,7 @@ export const PaymentModeModal: FC<IPaymentModeModalProps> = ({
 			setShowCredential(true);
 			setPaymentAccountInfo('');
 			setStatus('active');
+			setIsLoadingDetail(false);
 		}
 
 		return () => {
@@ -194,9 +232,12 @@ export const PaymentModeModal: FC<IPaymentModeModalProps> = ({
 							<Icon icon={isEdit ? 'Edit' : 'Payments'} size='lg' />
 						</div>
 						<div>
-							<h5 className='fw-bold mb-0 text-dark'>
-								{isEdit ? 'Edit Payment Mode' : 'Create Payment Mode'}
-							</h5>
+							<div className='d-flex align-items-center gap-2'>
+								<h5 className='fw-bold mb-0 text-dark'>
+									{isEdit ? 'Edit Payment Mode' : 'Create Payment Mode'}
+								</h5>
+								{isLoadingDetail && <Spinner isSmall className='text-primary' />}
+							</div>
 							<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
 								{isEdit
 									? 'Update payment mode details, code, and account information.'

@@ -18,6 +18,7 @@ import {
 	CreateMobilePlanTypePayload,
 	UpdateMobilePlanTypePayload,
 } from './type/mobile-plan-type';
+import mobilePlanTypeService from './service/mobilePlanTypeService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
 
 interface IMobilePlanTypeModalProps {
@@ -39,6 +40,7 @@ export const MobilePlanTypeModal: FC<IMobilePlanTypeModalProps> = ({
 	const [name, setName] = useState<string>('');
 	const [planTypeId, setPlanTypeId] = useState<string>('');
 	const [status, setStatus] = useState<MobilePlanTypeStatusType>('active');
+	const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
 
 	// DYNAMIC CONSTANTS (STATUS)
 	const [statusOptions, setStatusOptions] = useState<IConstantOption[]>([
@@ -65,7 +67,10 @@ export const MobilePlanTypeModal: FC<IMobilePlanTypeModalProps> = ({
 	}, []);
 
 	useEffect(() => {
+		let isMounted = true;
+
 		if (planTypeData && isOpen) {
+			// Populate immediately from list row
 			setName(planTypeData.name || '');
 			setPlanTypeId(
 				planTypeData.plan_type_id !== null && planTypeData.plan_type_id !== undefined
@@ -73,11 +78,44 @@ export const MobilePlanTypeModal: FC<IMobilePlanTypeModalProps> = ({
 					: '',
 			);
 			setStatus(planTypeData.status || 'active');
+
+			// Fetch fresh record from backend to avoid stale data
+			if (planTypeData.id) {
+				setIsLoadingDetail(true);
+				mobilePlanTypeService
+					.getMobilePlanTypeById(planTypeData.id)
+					.then((res) => {
+						if (!isMounted) return;
+						const fresh = res?.data;
+						if (fresh) {
+							setName(fresh.name || '');
+							setPlanTypeId(
+								fresh.plan_type_id !== null && fresh.plan_type_id !== undefined
+									? String(fresh.plan_type_id)
+									: '',
+							);
+							setStatus(fresh.status || 'active');
+						}
+					})
+					.catch(() => {
+						// Keep optimistic list data on error
+					})
+					.finally(() => {
+						if (isMounted) {
+							setIsLoadingDetail(false);
+						}
+					});
+			}
 		} else if (isOpen) {
 			setName('');
 			setPlanTypeId('');
 			setStatus('active');
+			setIsLoadingDetail(false);
 		}
+
+		return () => {
+			isMounted = false;
+		};
 	}, [planTypeData, isOpen]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -118,9 +156,12 @@ export const MobilePlanTypeModal: FC<IMobilePlanTypeModalProps> = ({
 							<Icon icon={isEdit ? 'Edit' : 'PhoneAndroid'} size='lg' />
 						</div>
 						<div>
-							<h5 className='fw-bold mb-0 text-dark'>
-								{isEdit ? 'Edit Mobile Plan Type' : 'Create Mobile Plan Type'}
-							</h5>
+							<div className='d-flex align-items-center gap-2'>
+								<h5 className='fw-bold mb-0 text-dark'>
+									{isEdit ? 'Edit Mobile Plan Type' : 'Create Mobile Plan Type'}
+								</h5>
+								{isLoadingDetail && <Spinner isSmall className='text-primary' />}
+							</div>
 							<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
 								{isEdit
 									? 'Update plan type details and activation status.'

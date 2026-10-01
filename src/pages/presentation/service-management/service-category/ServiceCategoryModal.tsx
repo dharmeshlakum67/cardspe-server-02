@@ -13,6 +13,7 @@ import Spinner from '../../../../components/bootstrap/Spinner';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
 import { IServiceCategory, ServiceCategoryStatusType } from './type/service-category-type';
+import serviceCategoryService from './service/serviceCategoryService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
 import { getImageUrl } from '../../../../helpers/helpers';
 import { ImagePreviewModal } from '../../../../components/common';
@@ -40,6 +41,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 	const [imagePreview, setImagePreview] = useState<string>('');
 	const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 	const [status, setStatus] = useState<ServiceCategoryStatusType>('active');
+	const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const [isDeleteIcon, setIsDeleteIcon] = useState<boolean>(false);
@@ -69,7 +71,10 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 	}, []);
 
 	useEffect(() => {
+		let isMounted = true;
+
 		if (categoryData && isOpen) {
+			// Populate immediately from list row
 			setName(categoryData.name || '');
 			setDisplayOrder(
 				categoryData.display_order !== null && categoryData.display_order !== undefined
@@ -81,6 +86,36 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 			const rawIcon = categoryData.icon || '';
 			setImagePreview(rawIcon ? getImageUrl(rawIcon) : '');
 			setStatus(categoryData.status || 'active');
+
+			// Fetch fresh record from backend to avoid stale data
+			if (categoryData.id) {
+				setIsLoadingDetail(true);
+				serviceCategoryService
+					.getServiceCategoryById(categoryData.id)
+					.then((res) => {
+						if (!isMounted) return;
+						const fresh = res?.data;
+						if (fresh) {
+							setName(fresh.name || '');
+							setDisplayOrder(
+								fresh.display_order !== null && fresh.display_order !== undefined
+									? String(fresh.display_order)
+									: '',
+							);
+							const freshIcon = fresh.icon || '';
+							setImagePreview(freshIcon ? getImageUrl(freshIcon) : '');
+							setStatus(fresh.status || 'active');
+						}
+					})
+					.catch(() => {
+						// Keep optimistic list data on error
+					})
+					.finally(() => {
+						if (isMounted) {
+							setIsLoadingDetail(false);
+						}
+					});
+			}
 		} else if (isOpen) {
 			setName('');
 			setDisplayOrder('');
@@ -88,10 +123,15 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 			setIsDeleteIcon(false);
 			setImagePreview('');
 			setStatus('active');
+			setIsLoadingDetail(false);
 		}
 		if (fileInputRef.current) {
 			fileInputRef.current.value = '';
 		}
+
+		return () => {
+			isMounted = false;
+		};
 	}, [categoryData, isOpen]);
 
 	// HANDLE USER IMAGE FILE SELECTION
@@ -170,9 +210,12 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 							<Icon icon={isEdit ? 'Edit' : 'Category'} size='lg' />
 						</div>
 						<div>
-							<h5 className='fw-bold mb-0 text-dark'>
-								{isEdit ? 'Edit Service Category' : 'Create Service Category'}
-							</h5>
+							<div className='d-flex align-items-center gap-2'>
+								<h5 className='fw-bold mb-0 text-dark'>
+									{isEdit ? 'Edit Service Category' : 'Create Service Category'}
+								</h5>
+								{isLoadingDetail && <Spinner isSmall className='text-primary' />}
+							</div>
 							<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
 								{isEdit
 									? 'Update service category details and activation status.'
