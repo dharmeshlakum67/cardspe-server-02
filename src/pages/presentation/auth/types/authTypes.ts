@@ -37,6 +37,7 @@ export interface IAuthUser {
 	kyc_status?: string;
 	current_balance?: string | number;
 	created_at?: string;
+	is_super_admin?: boolean;
 	role?: IRole;
 	profile?: IAdminProfile | null;
 }

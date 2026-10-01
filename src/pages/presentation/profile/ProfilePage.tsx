@@ -40,6 +40,10 @@ const ProfilePage: FC = () => {
 		authUser?.current_balance !== undefined && authUser?.current_balance !== null
 			? authUser.current_balance
 			: '0.00';
+	const isSuperAdmin = Boolean(
+		authUser?.is_super_admin ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_user',
+	);
 	const kycStatus = authUser?.kyc_status || 'Pending';
 	const isEmailVerified = authUser?.is_email_verified ?? false;
 	const isMobileVerified = authUser?.is_mobile_verified ?? false;
@@ -194,7 +198,7 @@ const ProfilePage: FC = () => {
 					{/* 2. METRIC STAT CARDS ROW (WALLET & KYC) */}
 					<div className='row g-4 mb-4 align-items-stretch'>
 						{/* WALLET CARD */}
-						<div className='col-12 col-md-6 d-flex'>
+						<div className={`col-12 ${isSuperAdmin ? 'col-md-12' : 'col-md-6'} d-flex`}>
 							<div className='profile-card metric-card profile-card-hover w-100 h-100'>
 								<div className='metric-card-left'>
 									<div className='metric-icon-box bg-wallet'>
@@ -214,33 +218,35 @@ const ProfilePage: FC = () => {
 							</div>
 						</div>
 
-						{/* KYC CARD */}
-						<div className='col-12 col-md-6 d-flex'>
-							<div className='profile-card metric-card profile-card-hover w-100 h-100'>
-								<div className='metric-card-left'>
-									<div className='metric-icon-box bg-kyc'>
-										<Icon icon='Shield' />
-									</div>
-									<div className='metric-info'>
-										<div className='d-flex align-items-center gap-2'>
-											<div className='metric-title mb-0'>KYC</div>
-											<span className='kyc-status-pill'>{kycStatus}</span>
+						{/* KYC CARD (ONLY FOR REGULAR USERS / MERCHANTS) */}
+						{!isSuperAdmin && (
+							<div className='col-12 col-md-6 d-flex'>
+								<div className='profile-card metric-card profile-card-hover w-100 h-100'>
+									<div className='metric-card-left'>
+										<div className='metric-icon-box bg-kyc'>
+											<Icon icon='Shield' />
 										</div>
-										<Link
-											to={`/${PAGE_ROUTES.KYC}`}
-											className='metric-link link-purple mt-3'>
-											Complete KYC
-										</Link>
+										<div className='metric-info'>
+											<div className='d-flex align-items-center gap-2'>
+												<div className='metric-title mb-0'>KYC</div>
+												<span className='kyc-status-pill'>{kycStatus}</span>
+											</div>
+											<Link
+												to={`/${PAGE_ROUTES.KYC}`}
+												className='metric-link link-purple mt-3'>
+												Complete KYC
+											</Link>
+										</div>
 									</div>
+									<Link
+										to={`/${PAGE_ROUTES.KYC}`}
+										className='metric-arrow-btn'
+										title='Complete KYC'>
+										<Icon icon='ChevronRight' />
+									</Link>
 								</div>
-								<Link
-									to={`/${PAGE_ROUTES.KYC}`}
-									className='metric-arrow-btn'
-									title='Complete KYC'>
-									<Icon icon='ChevronRight' />
-								</Link>
 							</div>
-						</div>
+						)}
 					</div>
 
 					{/* 3. MAIN CONTENT TWO-COLUMN LAYOUT (ACCOUNT STATUS & RECENT ACTIVITY) */}
