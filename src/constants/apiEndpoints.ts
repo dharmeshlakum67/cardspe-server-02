@@ -400,6 +400,16 @@ export const KYC_ENDPOINTS = {
 
 // SETTING ENDPOINTS
 export const SETTING_ENDPOINTS = {
+	GET_COMPANY_SETTING: {
+		url: '/api/setting/get-one',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	UPDATE_COMPANY_SETTING: {
+		url: '/api/setting/update',
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	},
 	GET_SERVICE_CONFIG: {
 		url: '/api/setting/get-service-config',
 		method: HTTP_METHODS.GET,

@@ -10,6 +10,7 @@ import Spinner from '../../../components/bootstrap/Spinner';
 import usePermission from '../../../hooks/usePermission';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import ServiceConfigurationModal from './components/ServiceConfigurationModal';
+import GeneralSettingModal from './components/GeneralSettingModal';
 import './css/SettingPage.scss';
 
 export interface ISettingItem {
@@ -48,6 +49,7 @@ export const SettingPage: FC = () => {
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const [activeSettingId, setActiveSettingId] = useState<string | null>(null);
 	const [isServiceConfigModalOpen, setIsServiceConfigModalOpen] = useState<boolean>(false);
+	const [isGeneralSettingModalOpen, setIsGeneralSettingModalOpen] = useState<boolean>(false);
 
 	// FILTER SETTINGS BASED ON SEARCH QUERY
 	const filteredSettings = useMemo(() => {
@@ -64,6 +66,8 @@ export const SettingPage: FC = () => {
 		setActiveSettingId(item.id);
 		if (item.id === 'service-configuration') {
 			setIsServiceConfigModalOpen(true);
+		} else if (item.id === 'general') {
+			setIsGeneralSettingModalOpen(true);
 		}
 	};
 
@@ -200,6 +204,12 @@ export const SettingPage: FC = () => {
 						</div>
 					)}
 				</div>
+
+				{/* GENERAL SETTING MODAL */}
+				<GeneralSettingModal
+					isOpen={isGeneralSettingModalOpen}
+					setIsOpen={setIsGeneralSettingModalOpen}
+				/>
 
 				{/* SERVICE CONFIGURATION MODAL */}
 				<ServiceConfigurationModal

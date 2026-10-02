@@ -1,3 +1,5 @@
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable react/require-default-props, no-nested-ternary */
 import React, { FC, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal, { ModalBody, ModalFooter, ModalHeader, ModalTitle } from '../../bootstrap/Modal';
@@ -163,17 +165,17 @@ export const BlockUnblockModal: FC<IBlockUnblockModalProps> = ({
 	);
 };
 
-BlockUnblockModal.propTypes = {
+(BlockUnblockModal as any).propTypes = {
 	isOpen: PropTypes.bool.isRequired,
 	setIsOpen: PropTypes.func.isRequired,
-	action: PropTypes.oneOf(['block', 'unblock']).isRequired as any,
+	action: PropTypes.oneOf(['block', 'unblock']).isRequired,
 	userName: PropTypes.string,
 	isLoading: PropTypes.bool,
 	onConfirm: PropTypes.func.isRequired,
 	onCancel: PropTypes.func,
 };
 
-BlockUnblockModal.defaultProps = {
+(BlockUnblockModal as any).defaultProps = {
 	userName: '',
 	isLoading: false,
 	onCancel: undefined,

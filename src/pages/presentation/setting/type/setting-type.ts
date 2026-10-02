@@ -32,3 +32,35 @@ export interface IUpdateServiceConfigApiResponse {
 	message: string;
 	data: IServiceConfigurationItem;
 }
+
+// COMPANY / GENERAL SETTING TYPES
+export interface ICompanySettingData {
+	id?: number;
+	company_name?: string;
+	customer_care_number?: string;
+	whatsapp_number?: string;
+	support_time?: string;
+	support_email_address?: string;
+	address?: string;
+	about_company?: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface ICompanySettingApiResponse {
+	status: boolean;
+	status_code: number;
+	message: string;
+	data: ICompanySettingData;
+}
+
+export interface IUpdateCompanySettingPayload {
+	company_name?: string;
+	customer_care_number?: string;
+	whatsapp_number?: string;
+	support_time?: string;
+	support_email_address?: string;
+	address?: string;
+	about_company?: string;
+}
+
