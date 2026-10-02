@@ -95,6 +95,21 @@ const getBrowserTheme = (browser?: string | null) => {
 	return { icon: 'Language', color: '#475569', bg: '#f8fafc', border: '#e2e8f0' };
 };
 
+interface IUserDetailTabItem {
+	id: TUserDetailTab;
+	label: string;
+	icon: string;
+}
+
+const USER_DETAIL_TABS: IUserDetailTabItem[] = [
+	{ id: 'overview', label: 'Overview', icon: 'PersonOutline' },
+	{ id: 'profile', label: 'Profile', icon: 'Person' },
+	{ id: 'kyc', label: 'KYC', icon: 'Assignment' },
+	{ id: 'wallet', label: 'Wallet', icon: 'AccountBalanceWallet' },
+	{ id: 'sessions', label: 'Sessions', icon: 'Schedule' },
+	{ id: 'activity_log', label: 'Activity Log', icon: 'Article' },
+];
+
 export const UserViewPage: FC = () => {
 	const { id: rawId } = useParams<{ id: string }>();
 	const navigate = useNavigate();
@@ -270,8 +285,8 @@ export const UserViewPage: FC = () => {
 					const list = Array.isArray(res.data)
 						? res.data
 						: (res.data as any)?.data && Array.isArray((res.data as any).data)
-						? (res.data as any).data
-						: [];
+							? (res.data as any).data
+							: [];
 					setSessions(list);
 					const total =
 						res.total_document ??
@@ -547,13 +562,12 @@ export const UserViewPage: FC = () => {
 								<div className="name-and-status">
 									<h1 className="hero-user-name">{user.name}</h1>
 									<span
-										className={`status-pill-badge ${
-											statusLower === 'active'
+										className={`status-pill-badge ${statusLower === 'active'
 												? 'status-active'
 												: statusLower === 'blocked'
-												? 'status-blocked'
-												: 'status-inactive'
-										}`}>
+													? 'status-blocked'
+													: 'status-inactive'
+											}`}>
 										{statusLower.charAt(0).toUpperCase() + statusLower.slice(1)}
 									</span>
 								</div>
@@ -606,48 +620,16 @@ export const UserViewPage: FC = () => {
 
 					{/* 2. HORIZONTAL NAVIGATION TABS */}
 					<div className="user-nav-tabs-bar">
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
-							onClick={() => setActiveTab('overview')}>
-							<Icon icon="PersonOutline" size="sm" className="tab-icon" />
-							<span>Overview</span>
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
-							onClick={() => setActiveTab('profile')}>
-							<Icon icon="Person" size="sm" className="tab-icon" />
-							<span>Profile</span>
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'kyc' ? 'active' : ''}`}
-							onClick={() => setActiveTab('kyc')}>
-							<Icon icon="Assignment" size="sm" className="tab-icon" />
-							<span>KYC</span>
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'wallet' ? 'active' : ''}`}
-							onClick={() => setActiveTab('wallet')}>
-							<Icon icon="AccountBalanceWallet" size="sm" className="tab-icon" />
-							<span>Wallet</span>
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'sessions' ? 'active' : ''}`}
-							onClick={() => setActiveTab('sessions')}>
-							<Icon icon="Schedule" size="sm" className="tab-icon" />
-							<span>Sessions</span>
-						</button>
-						<button
-							type="button"
-							className={`tab-button ${activeTab === 'activity_log' ? 'active' : ''}`}
-							onClick={() => setActiveTab('activity_log')}>
-							<Icon icon="Article" size="sm" className="tab-icon" />
-							<span>Activity Log</span>
-						</button>
+						{USER_DETAIL_TABS.map((tab) => (
+							<button
+								key={tab.id}
+								type="button"
+								className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+								onClick={() => setActiveTab(tab.id)}>
+								<Icon icon={tab.icon} size="sm" className="tab-icon" />
+								<span>{tab.label}</span>
+							</button>
+						))}
 					</div>
 
 					{/* 3. TAB CONTENT */}
@@ -677,9 +659,8 @@ export const UserViewPage: FC = () => {
 											<div className="field-item">
 												<span className="field-label">Company Name</span>
 												<span
-													className={`field-value ${
-														!user.company_name ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${!user.company_name ? 'empty-val' : ''
+														}`}>
 													{user.company_name || '-'}
 												</span>
 											</div>
@@ -754,9 +735,8 @@ export const UserViewPage: FC = () => {
 											<div className="field-item">
 												<span className="field-label">Parent Admin</span>
 												<span
-													className={`field-value ${
-														!parentUser ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${!parentUser ? 'empty-val' : ''
+														}`}>
 													{parentUser
 														? `${parentUser.name} (@${parentUser.username})`
 														: '-'}
@@ -780,8 +760,8 @@ export const UserViewPage: FC = () => {
 													{lastLoginFormatted
 														? `${lastLoginFormatted.date}, ${lastLoginFormatted.time}`
 														: createdFormatted
-														? `${createdFormatted.date}, ${createdFormatted.time}`
-														: '-'}
+															? `${createdFormatted.date}, ${createdFormatted.time}`
+															: '-'}
 												</span>
 											</div>
 										</div>
@@ -813,8 +793,8 @@ export const UserViewPage: FC = () => {
 													({emailVerifiedFormatted
 														? `${emailVerifiedFormatted.date}, ${emailVerifiedFormatted.time}`
 														: createdFormatted
-														? `${createdFormatted.date}, ${createdFormatted.time}`
-														: '-'})
+															? `${createdFormatted.date}, ${createdFormatted.time}`
+															: '-'})
 												</small>
 											</div>
 										</div>
@@ -832,8 +812,8 @@ export const UserViewPage: FC = () => {
 													({mobileVerifiedFormatted
 														? `${mobileVerifiedFormatted.date}, ${mobileVerifiedFormatted.time}`
 														: createdFormatted
-														? `${createdFormatted.date}, ${createdFormatted.time}`
-														: '-'})
+															? `${createdFormatted.date}, ${createdFormatted.time}`
+															: '-'})
 												</small>
 											</div>
 										</div>
@@ -875,18 +855,16 @@ export const UserViewPage: FC = () => {
 											<div className="field-item">
 												<span className="field-label">State</span>
 												<span
-													className={`field-value ${
-														stateName === '-' ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${stateName === '-' ? 'empty-val' : ''
+														}`}>
 													{stateName}
 												</span>
 											</div>
 											<div className="field-item">
 												<span className="field-label">City</span>
 												<span
-													className={`field-value ${
-														!profile?.city ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${!profile?.city ? 'empty-val' : ''
+														}`}>
 													{profile?.city || '-'}
 												</span>
 											</div>
@@ -895,18 +873,16 @@ export const UserViewPage: FC = () => {
 											<div className="field-item">
 												<span className="field-label">Postal Code</span>
 												<span
-													className={`field-value ${
-														!profile?.postal_code ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${!profile?.postal_code ? 'empty-val' : ''
+														}`}>
 													{profile?.postal_code || '-'}
 												</span>
 											</div>
 											<div className="field-item">
 												<span className="field-label">Address</span>
 												<span
-													className={`field-value ${
-														!profile?.address ? 'empty-val' : ''
-													}`}>
+													className={`field-value ${!profile?.address ? 'empty-val' : ''
+														}`}>
 													{profile?.address || '-'}
 												</span>
 											</div>
@@ -934,32 +910,32 @@ export const UserViewPage: FC = () => {
 											<span
 												className={getKycStatusBadgeClass(
 													kycDetail?.kyc_status ||
-														user.kyc_status ||
-														user.kyc?.status ||
-														'not_submitted',
+													user.kyc_status ||
+													user.kyc?.status ||
+													'not_submitted',
 												)}>
 												<Icon
 													icon={
 														(kycDetail?.kyc_status ||
 															user.kyc_status ||
 															user.kyc?.status) === 'approved' ||
-														(kycDetail?.kyc_status ||
-															user.kyc_status ||
-															user.kyc?.status) === 'verified'
+															(kycDetail?.kyc_status ||
+																user.kyc_status ||
+																user.kyc?.status) === 'verified'
 															? 'CheckCircle'
 															: (kycDetail?.kyc_status ||
-																	user.kyc_status ||
-																	user.kyc?.status) === 'rejected'
-															? 'Cancel'
-															: 'Info'
+																user.kyc_status ||
+																user.kyc?.status) === 'rejected'
+																? 'Cancel'
+																: 'Info'
 													}
 													size="sm"
 												/>
 												{getKycStatusLabel(
 													kycDetail?.kyc_status ||
-														user.kyc_status ||
-														user.kyc?.status ||
-														'not_submitted',
+													user.kyc_status ||
+													user.kyc?.status ||
+													'not_submitted',
 												)}
 											</span>
 										</div>
@@ -971,23 +947,20 @@ export const UserViewPage: FC = () => {
 												<span className="field-label">Submission Date</span>
 												<span className="field-value">
 													{kycDetail?.submitted_at
-														? `${formatDateTime(kycDetail.submitted_at).date}, ${
-																formatDateTime(kycDetail.submitted_at).time
-														  }`
+														? `${formatDateTime(kycDetail.submitted_at).date}, ${formatDateTime(kycDetail.submitted_at).time
+														}`
 														: user.kyc?.submitted_at
-														? `${formatDateTime(user.kyc.submitted_at).date}, ${
-																formatDateTime(user.kyc.submitted_at).time
-														  }`
-														: '-'}
+															? `${formatDateTime(user.kyc.submitted_at).date}, ${formatDateTime(user.kyc.submitted_at).time
+															}`
+															: '-'}
 												</span>
 											</div>
 											<div className="field-item">
 												<span className="field-label">Verification Date</span>
 												<span className="field-value">
 													{kycDetail?.verified_at
-														? `${formatDateTime(kycDetail.verified_at).date}, ${
-																formatDateTime(kycDetail.verified_at).time
-														  }`
+														? `${formatDateTime(kycDetail.verified_at).date}, ${formatDateTime(kycDetail.verified_at).time
+														}`
 														: '-'}
 												</span>
 											</div>
@@ -1034,107 +1007,84 @@ export const UserViewPage: FC = () => {
 							{!isKycLoading &&
 								!kycFetchError &&
 								(kycDetail?.documents && kycDetail.documents.length > 0 ? (
-										kycDetail.documents.map((doc, docIdx) => {
-											const docStatus = (doc.status || 'pending').toLowerCase();
-											const fieldEntries = doc.field_values
-												? Object.entries(doc.field_values).filter(
-														([, val]) =>
-															val !== null &&
-															val !== undefined &&
-															val !== '',
-												  )
-												: [];
-											const uploadedFiles = Array.isArray(doc.uploaded_files)
-												? doc.uploaded_files
-												: [];
+									kycDetail.documents.map((doc, docIdx) => {
+										const docStatus = (doc.status || 'pending').toLowerCase();
+										const fieldEntries = doc.field_values
+											? Object.entries(doc.field_values).filter(
+												([, val]) =>
+													val !== null &&
+													val !== undefined &&
+													val !== '',
+											)
+											: [];
+										const uploadedFiles = Array.isArray(doc.uploaded_files)
+											? doc.uploaded_files
+											: [];
 
-											return (
-												<div
-													key={
-														doc.document_id ||
-														doc.requirement_id ||
-														`doc_${docIdx}`
-													}
-													className={
-														kycDetail.documents.length === 1
-															? 'col-12'
-															: 'col-12 col-lg-6'
-													}>
-													<div className="kyc-doc-card">
-														{/* DOCUMENT HEADER */}
-														<div className="kyc-doc-header">
-															<div className="kyc-doc-title-wrap">
+										return (
+											<div
+												key={
+													doc.document_id ||
+													doc.requirement_id ||
+													`doc_${docIdx}`
+												}
+												className={
+													kycDetail.documents.length === 1
+														? 'col-12'
+														: 'col-12 col-lg-6'
+												}>
+												<div className="kyc-doc-card">
+													{/* DOCUMENT HEADER */}
+													<div className="kyc-doc-header">
+														<div className="kyc-doc-title-wrap">
+															<Icon
+																icon="Description"
+																className="text-primary"
+															/>
+															<h4 className="kyc-doc-name">
+																{doc.document_name}
+															</h4>
+															{doc.document_code && (
+																<span className="kyc-doc-code">
+																	{doc.document_code}
+																</span>
+															)}
+															{doc.is_mandatory ? (
+																<span className="kyc-mandatory-tag">
+																	Mandatory
+																</span>
+															) : (
+																<span className="kyc-optional-tag">
+																	Optional
+																</span>
+															)}
+														</div>
+														<div className="d-flex align-items-center gap-2 flex-wrap">
+															<span
+																className={getKycStatusBadgeClass(
+																	docStatus,
+																)}>
 																<Icon
-																	icon="Description"
-																	className="text-primary"
-																/>
-																<h4 className="kyc-doc-name">
-																	{doc.document_name}
-																</h4>
-																{doc.document_code && (
-																	<span className="kyc-doc-code">
-																		{doc.document_code}
-																	</span>
-																)}
-																{doc.is_mandatory ? (
-																	<span className="kyc-mandatory-tag">
-																		Mandatory
-																	</span>
-																) : (
-																	<span className="kyc-optional-tag">
-																		Optional
-																	</span>
-																)}
-															</div>
-															<div className="d-flex align-items-center gap-2 flex-wrap">
-																<span
-																	className={getKycStatusBadgeClass(
-																		docStatus,
-																	)}>
-																	<Icon
-																		icon={
-																			docStatus === 'verified' ||
+																	icon={
+																		docStatus === 'verified' ||
 																			docStatus === 'approved'
-																				? 'CheckCircle'
-																				: docStatus === 'rejected'
+																			? 'CheckCircle'
+																			: docStatus === 'rejected'
 																				? 'Cancel'
 																				: 'Schedule'
-																		}
-																		size="sm"
-																	/>
-																	{getKycStatusLabel(docStatus)}
-																</span>
-																{canReviewPermission && (
-																	<>
-																		{docStatus !== 'verified' &&
-																			docStatus !== 'approved' && (
-																				<button
-																					type="button"
-																					className="btn-kyc-approve"
-																					title="Approve Document"
-																					onClick={() => {
-																						const targetId = (doc.id ||
-																							doc.document_id ||
-																							doc.requirement_id ||
-																							'') as string | number;
-																						if (targetId) {
-																							setReviewTarget({
-																								type: 'document',
-																								id: targetId,
-																								name: doc.document_name,
-																							});
-																							setIsApproveModalOpen(true);
-																						}
-																					}}>
-																					<Icon icon="Check" size="sm" />
-																					<span>Approve</span>
-																				</button>
-																			)}
-																		{docStatus !== 'rejected' && (
+																	}
+																	size="sm"
+																/>
+																{getKycStatusLabel(docStatus)}
+															</span>
+															{canReviewPermission && (
+																<>
+																	{docStatus !== 'verified' &&
+																		docStatus !== 'approved' && (
 																			<button
 																				type="button"
-																				className="btn-kyc-reject"
-																				title="Reject Document"
+																				className="btn-kyc-approve"
+																				title="Approve Document"
 																				onClick={() => {
 																					const targetId = (doc.id ||
 																						doc.document_id ||
@@ -1146,192 +1096,212 @@ export const UserViewPage: FC = () => {
 																							id: targetId,
 																							name: doc.document_name,
 																						});
-																						setRejectRemark(
-																							doc.rejection_reason || '',
-																						);
-																						setRejectError('');
-																						setIsRejectModalOpen(true);
+																						setIsApproveModalOpen(true);
 																					}
 																				}}>
-																				<Icon icon="Close" size="sm" />
-																				<span>Reject</span>
+																				<Icon icon="Check" size="sm" />
+																				<span>Approve</span>
 																			</button>
 																		)}
-																	</>
-																)}
-															</div>
-														</div>
-
-														{/* DOCUMENT BODY */}
-														<div className="kyc-doc-body">
-															{/* DOCUMENT REJECTION REASON IF ANY */}
-															{doc.rejection_reason && (
-																<div className="alert alert-danger d-flex align-items-start gap-2 mb-0">
-																	<Icon
-																		icon="Warning"
-																		size="sm"
-																		className="mt-1 flex-shrink-0"
-																	/>
-																	<div className="small">
-																		<strong>
-																			Document Rejection Reason:
-																		</strong>{' '}
-																		{doc.rejection_reason}
-																	</div>
-																</div>
+																	{docStatus !== 'rejected' && (
+																		<button
+																			type="button"
+																			className="btn-kyc-reject"
+																			title="Reject Document"
+																			onClick={() => {
+																				const targetId = (doc.id ||
+																					doc.document_id ||
+																					doc.requirement_id ||
+																					'') as string | number;
+																				if (targetId) {
+																					setReviewTarget({
+																						type: 'document',
+																						id: targetId,
+																						name: doc.document_name,
+																					});
+																					setRejectRemark(
+																						doc.rejection_reason || '',
+																					);
+																					setRejectError('');
+																					setIsRejectModalOpen(true);
+																				}
+																			}}>
+																			<Icon icon="Close" size="sm" />
+																			<span>Reject</span>
+																		</button>
+																	)}
+																</>
 															)}
-
-															{/* SUBMITTED FIELDS */}
-															{fieldEntries.length > 0 && (
-																<div className="kyc-fields-section">
-																	<div className="section-sub-title">
-																		<Icon icon="Dataset" size="sm" />
-																		Submitted Information
-																	</div>
-																	<div className="row g-3">
-																		{fieldEntries.map(([key, value]) => (
-																			<div
-																				key={key}
-																				className={
-																					fieldEntries.length === 1
-																						? 'col-12'
-																						: 'col-12 col-sm-6'
-																				}>
-																				<div className="kyc-field-box">
-																					<span className="field-label">
-																						{formatKeyLabel(key)}
-																					</span>
-																					<span className="field-value">
-																						{typeof value === 'object'
-																							? JSON.stringify(value)
-																							: String(value)}
-																					</span>
-																				</div>
-																			</div>
-																		))}
-																	</div>
-																</div>
-															)}
-
-															{/* UPLOADED ATTACHMENTS */}
-															{uploadedFiles.length > 0 && (
-																<div className="kyc-attachments-section">
-																	<div className="section-sub-title">
-																		<Icon icon="AttachFile" size="sm" />
-																		Uploaded Files ({uploadedFiles.length})
-																	</div>
-																	<div className="row g-3">
-																		{uploadedFiles.map(
-																			(fileUrl, fIdx) => {
-																				const fullUrl =
-																					getImageUrl(fileUrl);
-																				const isPdf =
-																					/\.pdf$/i.test(fileUrl);
-
-																				const handleFileClick = () => {
-																					if (isPdf) {
-																						window.open(
-																							fullUrl,
-																							'_blank',
-																						);
-																					} else {
-																						setPreviewModal({
-																							isOpen: true,
-																							imageUrl: fullUrl,
-																							title: `${doc.document_name} - File #${
-																								fIdx + 1
-																							}`,
-																						});
-																					}
-																				};
-
-																				return (
-																					<div
-																						key={
-																							fileUrl ||
-																							`file_${fIdx}`
-																						}
-																						className="col-6 col-sm-6 col-md-4 col-lg-6 col-xl-4">
-																						<div
-																							className="kyc-file-card"
-																							role="button"
-																							tabIndex={0}
-																							onClick={
-																								handleFileClick
-																							}
-																							onKeyDown={(
-																								e,
-																							) => {
-																								if (
-																									e.key ===
-																										'Enter' ||
-																									e.key ===
-																										' '
-																								) {
-																									e.preventDefault();
-																									handleFileClick();
-																								}
-																							}}>
-																							{isPdf ? (
-																								<Icon
-																									icon="PictureAsPdf"
-																									size="3x"
-																									className="text-danger"
-																								/>
-																							) : (
-																								<img
-																									src={fullUrl}
-																									alt={`File #${
-																										fIdx + 1
-																									}`}
-																									className="file-thumb"
-																								/>
-																							)}
-																							<span className="file-name">
-																								{isPdf
-																									? 'Open PDF File'
-																									: `View Image #${
-																											fIdx + 1
-																									  }`}
-																							</span>
-																						</div>
-																					</div>
-																				);
-																			},
-																		)}
-																	</div>
-																</div>
-															)}
-
-															{fieldEntries.length === 0 &&
-																uploadedFiles.length === 0 && (
-																	<div className="p-3 bg-light rounded text-muted small text-center">
-																		No field values or attachments submitted
-																		for this document yet.
-																	</div>
-																)}
 														</div>
 													</div>
-												</div>
-											);
-										})
-									) : (
-										<div className="col-12">
-											<div className="p-4 bg-white rounded-3 border text-center text-muted">
-												<Icon
-													icon="AssignmentLate"
-													size="2x"
-													className="text-muted mb-2"
-												/>
-												<div className="fw-semibold">
-													No KYC Documents Submitted
-												</div>
-												<div className="small">
-													This user has not submitted any KYC documents yet.
+
+													{/* DOCUMENT BODY */}
+													<div className="kyc-doc-body">
+														{/* DOCUMENT REJECTION REASON IF ANY */}
+														{doc.rejection_reason && (
+															<div className="alert alert-danger d-flex align-items-start gap-2 mb-0">
+																<Icon
+																	icon="Warning"
+																	size="sm"
+																	className="mt-1 flex-shrink-0"
+																/>
+																<div className="small">
+																	<strong>
+																		Document Rejection Reason:
+																	</strong>{' '}
+																	{doc.rejection_reason}
+																</div>
+															</div>
+														)}
+
+														{/* SUBMITTED FIELDS */}
+														{fieldEntries.length > 0 && (
+															<div className="kyc-fields-section">
+																<div className="section-sub-title">
+																	<Icon icon="Dataset" size="sm" />
+																	Submitted Information
+																</div>
+																<div className="row g-3">
+																	{fieldEntries.map(([key, value]) => (
+																		<div
+																			key={key}
+																			className={
+																				fieldEntries.length === 1
+																					? 'col-12'
+																					: 'col-12 col-sm-6'
+																			}>
+																			<div className="kyc-field-box">
+																				<span className="field-label">
+																					{formatKeyLabel(key)}
+																				</span>
+																				<span className="field-value">
+																					{typeof value === 'object'
+																						? JSON.stringify(value)
+																						: String(value)}
+																				</span>
+																			</div>
+																		</div>
+																	))}
+																</div>
+															</div>
+														)}
+
+														{/* UPLOADED ATTACHMENTS */}
+														{uploadedFiles.length > 0 && (
+															<div className="kyc-attachments-section">
+																<div className="section-sub-title">
+																	<Icon icon="AttachFile" size="sm" />
+																	Uploaded Files ({uploadedFiles.length})
+																</div>
+																<div className="row g-3">
+																	{uploadedFiles.map(
+																		(fileUrl, fIdx) => {
+																			const fullUrl =
+																				getImageUrl(fileUrl);
+																			const isPdf =
+																				/\.pdf$/i.test(fileUrl);
+
+																			const handleFileClick = () => {
+																				if (isPdf) {
+																					window.open(
+																						fullUrl,
+																						'_blank',
+																					);
+																				} else {
+																					setPreviewModal({
+																						isOpen: true,
+																						imageUrl: fullUrl,
+																						title: `${doc.document_name} - File #${fIdx + 1
+																							}`,
+																					});
+																				}
+																			};
+
+																			return (
+																				<div
+																					key={
+																						fileUrl ||
+																						`file_${fIdx}`
+																					}
+																					className="col-6 col-sm-6 col-md-4 col-lg-6 col-xl-4">
+																					<div
+																						className="kyc-file-card"
+																						role="button"
+																						tabIndex={0}
+																						onClick={
+																							handleFileClick
+																						}
+																						onKeyDown={(
+																							e,
+																						) => {
+																							if (
+																								e.key ===
+																								'Enter' ||
+																								e.key ===
+																								' '
+																							) {
+																								e.preventDefault();
+																								handleFileClick();
+																							}
+																						}}>
+																						{isPdf ? (
+																							<Icon
+																								icon="PictureAsPdf"
+																								size="3x"
+																								className="text-danger"
+																							/>
+																						) : (
+																							<img
+																								src={fullUrl}
+																								alt={`File #${fIdx + 1
+																									}`}
+																								className="file-thumb"
+																							/>
+																						)}
+																						<span className="file-name">
+																							{isPdf
+																								? 'Open PDF File'
+																								: `View Image #${fIdx + 1
+																								}`}
+																						</span>
+																					</div>
+																				</div>
+																			);
+																		},
+																	)}
+																</div>
+															</div>
+														)}
+
+														{fieldEntries.length === 0 &&
+															uploadedFiles.length === 0 && (
+																<div className="p-3 bg-light rounded text-muted small text-center">
+																	No field values or attachments submitted
+																	for this document yet.
+																</div>
+															)}
+													</div>
 												</div>
 											</div>
+										);
+									})
+								) : (
+									<div className="col-12">
+										<div className="p-4 bg-white rounded-3 border text-center text-muted">
+											<Icon
+												icon="AssignmentLate"
+												size="2x"
+												className="text-muted mb-2"
+											/>
+											<div className="fw-semibold">
+												No KYC Documents Submitted
+											</div>
+											<div className="small">
+												This user has not submitted any KYC documents yet.
+											</div>
 										</div>
-									))}
+									</div>
+								))}
 						</div>
 					)}
 
@@ -1443,167 +1413,166 @@ export const UserViewPage: FC = () => {
 									{!isSessionsLoading &&
 										!sessionsFetchError &&
 										(sessions.length > 0 ? (
-												<div className="session-table-wrapper border-0 rounded-0">
-													<div className="table-responsive">
-														<table className="table session-table align-middle">
-															<thead>
-																<tr>
-																	<th>Device &amp; OS</th>
-																	<th>Browser</th>
-																	<th>IP Address</th>
-																	<th>User Agent</th>
-																	<th>Status</th>
-																	<th>Login Time</th>
-																</tr>
-															</thead>
-															<tbody>
-																{sessions.map((sess) => {
-																	const deviceTheme = getDeviceTheme(sess.device_type);
-																	const browserTheme = getBrowserTheme(sess.browser);
-																	const osDisplay = sess.os
-																		? `${sess.os}${sess.os_version ? ` ${sess.os_version}` : ''}`
-																		: 'Unknown OS';
-																	const browserDisplay = sess.browser
-																		? `${sess.browser}${
-																				sess.browser_version ? ` v${sess.browser_version}` : ''
-																		  }`
-																		: 'Unknown Browser';
+											<div className="session-table-wrapper border-0 rounded-0">
+												<div className="table-responsive">
+													<table className="table session-table align-middle">
+														<thead>
+															<tr>
+																<th>Device &amp; OS</th>
+																<th>Browser</th>
+																<th>IP Address</th>
+																<th>User Agent</th>
+																<th>Status</th>
+																<th>Login Time</th>
+															</tr>
+														</thead>
+														<tbody>
+															{sessions.map((sess) => {
+																const deviceTheme = getDeviceTheme(sess.device_type);
+																const browserTheme = getBrowserTheme(sess.browser);
+																const osDisplay = sess.os
+																	? `${sess.os}${sess.os_version ? ` ${sess.os_version}` : ''}`
+																	: 'Unknown OS';
+																const browserDisplay = sess.browser
+																	? `${sess.browser}${sess.browser_version ? ` v${sess.browser_version}` : ''
+																	}`
+																	: 'Unknown Browser';
 
-																	return (
-																		<tr key={sess.id}>
-																			<td>
-																				<div className="session-device-box">
-																					<div
-																						className="device-avatar"
-																						style={{
-																							backgroundColor: deviceTheme.bg,
-																							border: `1px solid ${deviceTheme.border}`,
-																							color: deviceTheme.color,
-																						}}>
-																						<Icon icon={deviceTheme.icon} size="md" />
-																					</div>
-																					<div className="device-info">
-																						<span className="os-title">{osDisplay}</span>
-																						<span className="device-type-tag">
-																							{sess.device_type || 'Desktop'}
-																						</span>
-																					</div>
-																				</div>
-																			</td>
-																			<td>
-																				<span
-																					className="session-browser-badge"
+																return (
+																	<tr key={sess.id}>
+																		<td>
+																			<div className="session-device-box">
+																				<div
+																					className="device-avatar"
 																					style={{
-																						backgroundColor: browserTheme.bg,
-																						border: `1px solid ${browserTheme.border}`,
-																						color: browserTheme.color,
+																						backgroundColor: deviceTheme.bg,
+																						border: `1px solid ${deviceTheme.border}`,
+																						color: deviceTheme.color,
 																					}}>
-																					<Icon icon={browserTheme.icon} size="sm" />
-																					<span>{browserDisplay}</span>
-																				</span>
-																			</td>
-																			<td>
-																				<span className="session-ip-badge">
-																					<Icon icon="Public" size="sm" className="text-secondary" />
-																					<span>{sess.ip_address || '-'}</span>
-																				</span>
-																			</td>
-																			<td>
-																				{sess.user_agent ? (
-																					<Tooltips
-																						title={sess.user_agent}
-																						placement="top">
-																						<span className="session-ua-pill">
-																							<span className="ua-text">
-																								{sess.user_agent.length > 22
-																									? `${sess.user_agent.substring(0, 22)}...`
-																									: sess.user_agent}
-																							</span>
-																							<Icon
-																								icon="Info"
-																								size="sm"
-																								className="text-primary flex-shrink-0"
-																							/>
-																						</span>
-																					</Tooltips>
-																				) : (
-																					<span className="text-muted small">-</span>
-																				)}
-																			</td>
-																			<td>
-																				{sess.is_logout ? (
-																					<span className="session-status-badge status-logout">
-																						<span className="logout-dot" />
-																						<span>Logged Out</span>
+																					<Icon icon={deviceTheme.icon} size="md" />
+																				</div>
+																				<div className="device-info">
+																					<span className="os-title">{osDisplay}</span>
+																					<span className="device-type-tag">
+																						{sess.device_type || 'Desktop'}
 																					</span>
-																				) : (
-																					<span className="session-status-badge status-active">
-																						<span className="pulse-dot" />
-																						<span>Active</span>
+																				</div>
+																			</div>
+																		</td>
+																		<td>
+																			<span
+																				className="session-browser-badge"
+																				style={{
+																					backgroundColor: browserTheme.bg,
+																					border: `1px solid ${browserTheme.border}`,
+																					color: browserTheme.color,
+																				}}>
+																				<Icon icon={browserTheme.icon} size="sm" />
+																				<span>{browserDisplay}</span>
+																			</span>
+																		</td>
+																		<td>
+																			<span className="session-ip-badge">
+																				<Icon icon="Public" size="sm" className="text-secondary" />
+																				<span>{sess.ip_address || '-'}</span>
+																			</span>
+																		</td>
+																		<td>
+																			{sess.user_agent ? (
+																				<Tooltips
+																					title={sess.user_agent}
+																					placement="top">
+																					<span className="session-ua-pill">
+																						<span className="ua-text">
+																							{sess.user_agent.length > 22
+																								? `${sess.user_agent.substring(0, 22)}...`
+																								: sess.user_agent}
+																						</span>
+																						<Icon
+																							icon="Info"
+																							size="sm"
+																							className="text-primary flex-shrink-0"
+																						/>
 																					</span>
-																				)}
-																			</td>
-																			<td>
-																				{sess.created_at ? (
-																					<div className="session-time-block">
-																						<span className="time-date">
-																							<Icon icon="CalendarToday" size="sm" className="text-muted" />
-																							<span>{formatDateTime(sess.created_at).date}</span>
-																						</span>
-																						<span className="time-clock">
-																							<Icon icon="Schedule" size="sm" className="text-muted" />
-																							<span>{formatDateTime(sess.created_at).time}</span>
-																						</span>
-																					</div>
-																				) : (
-																					<span className="text-muted small">-</span>
-																				)}
-																			</td>
-																		</tr>
-																	);
-																})}
-															</tbody>
-														</table>
-													</div>
-													{totalSessions > 0 && (
-														<div className="p-3 border-top bg-light-subtle">
-															<ListingPagination
-																pagination={{
-																	currentPage: sessionsPage,
-																	totalItems: totalSessions,
-																	perPage: sessionsLimit,
-																	perPageOptions: [10, 25, 50, 100],
-																	onPageChange: (newPage: number) => {
-																		setSessionsPage(newPage);
-																	},
-																	onPerPageChange: (newLimit: number) => {
-																		setSessionsLimit(newLimit);
-																		setSessionsPage(1);
-																	},
-																}}
-															/>
-														</div>
-													)}
+																				</Tooltips>
+																			) : (
+																				<span className="text-muted small">-</span>
+																			)}
+																		</td>
+																		<td>
+																			{sess.is_logout ? (
+																				<span className="session-status-badge status-logout">
+																					<span className="logout-dot" />
+																					<span>Logged Out</span>
+																				</span>
+																			) : (
+																				<span className="session-status-badge status-active">
+																					<span className="pulse-dot" />
+																					<span>Active</span>
+																				</span>
+																			)}
+																		</td>
+																		<td>
+																			{sess.created_at ? (
+																				<div className="session-time-block">
+																					<span className="time-date">
+																						<Icon icon="CalendarToday" size="sm" className="text-muted" />
+																						<span>{formatDateTime(sess.created_at).date}</span>
+																					</span>
+																					<span className="time-clock">
+																						<Icon icon="Schedule" size="sm" className="text-muted" />
+																						<span>{formatDateTime(sess.created_at).time}</span>
+																					</span>
+																				</div>
+																			) : (
+																				<span className="text-muted small">-</span>
+																			)}
+																		</td>
+																	</tr>
+																);
+															})}
+														</tbody>
+													</table>
 												</div>
-											) : (
-												<div className="p-5 bg-light-subtle text-muted text-center">
-													<div
-														className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-3 mb-2 border"
-														style={{ width: '60px', height: '60px' }}>
-														<Icon
-															icon="History"
-															size="lg"
-															className="text-secondary"
+												{totalSessions > 0 && (
+													<div className="p-3 border-top bg-light-subtle">
+														<ListingPagination
+															pagination={{
+																currentPage: sessionsPage,
+																totalItems: totalSessions,
+																perPage: sessionsLimit,
+																perPageOptions: [10, 25, 50, 100],
+																onPageChange: (newPage: number) => {
+																	setSessionsPage(newPage);
+																},
+																onPerPageChange: (newLimit: number) => {
+																	setSessionsLimit(newLimit);
+																	setSessionsPage(1);
+																},
+															}}
 														/>
 													</div>
-													<div className="fw-bold text-dark fs-6">
-														No Login Sessions Found
-													</div>
-													<div className="small text-muted">
-														No authentication logs have been recorded for this account yet.
-													</div>
+												)}
+											</div>
+										) : (
+											<div className="p-5 bg-light-subtle text-muted text-center">
+												<div
+													className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-3 mb-2 border"
+													style={{ width: '60px', height: '60px' }}>
+													<Icon
+														icon="History"
+														size="lg"
+														className="text-secondary"
+													/>
 												</div>
-											))}
+												<div className="fw-bold text-dark fs-6">
+													No Login Sessions Found
+												</div>
+												<div className="small text-muted">
+													No authentication logs have been recorded for this account yet.
+												</div>
+											</div>
+										))}
 								</div>
 							</div>
 						</div>
@@ -1709,9 +1678,8 @@ export const UserViewPage: FC = () => {
 						isOpen={isApproveModalOpen}
 						setIsOpen={setIsApproveModalOpen}
 						title={`Approve ${reviewTarget?.name || 'KYC'}`}
-						message={`Are you sure you want to approve ${
-							reviewTarget?.name ? `"${reviewTarget.name}"` : 'this KYC'
-						} and mark the status as approved?`}
+						message={`Are you sure you want to approve ${reviewTarget?.name ? `"${reviewTarget.name}"` : 'this KYC'
+							} and mark the status as approved?`}
 						confirmText="Yes, Approve"
 						cancelText="Cancel"
 						isLoading={isUpdatingKycStatus}
