@@ -1,0 +1,213 @@
+.login-history-page-wrapper {
+	width: 100%;
+
+	.session-user-box {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+
+		.user-avatar {
+			width: 38px;
+			height: 38px;
+			border-radius: 50%;
+			background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+			color: #1d4ed8;
+			font-weight: 700;
+			font-size: 0.95rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border: 1.5px solid #bfdbfe;
+			flex-shrink: 0;
+
+			img {
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				object-fit: cover;
+			}
+		}
+
+		.user-meta {
+			display: flex;
+			flex-direction: column;
+
+			.user-name {
+				font-weight: 700;
+				color: #0f172a;
+				font-size: 0.875rem;
+				line-height: 1.25;
+			}
+
+			.user-handle {
+				font-size: 0.75rem;
+				color: #64748b;
+				font-weight: 500;
+			}
+		}
+	}
+
+	.session-device-box {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+
+		.device-avatar {
+			width: 38px;
+			height: 38px;
+			border-radius: 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+		}
+
+		.device-info {
+			display: flex;
+			flex-direction: column;
+
+			.os-title {
+				font-weight: 700;
+				color: #0f172a;
+				font-size: 0.875rem;
+				line-height: 1.25;
+			}
+
+			.device-type-tag {
+				font-size: 0.7rem;
+				font-weight: 600;
+				color: #64748b;
+				text-transform: capitalize;
+			}
+		}
+	}
+
+	.session-browser-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.35rem 0.75rem;
+		border-radius: 8px;
+		font-size: 0.825rem;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.session-ip-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		color: #1e293b;
+		padding: 0.3rem 0.65rem;
+		border-radius: 7px;
+		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		font-size: 0.825rem;
+		font-weight: 700;
+	}
+
+	.session-ua-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		padding: 0.35rem 0.75rem;
+		border-radius: 8px;
+		font-size: 0.8rem;
+		color: #475569;
+		cursor: pointer;
+		max-width: 200px;
+		transition: all 0.2s ease;
+
+		&:hover {
+			background: #f1f5f9;
+			border-color: #cbd5e1;
+			color: #0f172a;
+		}
+
+		.ua-text {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	.session-status-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.35rem 0.8rem;
+		border-radius: 20px;
+		font-size: 0.775rem;
+		font-weight: 700;
+		white-space: nowrap;
+
+		&.status-active {
+			background: #ecfdf5;
+			color: #059669;
+			border: 1px solid #a7f3d0;
+
+			.pulse-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background-color: #10b981;
+				box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+				animation: pulseGreen 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+			}
+		}
+
+		&.status-logout {
+			background: #f8fafc;
+			color: #64748b;
+			border: 1px solid #e2e8f0;
+
+			.logout-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background-color: #94a3b8;
+			}
+		}
+	}
+
+	.session-time-block {
+		display: flex;
+		flex-direction: column;
+
+		.time-date {
+			font-size: 0.85rem;
+			font-weight: 700;
+			color: #0f172a;
+			display: flex;
+			align-items: center;
+			gap: 0.3rem;
+		}
+
+		.time-clock {
+			font-size: 0.75rem;
+			color: #64748b;
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+			margin-top: 0.15rem;
+		}
+	}
+}
+
+@keyframes pulseGreen {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+	}
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+	}
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+	}
+}

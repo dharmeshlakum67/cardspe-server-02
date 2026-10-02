@@ -14,7 +14,8 @@ export type TRoleType = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF';
 export interface IRoleItem {
 	id: number;
 	role_name: string;
-	role_key: string;
+	role_key?: string;
+	slug?: string;
 	role_type: TRoleType | string;
 	status: 'active' | 'inactive' | string;
 	created_at: string;

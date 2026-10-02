@@ -391,6 +391,11 @@ export const KYC_ENDPOINTS = {
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
+	GET_USER_KYC: (userId: string | number) => ({
+		url: `/api/kyc/get-data/${userId}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
 } as const;
 
 // SETTING ENDPOINTS
@@ -407,9 +412,71 @@ export const SETTING_ENDPOINTS = {
 	},
 } as const;
 
+// ADMIN / USER ENDPOINTS
+export const ADMIN_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/admin/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/admin/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/admin/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/admin/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/admin/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/admin/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+	GET_ACTIVE: {
+		url: '/api/admin/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_LOGIN_HISTORY: (userId: string | number) => ({
+		url: `/api/admin/login-history/${userId}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+} as const;
+
+export const USER_ENDPOINTS = ADMIN_ENDPOINTS;
+
+// LOGIN HISTORY ENDPOINTS
+export const LOGIN_HISTORY_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/auth/login-history',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_BY_USER: (userId: string | number) => ({
+		url: `/api/admin/login-history/${userId}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
+	ADMIN: ADMIN_ENDPOINTS,
+	USER: USER_ENDPOINTS,
 	ROLE: ROLE_ENDPOINTS,
 	ROLE_ACCESS: ROLE_ACCESS_ENDPOINTS,
 	PERMISSIONS: PERMISSION_ENDPOINTS,
@@ -419,6 +486,7 @@ export const API_ENDPOINTS = {
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
+	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,
 	SETTING: SETTING_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 } as const;

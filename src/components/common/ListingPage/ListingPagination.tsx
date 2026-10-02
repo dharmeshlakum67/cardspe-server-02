@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Icon from '../../icon/Icon';
 import { IListingPaginationConfig } from './types';
+import './ListingPage.scss';
 
 interface IListingPaginationProps {
 	pagination: IListingPaginationConfig;

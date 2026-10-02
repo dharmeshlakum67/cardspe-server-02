@@ -54,6 +54,7 @@ export const KycRequestListPage: FC = () => {
 	// REF GUARDS TO PREVENT DUPLICATE CALLS
 	const lastFetchKeyRef = useRef<string>('');
 	const isFetchingRef = useRef<boolean>(false);
+	const hasFetchedOptionsRef = useRef<boolean>(false);
 
 	// CAPITALIZE ONLY THE FIRST LETTER OF STATUS (E.G. 'Pending', 'Approved', 'Rejected')
 	const formatStatus = (s?: string) => {
@@ -156,7 +157,9 @@ export const KycRequestListPage: FC = () => {
 
 	// FETCH DYNAMIC CONSTANT STATUS OPTIONS & ACTIVE DOCUMENT TYPES ONCE ON MOUNT
 	useEffect(() => {
-		let isMounted = true;
+		if (hasFetchedOptionsRef.current) return;
+		hasFetchedOptionsRef.current = true;
+
 		const fetchOptions = async () => {
 			try {
 				const [statusRes, docTypeRes] = await Promise.all([
@@ -164,14 +167,12 @@ export const KycRequestListPage: FC = () => {
 					documentTypeService.getActiveDocumentTypes(),
 				]);
 
-				if (isMounted) {
-					if (statusRes && statusRes.length > 0) {
-						setStatusOptions(statusRes);
-					}
-					const activeTypes = docTypeRes?.data || [];
-					if (Array.isArray(activeTypes)) {
-						setDocTypeOptions(activeTypes);
-					}
+				if (statusRes && statusRes.length > 0) {
+					setStatusOptions(statusRes);
+				}
+				const activeTypes = docTypeRes?.data || [];
+				if (Array.isArray(activeTypes)) {
+					setDocTypeOptions(activeTypes);
 				}
 			} catch (err) {
 				console.error('Failed to load filter options:', err);
@@ -179,9 +180,6 @@ export const KycRequestListPage: FC = () => {
 		};
 
 		fetchOptions();
-		return () => {
-			isMounted = false;
-		};
 	}, []);
 
 	// HANDLE RESET FILTERS

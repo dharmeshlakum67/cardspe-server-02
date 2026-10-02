@@ -104,7 +104,7 @@
 				font-weight: 700;
 				color: #0f172a;
 				margin-bottom: 0.35rem;
-				text-align: center;
+				text-align: left;
 				white-space: nowrap;
 			}
 
@@ -535,6 +535,90 @@
 					flex-wrap: wrap;
 					justify-content: center;
 				}
+			}
+		}
+	}
+}
+
+// GLOBAL / STANDALONE PAGINATION STYLING
+.listing-pagination-container {
+	padding: 0.75rem 0;
+	width: 100%;
+
+	.pagination-pill-bar {
+		background: #f1f5f9;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.5rem;
+		padding: 3px 6px;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+
+		.page-pill-btn {
+			background: transparent;
+			border: none;
+			color: #334155;
+			font-size: 0.875rem;
+			font-weight: 600;
+			min-width: 32px;
+			height: 32px;
+			padding: 0 6px;
+			border-radius: 0.35rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.15s ease-in-out;
+			cursor: pointer;
+
+			&:hover:not(:disabled):not(.is-active) {
+				background-color: #e2e8f0;
+				color: #0f172a;
+			}
+
+			&.is-active {
+				background-color: #5c56b6;
+				color: #ffffff;
+				font-weight: 700;
+				box-shadow: 0 1px 3px rgba(92, 86, 182, 0.35);
+			}
+
+			&:disabled {
+				color: #94a3b8;
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+
+			&.nav-btn {
+				font-size: 1rem;
+				color: #475569;
+			}
+		}
+
+		.page-pill-dots {
+			color: #64748b;
+			font-size: 0.875rem;
+			font-weight: 700;
+			padding: 0 4px;
+			user-select: none;
+		}
+	}
+
+	.per-page-selector {
+		select {
+			border: 1.5px solid #d1d5db;
+			border-radius: 0.5rem;
+			height: 38px;
+			font-size: 0.875rem;
+			padding: 0 1.8rem 0 0.85rem;
+			background-color: #ffffff;
+			font-weight: 600;
+			color: #334155;
+			cursor: pointer;
+			outline: none;
+
+			&:focus {
+				border-color: #5c56b6;
+				box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.12);
 			}
 		}
 	}

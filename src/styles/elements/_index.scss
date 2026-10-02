@@ -21,27 +21,38 @@ code {
 	font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-[os='Windows'] {
-	::-webkit-scrollbar {
-		width: 0.75rem;
-	}
+html,
+body {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 
-	::-webkit-scrollbar-corner {
+	&::-webkit-scrollbar {
 		display: none;
+		width: 0;
+		height: 0;
 	}
+}
 
-	::-webkit-scrollbar-thumb {
-		background-color: rgba(0, 0, 0, 0);
-		border-radius: 1rem;
-	}
+// HIDE GLOBAL WINDOW SCROLLBAR WHILE MAINTAINING SMOOTH SCROLLING
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
 
-	::-webkit-scrollbar-track {
-		border-radius: 1rem;
-		box-shadow: inset 0 0 0.5rem rgba(0, 0, 0, 0);
-	}
+::-webkit-scrollbar-corner {
+	display: none;
+}
 
-	:hover::-webkit-scrollbar-thumb {
-		background-color: rgba(0, 0, 0, 0.5);
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.15);
+	border-radius: 4px;
+
+	&:hover {
+		background: rgba(0, 0, 0, 0.3);
 	}
 }
 

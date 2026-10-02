@@ -427,6 +427,37 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 				is_required: val.is_required,
 			}));
 
+		const sanitizedFields = fieldsList.map((f, idx) => {
+			const sanitized: Record<string, any> = {
+				field_name: f.field_name.trim(),
+				field_code: f.field_code.trim(),
+				field_type: f.field_type,
+				is_required: Boolean(f.is_required),
+				display_order:
+					f.display_order !== undefined && f.display_order !== null
+						? Number(f.display_order)
+						: idx + 1,
+				placeholder: f.placeholder?.trim() || null,
+				status: f.status || 'active',
+			};
+
+			if (['select', 'radio', 'checkbox'].includes(f.field_type)) {
+				if (Array.isArray(f.options) && f.options.length > 0) {
+					sanitized.options = f.options.map((opt) =>
+						typeof opt === 'string'
+							? { label: opt, value: slugifyCode(opt) }
+							: { label: opt.label, value: opt.value },
+					);
+				} else {
+					sanitized.options = null;
+				}
+			} else {
+				sanitized.options = null;
+			}
+
+			return sanitized as IDocumentField;
+		});
+
 		await onSubmit({
 			document_name: documentName.trim(),
 			document_code: documentCode.trim(),
@@ -435,10 +466,7 @@ export const DocumentTypeForm: FC<IDocumentTypeFormProps> = ({
 			verification_service: verificationService,
 			status,
 			roles: rolesPayload,
-			fields: fieldsList.map((f, idx) => ({
-				...f,
-				display_order: f.display_order !== undefined ? Number(f.display_order) : idx + 1,
-			})),
+			fields: sanitizedFields,
 		});
 	};
 

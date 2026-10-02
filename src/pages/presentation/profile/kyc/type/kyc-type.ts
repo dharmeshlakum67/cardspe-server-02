@@ -22,6 +22,8 @@ export interface IKycDocumentField {
 }
 
 export interface IKycDocumentItem {
+	id?: number | string;
+	document_type_id?: number | string;
 	requirement_id: number | null;
 	document_id: number;
 	document_name: string;

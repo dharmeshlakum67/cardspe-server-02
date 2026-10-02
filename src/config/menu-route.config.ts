@@ -25,6 +25,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// USERS MODULE (CHILD OF USER MANAGEMENT)
+	user: {
+		path: PAGE_ROUTES.USERS,
+		icon: 'Group',
+		text: 'Users',
+		subMenu: null,
+	},
+
 	// ROLE MODULE (SUPPORT BOTH role / roles KEYS FROM API)
 	role: {
 		path: PAGE_ROUTES.ROLES,
@@ -106,6 +114,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		path: PAGE_ROUTES.PAYMENT_MODE,
 		icon: 'Payments',
 		text: 'Payment Mode',
+		subMenu: null,
+	},
+
+	// LOGIN HISTORY (TOP-LEVEL PARENT MENU)
+	login_history: {
+		path: PAGE_ROUTES.LOGIN_HISTORY,
+		icon: 'History',
+		text: 'Login History',
 		subMenu: null,
 	},
 

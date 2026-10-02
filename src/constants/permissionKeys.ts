@@ -4,6 +4,7 @@ export const PERMISSION_KEYS = {
 	DASHBOARD: 'dashboard',
 	USER_MANAGEMENT: 'user_management',
 	USERS: 'users',
+	USER: 'user',
 	ROLE: 'role',
 	ROLES: 'roles',
 	KYC_REQUEST: 'kyc_request',

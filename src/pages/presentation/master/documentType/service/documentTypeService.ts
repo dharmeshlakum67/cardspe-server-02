@@ -9,6 +9,13 @@ import {
 	IDocumentTypeItem,
 } from '../type/document-type';
 
+let activeDocumentTypesCache: Promise<{ success: boolean; data: { id: number; document_name: string }[] }> | null = null;
+
+// CLEAR ACTIVE DOCUMENT TYPES CACHE ON MUTATIONS
+export const clearActiveDocumentTypesCache = () => {
+	activeDocumentTypesCache = null;
+};
+
 export const documentTypeService = {
 	// GET ALL DOCUMENT TYPES (LIST WITH FILTERS & PAGINATION)
 	getDocumentTypes: async (params?: IDocumentTypeQueryParams): Promise<IDocumentTypeListResponse> => {
@@ -17,11 +24,20 @@ export const documentTypeService = {
 		});
 	},
 
-	// GET ACTIVE DOCUMENT TYPES FOR DROPDOWNS
-	getActiveDocumentTypes: async (): Promise<{ success: boolean; data: { id: number; document_name: string }[] }> => {
-		return apiClient<{ success: boolean; data: { id: number; document_name: string }[] }>(
+	// GET ACTIVE DOCUMENT TYPES FOR DROPDOWNS (DEDUPLICATED & CACHED)
+	getActiveDocumentTypes: async (force = false): Promise<{ success: boolean; data: { id: number; document_name: string }[] }> => {
+		if (!force && activeDocumentTypesCache) {
+			return activeDocumentTypesCache;
+		}
+
+		activeDocumentTypesCache = apiClient<{ success: boolean; data: { id: number; document_name: string }[] }>(
 			DOCUMENT_TYPE_ENDPOINTS.GET_ACTIVE,
-		);
+		).catch((err) => {
+			activeDocumentTypesCache = null;
+			throw err;
+		});
+
+		return activeDocumentTypesCache;
 	},
 
 	// GET SINGLE DOCUMENT TYPE BY ID
@@ -33,6 +49,7 @@ export const documentTypeService = {
 	createDocumentType: async (
 		payload: ICreateDocumentTypePayload,
 	): Promise<{ success: boolean; statusCode?: number; message?: string; data: IDocumentTypeItem }> => {
+		clearActiveDocumentTypesCache();
 		return apiClient<{ success: boolean; statusCode?: number; message?: string; data: IDocumentTypeItem }>(
 			DOCUMENT_TYPE_ENDPOINTS.CREATE,
 			{
@@ -46,6 +63,7 @@ export const documentTypeService = {
 		id: number | string,
 		payload: IUpdateDocumentTypePayload,
 	): Promise<{ success: boolean; statusCode?: number; message?: string; data: any }> => {
+		clearActiveDocumentTypesCache();
 		return apiClient<{ success: boolean; statusCode?: number; message?: string; data: any }>(
 			DOCUMENT_TYPE_ENDPOINTS.UPDATE(id),
 			{
@@ -59,6 +77,7 @@ export const documentTypeService = {
 		id: number | string,
 		status: 'active' | 'inactive' | string,
 	): Promise<{ success: boolean; statusCode?: number; message?: string; data?: any }> => {
+		clearActiveDocumentTypesCache();
 		return apiClient(DOCUMENT_TYPE_ENDPOINTS.UPDATE_STATUS(id), {
 			body: { status },
 		});
@@ -68,6 +87,7 @@ export const documentTypeService = {
 	deleteDocumentType: async (
 		id: number | string,
 	): Promise<{ success: boolean; statusCode?: number; message?: string }> => {
+		clearActiveDocumentTypesCache();
 		return apiClient<{ success: boolean; statusCode?: number; message?: string }>(
 			DOCUMENT_TYPE_ENDPOINTS.DELETE(id),
 		);

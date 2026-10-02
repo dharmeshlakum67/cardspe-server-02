@@ -38,9 +38,9 @@ export const authService = {
 			requiresAuth: false,
 		});
 
-		// STORE ONLY TOKEN IN LOCALSTORAGE (NO USER DATA)
+		// STORE ONLY TOKEN IN LOCALSTORAGE (WHEN MOBILE VERIFICATION NOT PENDING)
 		const token = response?.data?.token;
-		if (token) {
+		if (token && !response?.data?.is_mobile_verification_required) {
 			localStorage.setItem(ENV.TOKEN_KEY, token);
 		}
 		// PURGE ANY POTENTIAL USER OBJECTS FROM STORAGE

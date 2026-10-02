@@ -35,6 +35,9 @@ export const constantService = {
 					}
 					if (typeof res.data === 'object' && res.data !== null) {
 						const rawObj = res.data as Record<string, any>;
+						if (Array.isArray(rawObj.status)) {
+							return rawObj.status;
+						}
 						if (Array.isArray(rawObj.verification_services)) {
 							return rawObj.verification_services;
 						}
@@ -129,6 +132,11 @@ export const constantService = {
 	// GET KYC REQUEST STATUS CONSTANTS
 	getKycRequestConstants: async (): Promise<IConstantOption[]> => {
 		return constantService.getConstantByType(PERMISSION_KEYS.KYC_REQUEST);
+	},
+
+	// GET USER / ADMIN STATUS CONSTANTS
+	getUserStatusConstants: async (): Promise<IConstantOption[]> => {
+		return constantService.getConstantByType(PERMISSION_KEYS.USER || 'user');
 	},
 };
 

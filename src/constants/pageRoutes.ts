@@ -17,7 +17,11 @@ export const PAGE_ROUTES = {
 	PROFILE: 'admin/profile',
 	KYC: 'profile/kyc',
 
-	// USER MANAGEMENT / ROLES & KYC REQUESTS
+	// USER MANAGEMENT / ROLES, USERS & KYC REQUESTS
+	USERS: 'users',
+	USERS_ADD: 'users/add',
+	USERS_VIEW: 'users/view/:id',
+	USERS_EDIT: 'users/edit/:id',
 	ROLES: 'roles',
 	ROLES_ADD: 'roles/add',
 	ROLES_VIEW: 'roles/view/:id',
@@ -38,6 +42,9 @@ export const PAGE_ROUTES = {
 	MOBILE_PLAN_TYPE: 'service-management/mobile-plan-type',
 	MOBILE_PLAN_TYPE_MASTER: 'master/mobile-plan-type',
 	PAYMENT_MODE: 'service-management/payment-mode',
+
+	// LOGIN HISTORY
+	LOGIN_HISTORY: 'login-history',
 
 	// SETTINGS
 	SETTING: 'setting',

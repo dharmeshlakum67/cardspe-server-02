@@ -41,11 +41,26 @@ const PaymentModeListPage = lazy(
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
 const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
+const LoginHistoryListPage = lazy(
+	() => import('../pages/presentation/login-history/LoginHistoryListPage'),
+);
 const KycRequestListPage = lazy(
 	() => import('../pages/presentation/user-management/kyc-requests/KycRequestListPage'),
 );
 const KycRequestViewPage = lazy(
 	() => import('../pages/presentation/user-management/kyc-requests/KycRequestViewPage'),
+);
+const UserListPage = lazy(
+	() => import('../pages/presentation/user-management/users/UserListPage'),
+);
+const UserAddPage = lazy(
+	() => import('../pages/presentation/user-management/users/UserAddPage'),
+);
+const UserViewPage = lazy(
+	() => import('../pages/presentation/user-management/users/UserViewPage'),
+);
+const UserEditPage = lazy(
+	() => import('../pages/presentation/user-management/users/UserEditPage'),
 );
 
 const contents: RouteProps[] = [
@@ -80,6 +95,22 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.KYC,
 		element: <KycPage />,
+	},
+	{
+		path: PAGE_ROUTES.USERS,
+		element: <UserListPage />,
+	},
+	{
+		path: PAGE_ROUTES.USERS_ADD,
+		element: <UserAddPage />,
+	},
+	{
+		path: PAGE_ROUTES.USERS_VIEW,
+		element: <UserViewPage />,
+	},
+	{
+		path: PAGE_ROUTES.USERS_EDIT,
+		element: <UserEditPage />,
 	},
 	{
 		path: PAGE_ROUTES.ROLES,
@@ -140,6 +171,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.PAYMENT_MODE,
 		element: <PaymentModeListPage />,
+	},
+	{
+		path: PAGE_ROUTES.LOGIN_HISTORY,
+		element: <LoginHistoryListPage />,
 	},
 	{
 		path: PAGE_ROUTES.SETTING,

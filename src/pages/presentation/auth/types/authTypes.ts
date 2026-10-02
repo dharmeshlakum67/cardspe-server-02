@@ -53,11 +53,15 @@ export interface IUpdateProfilePayload {
 }
 
 export interface ILoginResponse {
-	status: string;
+	success?: boolean;
+	status?: string | number;
+	statusCode?: number;
 	message: string;
 	data: {
-		token: string;
-		user: IAuthUser;
+		is_mobile_verification_required?: boolean;
+		mobile_number?: string;
+		token?: string;
+		user?: IAuthUser;
 	};
 }
 
@@ -132,12 +136,14 @@ export interface IVerifyOTPPayload {
 }
 
 export interface IVerifyOTPResponse {
+	success?: boolean;
+	statusCode?: number;
 	message?: string;
 	token?: string;
 	user?: IAuthUser;
 	data?: {
-		token: string;
-		user: IAuthUser;
+		token?: string;
+		user?: IAuthUser;
 	};
 }
 
@@ -146,7 +152,12 @@ export interface IResendOTPPayload {
 }
 
 export interface IResendOTPResponse {
+	success?: boolean;
+	statusCode?: number;
 	message?: string;
+	data?: {
+		cooldown_seconds?: number;
+	};
 	cooldown_seconds?: number;
 }
 

@@ -48,6 +48,14 @@ export const kycService = {
 			body: payload,
 		});
 	},
+
+	// GET SPECIFIC USER'S FULL KYC DETAILS & SUBMITTED DOCUMENTS (FOR ADMIN VIEW)
+	getUserKycDetails: async (
+		userId: number | string,
+	): Promise<IKycDetailsApiResponse> => {
+		return apiClient<IKycDetailsApiResponse>(KYC_ENDPOINTS.GET_USER_KYC(userId));
+	},
 };
 
 export default kycService;
+

@@ -7,6 +7,13 @@ import {
 	IRoleDetailResponse,
 } from '../type/role-type';
 
+let activeRolesCache: Promise<{ success: boolean; data: IRoleItem[] }> | null = null;
+
+// CLEAR ACTIVE ROLES CACHE ON MUTATIONS
+export const clearActiveRolesCache = () => {
+	activeRolesCache = null;
+};
+
 export const roleService = {
 	// FETCH ALL ROLES WITH FILTERS AND PAGINATION
 	getRoles: async (params?: IRoleFilterParams): Promise<IRolesResponse> => {
@@ -32,6 +39,7 @@ export const roleService = {
 
 	// CREATE ROLE
 	createRole: async (data: Partial<IRoleItem>): Promise<{ success: boolean; message?: string; data: IRoleItem }> => {
+		clearActiveRolesCache();
 		return apiClient<{ success: boolean; message?: string; data: IRoleItem }>(ROLE_ENDPOINTS.CREATE, {
 			body: data,
 		});
@@ -42,6 +50,7 @@ export const roleService = {
 		id: number | string,
 		data: Partial<IRoleItem>,
 	): Promise<{ success: boolean; message?: string; data: IRoleItem }> => {
+		clearActiveRolesCache();
 		return apiClient<{ success: boolean; message?: string; data: IRoleItem }>(ROLE_ENDPOINTS.UPDATE(id), {
 			body: data,
 		});
@@ -52,18 +61,31 @@ export const roleService = {
 		id: number | string,
 		role_status: 'active' | 'inactive' | string,
 	): Promise<{ success: boolean; message: string; data?: any }> => {
+		clearActiveRolesCache();
 		return apiClient(ROLE_ENDPOINTS.UPDATE_STATUS(id), {
 			body: { role_status },
 		});
 	},
 
-	// FETCH ACTIVE ROLES FOR DROPDOWNS / ASSIGNMENTS
-	getActiveRoles: async (): Promise<{ success: boolean; data: IRoleItem[] }> => {
-		return apiClient<{ success: boolean; data: IRoleItem[] }>(ROLE_ENDPOINTS.GET_ACTIVE);
+	// FETCH ACTIVE ROLES FOR DROPDOWNS / ASSIGNMENTS (DEDUPLICATED & CACHED)
+	getActiveRoles: async (force = false): Promise<{ success: boolean; data: IRoleItem[] }> => {
+		if (!force && activeRolesCache) {
+			return activeRolesCache;
+		}
+
+		activeRolesCache = apiClient<{ success: boolean; data: IRoleItem[] }>(
+			ROLE_ENDPOINTS.GET_ACTIVE,
+		).catch((err) => {
+			activeRolesCache = null;
+			throw err;
+		});
+
+		return activeRolesCache;
 	},
 
 	// DELETE ROLE
 	deleteRole: async (id: number | string): Promise<{ success: boolean; message: string }> => {
+		clearActiveRolesCache();
 		return apiClient<{ success: boolean; message: string }>(ROLE_ENDPOINTS.DELETE(id));
 	},
 };
