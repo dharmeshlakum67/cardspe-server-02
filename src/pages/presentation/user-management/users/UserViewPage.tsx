@@ -6,10 +6,13 @@ import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import Icon from '../../../../components/icon/Icon';
 import Spinner from '../../../../components/bootstrap/Spinner';
-import ConfirmationModal from '../../../../components/common/ConfirmationModal';
+import {
+	ConfirmationModal,
+	BlockUnblockModal,
+	AppBreadcrumbs,
+	ListingPagination,
+} from '../../../../components/common';
 import showNotification from '../../../../components/extras/showNotification';
-import AppBreadcrumbs from '../../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
-import { ListingPagination } from '../../../../components/common/ListingPage';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../../menu';
@@ -18,6 +21,8 @@ import { formatDateTime } from '../../../../helpers/dateUtils';
 import usePermission from '../../../../hooks/usePermission';
 import userService from './service/userService';
 import { IUserItem, ISessionItem } from './type/user-type';
+import blockHistoryService from '../block-history/service/blockHistoryService';
+import { IBlockHistoryItem } from '../block-history/type/block-history-type';
 import kycService from '../../profile/kyc/service/kycService';
 import { IKycDetailsResponseData } from '../../profile/kyc/type/kyc-type';
 import { getImageUrl } from '../../../../helpers/helpers';
@@ -37,6 +42,7 @@ export type TUserDetailTab =
 	| 'kyc'
 	| 'wallet'
 	| 'sessions'
+	| 'block_history'
 	| 'activity_log';
 
 // FORMAT KEY LABEL (e.g. pan_number -> Pan Number)
@@ -107,6 +113,7 @@ const USER_DETAIL_TABS: IUserDetailTabItem[] = [
 	{ id: 'kyc', label: 'KYC', icon: 'Assignment' },
 	{ id: 'wallet', label: 'Wallet', icon: 'AccountBalanceWallet' },
 	{ id: 'sessions', label: 'Sessions', icon: 'Schedule' },
+	{ id: 'block_history', label: 'Block History', icon: 'Block' },
 	{ id: 'activity_log', label: 'Activity Log', icon: 'Article' },
 ];
 
@@ -133,6 +140,7 @@ export const UserViewPage: FC = () => {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [isStatusChanging, setIsStatusChanging] = useState<boolean>(false);
+	const [isBlockModalOpen, setIsBlockModalOpen] = useState<boolean>(false);
 
 	// KYC TAB LAZY LOADING STATE
 	const [kycDetail, setKycDetail] = useState<IKycDetailsResponseData | null>(null);
@@ -148,6 +156,15 @@ export const UserViewPage: FC = () => {
 	const [isSessionsLoading, setIsSessionsLoading] = useState<boolean>(false);
 	const [sessionsFetchError, setSessionsFetchError] = useState<string | null>(null);
 	const hasFetchedSessionsRef = useRef<boolean>(false);
+
+	// BLOCK HISTORY TAB LAZY LOADING & PAGINATION STATE
+	const [blockHistories, setBlockHistories] = useState<IBlockHistoryItem[]>([]);
+	const [blockHistoryPage, setBlockHistoryPage] = useState<number>(1);
+	const [blockHistoryLimit, setBlockHistoryLimit] = useState<number>(10);
+	const [totalBlockHistories, setTotalBlockHistories] = useState<number>(0);
+	const [isBlockHistoryLoading, setIsBlockHistoryLoading] = useState<boolean>(false);
+	const [blockHistoryFetchError, setBlockHistoryFetchError] = useState<string | null>(null);
+	const hasFetchedBlockHistoryRef = useRef<boolean>(false);
 
 	// KYC APPROVE & REJECT REVIEW STATE
 	const [reviewTarget, setReviewTarget] = useState<{
@@ -315,6 +332,54 @@ export const UserViewPage: FC = () => {
 		}
 	}, [activeTab, decryptedId, user?.id, sessionsPage, sessionsLimit, fetchUserSessions]);
 
+	// LAZY FETCH USER BLOCK HISTORY
+	const fetchUserBlockHistory = useCallback(
+		async (userId?: number | string, page?: number, limit?: number) => {
+			const targetId = userId || decryptedId || user?.id;
+			if (!targetId) return;
+			const targetPage = page ?? blockHistoryPage;
+			const targetLimit = limit ?? blockHistoryLimit;
+			try {
+				setIsBlockHistoryLoading(true);
+				setBlockHistoryFetchError(null);
+				const res = await blockHistoryService.getBlockHistoryByUser(targetId, {
+					page: targetPage,
+					limit: targetLimit,
+				});
+				if (res) {
+					const list = Array.isArray(res.data)
+						? res.data
+						: (res.data as any)?.data && Array.isArray((res.data as any).data)
+							? (res.data as any).data
+							: [];
+					setBlockHistories(list);
+					const total =
+						res.total_document ??
+						(res as any)?.total ??
+						(res as any)?.total_count ??
+						(res.data as any)?.total_document ??
+						list.length;
+					setTotalBlockHistories(Number(total) || list.length);
+					hasFetchedBlockHistoryRef.current = true;
+				}
+			} catch (err: any) {
+				setBlockHistoryFetchError(
+					err?.data?.message || err?.message || 'Failed to load user block history.',
+				);
+			} finally {
+				setIsBlockHistoryLoading(false);
+			}
+		},
+		[decryptedId, user?.id, blockHistoryPage, blockHistoryLimit],
+	);
+
+	useEffect(() => {
+		const targetId = decryptedId || user?.id;
+		if (activeTab === 'block_history' && targetId) {
+			fetchUserBlockHistory(targetId, blockHistoryPage, blockHistoryLimit);
+		}
+	}, [activeTab, decryptedId, user?.id, blockHistoryPage, blockHistoryLimit, fetchUserBlockHistory]);
+
 	// CAN REVIEW / APPROVE / REJECT PERMISSION CHECK
 	const canReviewPermission =
 		Boolean(canReview && canReview(PERMISSION_KEYS.KYC_REQUEST)) ||
@@ -400,19 +465,26 @@ export const UserViewPage: FC = () => {
 		}
 	};
 
-	// TOGGLE STATUS HANDLER (BLOCK / ACTIVATE)
-	const handleToggleStatus = async () => {
+	// BLOCK / UNBLOCK CONFIRMATION HANDLER
+	const handleBlockUnblockConfirm = async (reason: string) => {
 		if (!user || isStatusChanging) return;
-		const newStatus = user.status === 'active' ? 'blocked' : 'active';
+		const isCurrentlyActive = user.status === 'active';
+		const action: 'block' | 'unblock' = isCurrentlyActive ? 'block' : 'unblock';
+		const newStatus = isCurrentlyActive ? 'blocked' : 'active';
 		setIsStatusChanging(true);
 		try {
-			await userService.updateUserStatus(user.id, newStatus);
+			const res = await userService.blockUnblockUser(user.id, {
+				action,
+				reason: reason.trim() || undefined,
+			});
 			setUser({ ...user, status: newStatus });
 			showNotification(
 				'Status Updated',
-				`User marked as ${newStatus === 'active' ? 'Active' : 'Blocked'} successfully.`,
+				res?.message || `User ${action === 'block' ? 'blocked' : 'unblocked'} successfully.`,
 				'success',
 			);
+			setIsBlockModalOpen(false);
+			fetchUserBlockHistory(user.id, 1, blockHistoryLimit);
 		} catch (error: any) {
 			showNotification(
 				'Status Update Failed',
@@ -518,7 +590,7 @@ export const UserViewPage: FC = () => {
 								type="button"
 								className={statusLower === 'active' ? 'btn-header-block' : 'btn-header-activate'}
 								disabled={isStatusChanging}
-								onClick={handleToggleStatus}>
+								onClick={() => setIsBlockModalOpen(true)}>
 								<Icon
 									icon={statusLower === 'active' ? 'Block' : 'CheckCircle'}
 									size="sm"
@@ -1514,14 +1586,16 @@ export const UserViewPage: FC = () => {
 																		</td>
 																		<td>
 																			{sess.created_at ? (
-																				<div className="session-time-block">
-																					<span className="time-date">
-																						<Icon icon="CalendarToday" size="sm" className="text-muted" />
-																						<span>{formatDateTime(sess.created_at).date}</span>
+																				<div className="d-flex flex-column">
+																					<span
+																						className="fw-medium text-dark"
+																						style={{ fontSize: '0.8125rem' }}>
+																						{formatDateTime(sess.created_at).date}
 																					</span>
-																					<span className="time-clock">
-																						<Icon icon="Schedule" size="sm" className="text-muted" />
-																						<span>{formatDateTime(sess.created_at).time}</span>
+																					<span
+																						className="text-muted"
+																						style={{ fontSize: '0.75rem' }}>
+																						{formatDateTime(sess.created_at).time}
 																					</span>
 																				</div>
 																			) : (
@@ -1573,6 +1647,186 @@ export const UserViewPage: FC = () => {
 												</div>
 											</div>
 										))}
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* BLOCK HISTORY TAB */}
+					{activeTab === 'block_history' && (
+						<div className="row g-4">
+							<div className="col-12">
+								<div className="user-section-card p-0 overflow-hidden">
+									<div className="card-title-header px-4 pt-4 pb-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+										<div className="d-flex align-items-center gap-3">
+											<div className="title-icon bg-danger-subtle text-danger">
+												<Icon icon="Block" />
+											</div>
+											<div>
+												<h3 className="card-main-title mb-0">Block &amp; Unblock Audit History</h3>
+												<span className="text-muted small" style={{ fontSize: '0.8125rem' }}>
+													Complete record of account status restrictions and restorations
+												</span>
+											</div>
+										</div>
+										<button
+											type="button"
+											className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+											onClick={() => {
+												const targetId = decryptedId || user?.id;
+												if (targetId) fetchUserBlockHistory(targetId, blockHistoryPage, blockHistoryLimit);
+											}}
+											disabled={isBlockHistoryLoading}>
+											<Icon icon="Refresh" size="sm" />
+											<span>Refresh</span>
+										</button>
+									</div>
+
+									{isBlockHistoryLoading ? (
+										<div className="p-5 text-center bg-light-subtle">
+											<Spinner size="lg" isGrow className="text-primary mb-2" />
+											<div className="fw-medium text-muted">Loading block audit logs...</div>
+										</div>
+									) : blockHistoryFetchError ? (
+										<div className="p-5 text-center bg-light-subtle">
+											<div className="text-danger mb-2">
+												<Icon icon="Error" size="lg" />
+											</div>
+											<div className="fw-bold text-dark mb-1">Failed to Load Block History</div>
+											<div className="text-muted small mb-3">{blockHistoryFetchError}</div>
+											<button
+												type="button"
+												className="btn btn-sm btn-primary"
+												onClick={() => {
+													const targetId = decryptedId || user?.id;
+													if (targetId) fetchUserBlockHistory(targetId, blockHistoryPage, blockHistoryLimit);
+												}}>
+												Retry
+											</button>
+										</div>
+									) : blockHistories && blockHistories.length > 0 ? (
+										<div className="sessions-table-wrapper">
+											<div className="table-responsive">
+												<table className="table table-hover align-middle mb-0 custom-user-sessions-table">
+													<thead>
+														<tr>
+															<th style={{ width: '160px' }}>Action</th>
+															<th style={{ minWidth: '220px' }}>Reason / Remarks</th>
+															<th style={{ minWidth: '220px' }}>Action Taken By</th>
+															<th style={{ width: '190px' }}>Date &amp; Time</th>
+														</tr>
+													</thead>
+													<tbody>
+														{blockHistories.map((item) => {
+															const isBlockAction = item.action === 'block';
+															const { date, time } = formatDateTime(item.created_at);
+															const actorName =
+																item.action_by?.name ||
+																(item.action_taken_by ? `Admin #${item.action_taken_by}` : 'System');
+															const actorUsername = item.action_by?.username;
+
+															return (
+																<tr key={item.id}>
+																	<td>
+																		<span
+																			className={`badge d-inline-flex align-items-center gap-1 px-3 py-2 ${
+																				isBlockAction
+																					? 'bg-danger-subtle text-danger border border-danger-subtle'
+																					: 'bg-success-subtle text-success border border-success-subtle'
+																			}`}
+																			style={{ borderRadius: '50px', fontSize: '0.8125rem', fontWeight: 600 }}>
+																			<Icon icon={isBlockAction ? 'Block' : 'CheckCircle'} size="sm" />
+																			<span>{isBlockAction ? 'Blocked' : 'Unblocked'}</span>
+																		</span>
+																	</td>
+																	<td>
+																		<span
+																			className="text-dark fw-medium"
+																			style={{ fontSize: '0.875rem' }}>
+																			{item.reason || <span className="text-muted fst-italic">No reason provided</span>}
+																		</span>
+																	</td>
+																	<td>
+																		<div className="d-flex align-items-center gap-2">
+																			<div
+																				className="rounded-circle d-flex align-items-center justify-content-center text-primary fw-bold"
+																				style={{
+																					width: '34px',
+																					height: '34px',
+																					backgroundColor: '#eff6ff',
+																					fontSize: '0.8rem',
+																					border: '1px solid #dbeafe',
+																				}}>
+																				{actorName.slice(0, 2).toUpperCase()}
+																			</div>
+																			<div>
+																				<div className="fw-semibold text-dark" style={{ fontSize: '0.875rem' }}>
+																					{actorName}
+																				</div>
+																				<div className="d-flex align-items-center gap-1 small text-muted">
+																					{actorUsername && <span>@{actorUsername}</span>}
+
+																				</div>
+																			</div>
+																		</div>
+																	</td>
+																	<td>
+																		{item.created_at ? (
+																			<div className="d-flex flex-column">
+																				<span
+																					className="fw-medium text-dark"
+																					style={{ fontSize: '0.8125rem' }}>
+																					{date}
+																				</span>
+																				<span
+																					className="text-muted"
+																					style={{ fontSize: '0.75rem' }}>
+																					{time}
+																				</span>
+																			</div>
+																		) : (
+																			<span className="text-muted small">-</span>
+																		)}
+																	</td>
+																</tr>
+															);
+														})}
+													</tbody>
+												</table>
+											</div>
+											{totalBlockHistories > 0 && (
+												<div className="p-3 border-top bg-light-subtle">
+													<ListingPagination
+														pagination={{
+															currentPage: blockHistoryPage,
+															totalItems: totalBlockHistories,
+															perPage: blockHistoryLimit,
+															perPageOptions: [10, 25, 50, 100],
+															onPageChange: (newPage: number) => {
+																setBlockHistoryPage(newPage);
+															},
+															onPerPageChange: (newLimit: number) => {
+																setBlockHistoryLimit(newLimit);
+																setBlockHistoryPage(1);
+															},
+														}}
+													/>
+												</div>
+											)}
+										</div>
+									) : (
+										<div className="p-5 bg-light-subtle text-muted text-center">
+											<div
+												className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-3 mb-2 border"
+												style={{ width: '60px', height: '60px' }}>
+												<Icon icon="Shield" size="lg" className="text-secondary" />
+											</div>
+											<div className="fw-bold text-dark fs-6">No Block History Found</div>
+											<div className="small text-muted">
+												No block or unblock events have been recorded for this user account.
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 						</div>
@@ -1783,6 +2037,19 @@ export const UserViewPage: FC = () => {
 							</Button>
 						</ModalFooter>
 					</Modal>
+
+					{/* BLOCK / UNBLOCK CONFIRMATION & REASON MODAL */}
+					{user && (
+						<BlockUnblockModal
+							isOpen={isBlockModalOpen}
+							setIsOpen={setIsBlockModalOpen}
+							action={statusLower === 'active' ? 'block' : 'unblock'}
+							userName={user.name}
+							isLoading={isStatusChanging}
+							onConfirm={handleBlockUnblockConfirm}
+							onCancel={() => setIsBlockModalOpen(false)}
+						/>
+					)}
 				</div>
 			</Page>
 		</PageWrapper>

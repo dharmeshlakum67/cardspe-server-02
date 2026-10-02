@@ -938,7 +938,9 @@ export const KycRequestViewPage: FC = () => {
 			{/* IMAGE PREVIEW MODAL */}
 			<ImagePreviewModal
 				isOpen={previewModal.isOpen}
-				setIsOpen={(open) => setPreviewModal((prev) => ({ ...prev, isOpen: open }))}
+				setIsOpen={(open: boolean) =>
+					setPreviewModal((prev) => ({ ...prev, isOpen: open }))
+				}
 				imageUrl={previewModal.imageUrl}
 				title={previewModal.title}
 			/>

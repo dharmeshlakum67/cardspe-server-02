@@ -76,6 +76,16 @@ export const userService = {
 		});
 	},
 
+	// BLOCK OR UNBLOCK USER (HIERARCHY SCOPED)
+	blockUnblockUser: async (
+		id: number | string,
+		payload: { action: 'block' | 'unblock'; reason?: string | null },
+	): Promise<{ success: boolean; message: string; data?: any }> => {
+		return apiClient(ADMIN_ENDPOINTS.BLOCK_STATUS(id), {
+			body: payload,
+		});
+	},
+
 	// DELETE USER / ADMIN
 	deleteUser: async (id: number | string): Promise<{ success: boolean; message: string }> => {
 		return apiClient<{ success: boolean; message: string }>(ADMIN_ENDPOINTS.DELETE(id));

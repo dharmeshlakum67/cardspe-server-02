@@ -55,6 +55,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// BLOCK HISTORY MODULE (CHILD OF USER MANAGEMENT)
+	block_history: {
+		path: PAGE_ROUTES.BLOCK_HISTORY,
+		icon: 'AppBlocking',
+		text: 'Block History',
+		subMenu: null,
+	},
+
 	// MASTER PARENT
 	master: {
 		path: null,

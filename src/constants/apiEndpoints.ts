@@ -439,6 +439,16 @@ export const ADMIN_ENDPOINTS = {
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
+	BLOCK_STATUS: (id: string | number) => ({
+		url: `/api/admin/block-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	BLOCK_UNBLOCK: (id: string | number) => ({
+		url: `/api/admin/block-unblock/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
 	DELETE: (id: string | number) => ({
 		url: `/api/admin/delete/${id}`,
 		method: HTTP_METHODS.DELETE,
@@ -457,6 +467,20 @@ export const ADMIN_ENDPOINTS = {
 } as const;
 
 export const USER_ENDPOINTS = ADMIN_ENDPOINTS;
+
+// BLOCK HISTORY ENDPOINTS
+export const BLOCK_HISTORY_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/admin/block-history',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_BY_USER: (userId: string | number) => ({
+		url: `/api/admin/block-history/${userId}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+} as const;
 
 // LOGIN HISTORY ENDPOINTS
 export const LOGIN_HISTORY_ENDPOINTS = {
@@ -486,6 +510,7 @@ export const API_ENDPOINTS = {
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
+	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,
 	SETTING: SETTING_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,

@@ -17,7 +17,7 @@ export const PAGE_ROUTES = {
 	PROFILE: 'admin/profile',
 	KYC: 'profile/kyc',
 
-	// USER MANAGEMENT / ROLES, USERS & KYC REQUESTS
+	// USER MANAGEMENT / ROLES, USERS, KYC REQUESTS & BLOCK HISTORY
 	USERS: 'users',
 	USERS_ADD: 'users/add',
 	USERS_VIEW: 'users/view/:id',
@@ -28,6 +28,7 @@ export const PAGE_ROUTES = {
 	ROLES_EDIT: 'roles/edit/:id',
 	KYC_REQUESTS: 'kyc-requests',
 	KYC_REQUESTS_VIEW: 'kyc-requests/view/:id',
+	BLOCK_HISTORY: 'users/block-history',
 
 	// MASTER / DOCUMENT TYPE & STATE
 	DOCUMENT_TYPE: 'master/document-type',

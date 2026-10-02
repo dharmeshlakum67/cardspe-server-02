@@ -62,6 +62,9 @@ const UserViewPage = lazy(
 const UserEditPage = lazy(
 	() => import('../pages/presentation/user-management/users/UserEditPage'),
 );
+const BlockHistoryListPage = lazy(
+	() => import('../pages/presentation/user-management/block-history/BlockHistoryListPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -135,6 +138,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.KYC_REQUESTS_VIEW,
 		element: <KycRequestViewPage />,
+	},
+	{
+		path: PAGE_ROUTES.BLOCK_HISTORY,
+		element: <BlockHistoryListPage />,
 	},
 	{
 		path: PAGE_ROUTES.DOCUMENT_TYPE,
