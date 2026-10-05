@@ -364,6 +364,55 @@ export const PAYMENT_MODE_ENDPOINTS = {
 	}),
 } as const;
 
+// OPERATOR ENDPOINTS
+export const OPERATOR_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/operator/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/operator/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL_ACTIVE: {
+		url: '/api/operator/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/operator/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	GET_BY_ID: (id: string | number) => ({
+		url: `/api/operator/get-by-id/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	CREATE: {
+		url: '/api/operator/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/operator/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/operator/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/operator/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // KYC ENDPOINTS
 export const KYC_ENDPOINTS = {
 	GET_DATA: {
@@ -519,6 +568,7 @@ export const API_ENDPOINTS = {
 	SERVICE_CATEGORY: SERVICE_CATEGORY_ENDPOINTS,
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
+	OPERATOR: OPERATOR_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,

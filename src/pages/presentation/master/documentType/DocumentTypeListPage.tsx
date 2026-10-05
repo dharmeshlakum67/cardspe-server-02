@@ -123,13 +123,56 @@ const DocumentTypeListPage: FC = () => {
 					limit: perPage,
 				});
 
-				if (res && res.data) {
-					setDocumentTypes(res.data);
-					setTotalDocuments(res.total_document ?? res.data.length);
-				} else {
-					setDocumentTypes([]);
-					setTotalDocuments(0);
+				const respAny = res as any;
+				const rawData = respAny?.data;
+				let fetchedData: IDocumentTypeItem[] = [];
+				let count = 0;
+
+				if (Array.isArray(rawData)) {
+					fetchedData = rawData;
+				} else if (rawData && typeof rawData === 'object') {
+					if (Array.isArray(rawData.rows)) {
+						fetchedData = rawData.rows;
+					} else if (Array.isArray(rawData.document_types)) {
+						fetchedData = rawData.document_types;
+					} else if (Array.isArray(rawData.documentTypes)) {
+						fetchedData = rawData.documentTypes;
+					} else if (Array.isArray(rawData.list)) {
+						fetchedData = rawData.list;
+					} else if (Array.isArray(rawData.data)) {
+						fetchedData = rawData.data;
+					}
+				} else if (Array.isArray(respAny?.rows)) {
+					fetchedData = respAny.rows;
 				}
+
+				if (typeof respAny?.total_document === 'number') {
+					count = respAny.total_document;
+				} else if (typeof respAny?.totalDocuments === 'number') {
+					count = respAny.totalDocuments;
+				} else if (typeof respAny?.total === 'number') {
+					count = respAny.total;
+				} else if (typeof respAny?.count === 'number') {
+					count = respAny.count;
+				} else if (rawData && typeof rawData === 'object') {
+					if (typeof rawData.count === 'number') {
+						count = rawData.count;
+					} else if (typeof rawData.total === 'number') {
+						count = rawData.total;
+					} else if (typeof rawData.total_document === 'number') {
+						count = rawData.total_document;
+					} else if (typeof rawData.totalDocuments === 'number') {
+						count = rawData.totalDocuments;
+					}
+				}
+
+				if (!count && fetchedData.length > 0) {
+					count = fetchedData.length;
+				}
+
+				setDocumentTypes(fetchedData);
+				setTotalDocuments(count);
+				lastFetchKeyRef.current = currentFetchKey;
 			} catch (error: any) {
 				showNotification(
 					'Error fetching document types',

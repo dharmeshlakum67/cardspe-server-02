@@ -125,6 +125,20 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// OPERATOR CHILD MODULE
+	operator: {
+		path: PAGE_ROUTES.OPERATORS,
+		icon: 'Hub',
+		text: 'Operators',
+		subMenu: null,
+	},
+	operators: {
+		path: PAGE_ROUTES.OPERATORS,
+		icon: 'Hub',
+		text: 'Operators',
+		subMenu: null,
+	},
+
 	// LOGIN HISTORY (TOP-LEVEL PARENT MENU)
 	login_history: {
 		path: PAGE_ROUTES.LOGIN_HISTORY,

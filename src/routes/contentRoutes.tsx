@@ -38,6 +38,18 @@ const MobilePlanTypeListPage = lazy(
 const PaymentModeListPage = lazy(
 	() => import('../pages/presentation/service-management/payment-mode/PaymentModeListPage'),
 );
+const OperatorListPage = lazy(
+	() => import('../pages/presentation/service-management/operator/OperatorListPage'),
+);
+const OperatorAddPage = lazy(
+	() => import('../pages/presentation/service-management/operator/OperatorAddPage'),
+);
+const OperatorEditPage = lazy(
+	() => import('../pages/presentation/service-management/operator/OperatorEditPage'),
+);
+const OperatorViewPage = lazy(
+	() => import('../pages/presentation/service-management/operator/OperatorViewPage'),
+);
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
 const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
@@ -178,6 +190,26 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.PAYMENT_MODE,
 		element: <PaymentModeListPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATORS,
+		element: <OperatorListPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATOR,
+		element: <OperatorListPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATOR_ADD,
+		element: <OperatorAddPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATOR_EDIT,
+		element: <OperatorEditPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATOR_VIEW,
+		element: <OperatorViewPage />,
 	},
 	{
 		path: PAGE_ROUTES.LOGIN_HISTORY,

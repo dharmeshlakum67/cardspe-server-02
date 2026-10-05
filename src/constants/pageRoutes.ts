@@ -38,11 +38,16 @@ export const PAGE_ROUTES = {
 	STATE: 'master/state',
 	STATE_ALT: 'state',
 
-	// SERVICE MANAGEMENT / SERVICE CATEGORY, MOBILE PLAN TYPE & PAYMENT MODE
+	// SERVICE MANAGEMENT / SERVICE CATEGORY, MOBILE PLAN TYPE, PAYMENT MODE & OPERATOR
 	SERVICE_CATEGORY: 'service-management/service-category',
 	MOBILE_PLAN_TYPE: 'service-management/mobile-plan-type',
 	MOBILE_PLAN_TYPE_MASTER: 'master/mobile-plan-type',
 	PAYMENT_MODE: 'service-management/payment-mode',
+	OPERATORS: 'service-management/operators',
+	OPERATOR: 'service-management/operators',
+	OPERATOR_ADD: 'service-management/operators/add',
+	OPERATOR_EDIT: 'service-management/operators/edit/:id',
+	OPERATOR_VIEW: 'service-management/operators/view/:id',
 
 	// LOGIN HISTORY
 	LOGIN_HISTORY: 'login-history',
