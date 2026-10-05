@@ -43,7 +43,8 @@ export type TUserDetailTab =
 	| 'wallet'
 	| 'sessions'
 	| 'block_history'
-	| 'activity_log';
+	| 'activity_log'
+	| 'service_management';
 
 // FORMAT KEY LABEL (e.g. pan_number -> Pan Number)
 const formatKeyLabel = (key: string): string => {
@@ -112,6 +113,7 @@ const USER_DETAIL_TABS: IUserDetailTabItem[] = [
 	{ id: 'profile', label: 'Profile', icon: 'Person' },
 	{ id: 'kyc', label: 'KYC', icon: 'Assignment' },
 	{ id: 'wallet', label: 'Wallet', icon: 'AccountBalanceWallet' },
+	{ id: 'service_management', label: 'Service Management', icon: 'Settings' },
 	{ id: 'sessions', label: 'Sessions', icon: 'Schedule' },
 	{ id: 'block_history', label: 'Block History', icon: 'Block' },
 	{ id: 'activity_log', label: 'Activity Log', icon: 'Article' },
@@ -313,11 +315,25 @@ export const UserViewPage: FC = () => {
 						list.length;
 					setTotalSessions(Number(total) || list.length);
 					hasFetchedSessionsRef.current = true;
+				} else {
+					setSessions([]);
+					setTotalSessions(0);
+					hasFetchedSessionsRef.current = true;
 				}
 			} catch (err: any) {
-				setSessionsFetchError(
-					err?.data?.message || err?.message || 'Failed to load user login history.',
-				);
+				const errMsg = err?.data?.message || err?.message || '';
+				if (
+					errMsg.includes('Unexpected non-whitespace character') ||
+					errMsg.includes('JSON') ||
+					err?.status === 404
+				) {
+					setSessions([]);
+					setTotalSessions(0);
+					setSessionsFetchError(null);
+					hasFetchedSessionsRef.current = true;
+				} else {
+					setSessionsFetchError(errMsg || 'Failed to load user login history.');
+				}
 			} finally {
 				setIsSessionsLoading(false);
 			}
@@ -361,11 +377,25 @@ export const UserViewPage: FC = () => {
 						list.length;
 					setTotalBlockHistories(Number(total) || list.length);
 					hasFetchedBlockHistoryRef.current = true;
+				} else {
+					setBlockHistories([]);
+					setTotalBlockHistories(0);
+					hasFetchedBlockHistoryRef.current = true;
 				}
 			} catch (err: any) {
-				setBlockHistoryFetchError(
-					err?.data?.message || err?.message || 'Failed to load user block history.',
-				);
+				const errMsg = err?.data?.message || err?.message || '';
+				if (
+					errMsg.includes('Unexpected non-whitespace character') ||
+					errMsg.includes('JSON') ||
+					err?.status === 404
+				) {
+					setBlockHistories([]);
+					setTotalBlockHistories(0);
+					setBlockHistoryFetchError(null);
+					hasFetchedBlockHistoryRef.current = true;
+				} else {
+					setBlockHistoryFetchError(errMsg || 'Failed to load user block history.');
+				}
 			} finally {
 				setIsBlockHistoryLoading(false);
 			}

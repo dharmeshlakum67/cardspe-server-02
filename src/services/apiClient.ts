@@ -27,6 +27,79 @@ export class ApiError extends Error {
 	}
 }
 
+function parseJsonSafely(text: string): any {
+	if (typeof text !== 'string') return text;
+	const trimmed = text.trim();
+	if (!trimmed) return {};
+
+	try {
+		return JSON.parse(trimmed);
+	} catch (err: any) {
+		// 1. Try extracting up to syntax error position (e.g. "Unexpected non-whitespace character after JSON at position 571")
+		const posMatch = err?.message?.match(/position\s+(\d+)/i);
+		if (posMatch && posMatch[1]) {
+			const pos = parseInt(posMatch[1], 10);
+			if (!isNaN(pos) && pos > 0 && pos <= trimmed.length) {
+				try {
+					return JSON.parse(trimmed.slice(0, pos).trim());
+				} catch {
+					// Fall through to brace matching
+				}
+			}
+		}
+
+		// 2. Try to extract first complete JSON object { ... } or array [ ... ] using brace matching
+		const firstBrace = trimmed.indexOf('{');
+		const firstBracket = trimmed.indexOf('[');
+		let startIdx = -1;
+		let openChar = '{';
+		let closeChar = '}';
+
+		if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+			startIdx = firstBrace;
+			openChar = '{';
+			closeChar = '}';
+		} else if (firstBracket !== -1) {
+			startIdx = firstBracket;
+			openChar = '[';
+			closeChar = ']';
+		}
+
+		if (startIdx !== -1) {
+			let depth = 0;
+			let inString = false;
+			let escape = false;
+			for (let i = startIdx; i < trimmed.length; i++) {
+				const char = trimmed[i];
+				if (inString) {
+					if (escape) {
+						escape = false;
+					} else if (char === '\\') {
+						escape = true;
+					} else if (char === '"') {
+						inString = false;
+					}
+				} else if (char === '"') {
+					inString = true;
+				} else if (char === openChar) {
+					depth++;
+				} else if (char === closeChar) {
+					depth--;
+					if (depth === 0) {
+						try {
+							return JSON.parse(trimmed.slice(startIdx, i + 1));
+						} catch {
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return text;
+	}
+}
+
 // API CLIENT
 export async function apiClient<T = any>(endpoint: TEndpointInput, options: IRequestOptions = {},): Promise<T> {
 	const { params, headers, body, requiresAuth, ...customConfig } = options;
@@ -89,11 +162,15 @@ export async function apiClient<T = any>(endpoint: TEndpointInput, options: IReq
 	const response = await fetch(url, config);
 
 	let responseData: any;
+	const rawText = await response.text();
 	const contentType = response.headers.get('content-type');
-	if (contentType && contentType.includes('application/json')) {
-		responseData = await response.json();
+	const isJson = (contentType && contentType.includes('application/json')) ||
+		(rawText && (rawText.trim().startsWith('{') || rawText.trim().startsWith('[')));
+
+	if (isJson) {
+		responseData = parseJsonSafely(rawText);
 	} else {
-		responseData = await response.text();
+		responseData = rawText;
 	}
 
 	if (!response.ok) {

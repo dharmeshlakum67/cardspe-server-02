@@ -96,9 +96,23 @@ export const userService = {
 		userId: number | string,
 		params?: Record<string, any>,
 	): Promise<{ success: boolean; message?: string; data: any[]; total_document?: number }> => {
-		return apiClient(ADMIN_ENDPOINTS.GET_LOGIN_HISTORY(userId), {
-			params,
-		});
+		try {
+			const res = await apiClient(ADMIN_ENDPOINTS.GET_LOGIN_HISTORY(userId), {
+				params,
+			});
+			return res;
+		} catch (error: any) {
+			const errMsg = error?.message || error?.data?.message || '';
+			if (
+				errMsg.includes('Unexpected non-whitespace character') ||
+				errMsg.includes('JSON') ||
+				error?.status === 404 ||
+				error?.status === 204
+			) {
+				return { success: true, data: [], total_document: 0 };
+			}
+			throw error;
+		}
 	},
 };
 
