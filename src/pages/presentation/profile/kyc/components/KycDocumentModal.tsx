@@ -530,14 +530,24 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 		if (!isApproved && !isEditMode) {
 			return (
 				<>
-					<Button type='button' color='light' className='px-4 py-2' onClick={handleClose}>
+					<Button
+						key='btn-close-view'
+						type='button'
+						color='light'
+						className='px-4 py-2'
+						onClick={handleClose}>
 						Close
 					</Button>
 					<Button
+						key='btn-edit-action'
 						type='button'
 						color='primary'
 						className='px-4 py-2 d-inline-flex align-items-center gap-2'
-						onClick={() => setIsEditMode(true)}>
+						onClick={(e: React.MouseEvent) => {
+							e.preventDefault();
+							e.stopPropagation();
+							setIsEditMode(true);
+						}}>
 						<Icon icon='Edit' />
 						<span>Edit Submission</span>
 					</Button>
@@ -548,11 +558,14 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 		return (
 			<>
 				<Button
+					key='btn-cancel-edit'
 					type='button'
 					color='light'
 					className='px-4 py-2'
 					isDisable={loading}
-					onClick={() => {
+					onClick={(e: React.MouseEvent) => {
+						e.preventDefault();
+						e.stopPropagation();
 						if (isSubmitted) {
 							setIsEditMode(false);
 						} else {
@@ -562,6 +575,7 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 					Cancel
 				</Button>
 				<Button
+					key='btn-submit-action'
 					type='submit'
 					color='primary'
 					className='px-4 py-2 d-inline-flex align-items-center gap-2'
@@ -630,7 +644,16 @@ export const KycDocumentModal: FC<IKycDocumentModalProps> = ({
 			</ModalHeader>
 
 			{/* FORM */}
-			<form onSubmit={step === 'OTP' ? handleOtpSubmit : handleFormSubmit}>
+			<form
+				onSubmit={(e) => {
+					if (step === 'OTP') {
+						handleOtpSubmit(e);
+					} else if (isEditMode) {
+						handleFormSubmit(e);
+					} else {
+						e.preventDefault();
+					}
+				}}>
 				<ModalBody className='px-4 py-3'>
 					{/* STEP 2: OTP VIEW */}
 					{step === 'OTP' ? (

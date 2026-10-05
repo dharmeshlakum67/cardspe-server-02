@@ -14,6 +14,7 @@ import COLORS from '../common/data/enumColors';
 import { getOS } from '../helpers/helpers';
 import AsideRoutes from '../layout/Aside/AsideRoutes';
 import { ToastCloseButton } from '../components/bootstrap/Toasts';
+import SocketNotificationListener from '../components/common/SocketNotificationListener';
 
 const App = () => {
 	getOS();
@@ -64,6 +65,7 @@ const App = () => {
 
 	return (
 		<ThemeProvider theme={theme}>
+			<SocketNotificationListener />
 			<div
 				ref={ref}
 				className='app'

@@ -604,6 +604,25 @@ export const BANK_DETAIL_ENDPOINTS = {
 	}),
 } as const;
 
+// NOTIFICATION ENDPOINTS
+export const NOTIFICATION_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/notification',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	MARK_ALL_READ: {
+		url: '/api/notification/read-all',
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	},
+	MARK_READ: (id: string | number) => ({
+		url: `/api/notification/mark-read/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -619,6 +638,7 @@ export const API_ENDPOINTS = {
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	OPERATOR: OPERATOR_ENDPOINTS,
 	BANK_DETAIL: BANK_DETAIL_ENDPOINTS,
+	NOTIFICATION: NOTIFICATION_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,

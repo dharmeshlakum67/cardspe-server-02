@@ -7,20 +7,23 @@ import App from './App/App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeContextProvider } from './contexts/themeContext';
 import { AuthContextProvider } from './contexts/authContext';
+import { SocketContextProvider } from './contexts/socketContext';
 import { PermissionContextProvider } from './contexts/permissionContext';
 import './i18n';
 
 const children = (
 	<AuthContextProvider>
-		<PermissionContextProvider>
-			<ThemeContextProvider>
-				<Router>
-					<React.StrictMode>
-						<App />
-					</React.StrictMode>
-				</Router>
-			</ThemeContextProvider>
-		</PermissionContextProvider>
+		<SocketContextProvider>
+			<PermissionContextProvider>
+				<ThemeContextProvider>
+					<Router>
+						<React.StrictMode>
+							<App />
+						</React.StrictMode>
+					</Router>
+				</ThemeContextProvider>
+			</PermissionContextProvider>
+		</SocketContextProvider>
 	</AuthContextProvider>
 );
 

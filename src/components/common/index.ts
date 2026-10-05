@@ -8,4 +8,5 @@ export * from './ImagePreviewModal';
 export { default as ContactNumberInput } from './ContactNumberInput';
 export { default as AppBreadcrumbs } from './AppBreadcrumbs/AppBreadcrumbs';
 export type { AppBreadcrumbItem } from './AppBreadcrumbs/AppBreadcrumbs';
+export { default as SocketNotificationListener } from './SocketNotificationListener';
 
