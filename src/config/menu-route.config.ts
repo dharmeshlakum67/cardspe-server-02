@@ -139,6 +139,22 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// PAYMENTS PARENT (EXPANDABLE GROUP)
+	payments: {
+		path: null,
+		icon: 'AccountBalance',
+		text: 'Payments',
+		subMenu: null,
+	},
+
+	// BANK DETAILS CHILD MODULE
+	bank_details: {
+		path: PAGE_ROUTES.BANK_DETAILS,
+		icon: 'AccountBalanceWallet',
+		text: 'Bank Details',
+		subMenu: null,
+	},
+
 	// LOGIN HISTORY (TOP-LEVEL PARENT MENU)
 	login_history: {
 		path: PAGE_ROUTES.LOGIN_HISTORY,

@@ -555,6 +555,45 @@ export const LOGIN_HISTORY_ENDPOINTS = {
 	}),
 } as const;
 
+// BANK DETAIL ENDPOINTS
+export const BANK_DETAIL_ENDPOINTS = {
+	CREATE: {
+		url: '/api/bank-detail/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	GET_ALL: {
+		url: '/api/bank-detail/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/bank-detail/active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/bank-detail/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	UPDATE: (id: string | number) => ({
+		url: `/api/bank-detail/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/bank-detail/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/bank-detail/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -569,6 +608,7 @@ export const API_ENDPOINTS = {
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	OPERATOR: OPERATOR_ENDPOINTS,
+	BANK_DETAIL: BANK_DETAIL_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,

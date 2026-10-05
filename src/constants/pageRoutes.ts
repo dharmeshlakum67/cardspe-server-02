@@ -49,6 +49,9 @@ export const PAGE_ROUTES = {
 	OPERATOR_EDIT: 'service-management/operators/edit/:id',
 	OPERATOR_VIEW: 'service-management/operators/view/:id',
 
+	// PAYMENTS / BANK DETAILS
+	BANK_DETAILS: 'payments/bank-details',
+
 	// LOGIN HISTORY
 	LOGIN_HISTORY: 'login-history',
 

@@ -18,6 +18,8 @@ export const PERMISSION_KEYS = {
 	MOBILE_PLAN_TYPE: 'mobile_plan_type',
 	PAYMENT_MODE: 'payment_mode',
 	OPERATOR: 'operator',
+	PAYMENTS: 'payments',
+	BANK_DETAILS: 'bank_details',
 	SETTING: 'setting',
 	SETTINGS: 'settings',
 } as const;

@@ -77,6 +77,9 @@ const UserEditPage = lazy(
 const BlockHistoryListPage = lazy(
 	() => import('../pages/presentation/user-management/block-history/BlockHistoryListPage'),
 );
+const BankDetailListPage = lazy(
+	() => import('../pages/presentation/payments/bank-detail/BankDetailListPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -218,6 +221,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.SETTING,
 		element: <SettingPage />,
+	},
+	{
+		path: PAGE_ROUTES.BANK_DETAILS,
+		element: <BankDetailListPage />,
 	},
 	{
 		path: '*',
