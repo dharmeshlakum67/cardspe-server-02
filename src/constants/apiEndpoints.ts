@@ -523,6 +523,16 @@ export const ADMIN_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	}),
+	GET_SERVICE_ACCESS: (id: string | number) => ({
+		url: `/api/admin/service-access/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	UPDATE_SERVICE_ACCESS: (id: string | number) => ({
+		url: `/api/admin/service-access/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
 } as const;
 
 export const USER_ENDPOINTS = ADMIN_ENDPOINTS;

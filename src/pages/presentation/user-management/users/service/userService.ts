@@ -10,6 +10,10 @@ import {
 	IActiveAdminItem,
 	IActiveAdminQueryParams,
 } from '../type/user-type';
+import {
+	IServiceAccessResponse,
+	IUpdateServiceAccessPayload,
+} from '../type/service-access-type';
 
 export const userService = {
 	// FETCH ALL USERS / ADMINS WITH FILTERS AND PAGINATION
@@ -113,6 +117,21 @@ export const userService = {
 			}
 			throw error;
 		}
+	},
+
+	// GET USER / ADMIN SERVICE ACCESS
+	getServiceAccess: async (id: number | string): Promise<IServiceAccessResponse> => {
+		return apiClient<IServiceAccessResponse>(ADMIN_ENDPOINTS.GET_SERVICE_ACCESS(id));
+	},
+
+	// UPDATE USER / ADMIN SERVICE ACCESS (BATCH OR SINGLE)
+	updateServiceAccess: async (
+		id: number | string,
+		payload: IUpdateServiceAccessPayload,
+	): Promise<{ success: boolean; message: string; data?: any }> => {
+		return apiClient(ADMIN_ENDPOINTS.UPDATE_SERVICE_ACCESS(id), {
+			body: payload,
+		});
 	},
 };
 

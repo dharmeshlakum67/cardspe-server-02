@@ -74,6 +74,28 @@
 			}
 		}
 
+		.btn-header-manage-services {
+			background: #eef2ff;
+			border: 1px solid #c7d2fe;
+			color: #4338ca;
+			font-size: 0.85rem;
+			font-weight: 600;
+			padding: 0.45rem 1.15rem;
+			border-radius: 8px;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.4rem;
+			cursor: pointer;
+			transition: all 0.2s ease;
+
+			&:hover {
+				background: #e0e7ff;
+				border-color: #a5b4fc;
+				color: #3730a3;
+				transform: translateY(-1px);
+			}
+		}
+
 		.btn-header-edit {
 			background: #2563eb;
 			border: 1px solid #2563eb;

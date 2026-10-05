@@ -22,6 +22,8 @@ export const PERMISSION_KEYS = {
 	BANK_DETAILS: 'bank_details',
 	SETTING: 'setting',
 	SETTINGS: 'settings',
+	MANAGE_SERVICE: 'manage_service',
+	MANAGE_SERVICES: 'manage_services',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

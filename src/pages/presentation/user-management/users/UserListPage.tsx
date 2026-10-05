@@ -1,5 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/label-has-associated-control */
+/* eslint-disable react/no-unstable-nested-components */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
@@ -20,6 +21,7 @@ import roleService from '../../role/service/roleService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
 import { IUserItem } from './type/user-type';
 import { IRoleItem } from '../../role/type/role-type';
+import ManageServiceAccessModal from './components/ManageServiceAccessModal';
 import './css/UserManagement.scss';
 
 export const UserListPage: FC = () => {
@@ -32,6 +34,10 @@ export const UserListPage: FC = () => {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const [userToDelete, setUserToDelete] = useState<IUserItem | null>(null);
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+	// SERVICE ACCESS MODAL STATES
+	const [isServiceModalOpen, setIsServiceModalOpen] = useState<boolean>(false);
+	const [selectedUserForServices, setSelectedUserForServices] = useState<IUserItem | null>(null);
 
 	// AVAILABLE ROLES FOR DROPDOWN (FROM api/role/get-active)
 	const [roleOptions, setRoleOptions] = useState<IRoleItem[]>([]);
@@ -55,7 +61,18 @@ export const UserListPage: FC = () => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [perPage, setPerPage] = useState<number>(10);
 
-	const { canRead, canDelete, isLoadingPermissions } = usePermission();
+	const { canRead, canDelete, hasPermission, isLoadingPermissions } = usePermission();
+
+	// MANAGE SERVICE PERMISSION GUARD
+	const canManageService = Boolean(
+		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
+		hasPermission(PERMISSION_KEYS.MANAGE_SERVICES) ||
+		hasPermission('manage_service') ||
+		hasPermission('manage_services') ||
+		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+	);
 
 	// REF GUARDS TO PREVENT DUPLICATE FETCHES
 	const lastFetchKeyRef = useRef<string>('');
@@ -517,7 +534,23 @@ export const UserListPage: FC = () => {
 					emptyIcon="Group"
 					actions={{
 						permissionKey: PERMISSION_KEYS.USERS,
-						actionColumnWidth: '160px',
+						actionColumnWidth: canManageService ? '290px' : '160px',
+						customActions: canManageService
+							? (user) => (
+									<button
+										type="button"
+										className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1"
+										title="Manage Services"
+										style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+										onClick={() => {
+											setSelectedUserForServices(user);
+											setIsServiceModalOpen(true);
+										}}>
+										<Icon icon="Shield" size="sm" />
+										<span>Manage Services</span>
+									</button>
+							  )
+							: undefined,
 						onView: (user) => {
 							navigate(`/${PAGE_ROUTES.USERS_VIEW.replace(':id', encryptId(user.id))}`);
 						},
@@ -541,6 +574,13 @@ export const UserListPage: FC = () => {
 							setCurrentPage(1);
 						},
 					}}
+				/>
+
+				{/* MANAGE SERVICE ACCESS MODAL */}
+				<ManageServiceAccessModal
+					isOpen={isServiceModalOpen}
+					setIsOpen={setIsServiceModalOpen}
+					user={selectedUserForServices}
 				/>
 
 				{/* CONFIRMATION MODAL */}

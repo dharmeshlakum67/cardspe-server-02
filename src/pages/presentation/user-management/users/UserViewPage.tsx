@@ -34,6 +34,7 @@ import Modal, {
 	ModalHeader,
 	ModalTitle,
 } from '../../../../components/bootstrap/Modal';
+import ServiceAccessManager from './components/ServiceAccessManager';
 import './css/UserViewPage.scss';
 
 export type TUserDetailTab =
@@ -126,10 +127,30 @@ export const UserViewPage: FC = () => {
 		canRead,
 		canUpdate,
 		canDelete,
-		canReview,
 		hasPermission,
 		isLoadingPermissions,
 	} = usePermission();
+
+	// MANAGE SERVICE PERMISSION GUARD
+	const canManageService = Boolean(
+		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
+		hasPermission(PERMISSION_KEYS.MANAGE_SERVICES) ||
+		hasPermission('manage_service') ||
+		hasPermission('manage_services') ||
+		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+	);
+
+	// TABS FILTERED BY PERMISSION
+	const visibleTabs = useMemo(() => {
+		return USER_DETAIL_TABS.filter((tab) => {
+			if (tab.id === 'service_management') {
+				return canManageService;
+			}
+			return true;
+		});
+	}, [canManageService]);
 
 	// DECRYPT ID FROM URL
 	const decryptedId = useMemo(() => decryptId(rawId), [rawId]);
@@ -412,9 +433,6 @@ export const UserViewPage: FC = () => {
 
 	// CAN REVIEW / APPROVE / REJECT PERMISSION CHECK
 	const canReviewPermission =
-		Boolean(canReview && canReview(PERMISSION_KEYS.KYC_REQUEST)) ||
-		Boolean(canReview && canReview('kyc_requests')) ||
-		Boolean(canReview && canReview('kyc')) ||
 		Boolean(hasPermission && hasPermission(PERMISSION_KEYS.KYC_REQUEST, 'review')) ||
 		Boolean(hasPermission && hasPermission(PERMISSION_KEYS.KYC_REQUEST, 'approve')) ||
 		Boolean(hasPermission && hasPermission(PERMISSION_KEYS.KYC_REQUEST, 'update')) ||
@@ -627,6 +645,15 @@ export const UserViewPage: FC = () => {
 								/>
 								<span>{statusLower === 'active' ? 'Block User' : 'Activate User'}</span>
 							</button>
+							{canManageService && (
+								<button
+									type="button"
+									className="btn-header-manage-services"
+									onClick={() => setActiveTab('service_management')}>
+									<Icon icon="Shield" size="sm" />
+									<span>Manage Services</span>
+								</button>
+							)}
 							{canUpdate(PERMISSION_KEYS.USERS) && (
 								<button
 									type="button"
@@ -722,7 +749,7 @@ export const UserViewPage: FC = () => {
 
 					{/* 2. HORIZONTAL NAVIGATION TABS */}
 					<div className="user-nav-tabs-bar">
-						{USER_DETAIL_TABS.map((tab) => (
+						{visibleTabs.map((tab) => (
 							<button
 								key={tab.id}
 								type="button"
@@ -1432,6 +1459,34 @@ export const UserViewPage: FC = () => {
 											</div>
 										</div>
 									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* SERVICE MANAGEMENT TAB */}
+					{canManageService && activeTab === 'service_management' && (
+						<div className="row g-4">
+							<div className="col-12">
+								<div className="user-section-card p-4">
+									<div className="card-title-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+										<div className="d-flex align-items-center gap-2">
+											<div className="title-icon">
+												<Icon icon="Settings" />
+											</div>
+											<div>
+												<h3 className="card-main-title mb-0">Service Access Management</h3>
+												<span className="text-muted small">
+													View and configure accessible service categories for this user.
+												</span>
+											</div>
+										</div>
+									</div>
+									<ServiceAccessManager
+										userId={decryptedId || user.id}
+										userName={user.name}
+										username={user.username}
+									/>
 								</div>
 							</div>
 						</div>

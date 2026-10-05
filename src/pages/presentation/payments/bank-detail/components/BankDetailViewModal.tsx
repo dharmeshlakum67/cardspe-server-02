@@ -287,8 +287,4 @@ export const BankDetailViewModal: FC<IBankDetailViewModalProps> = ({
 	);
 };
 
-BankDetailViewModal.defaultProps = {
-	bankDetail: null,
-};
-
 export default BankDetailViewModal;

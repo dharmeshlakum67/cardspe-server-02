@@ -69,7 +69,7 @@ function parseJsonSafely(text: string): any {
 			let depth = 0;
 			let inString = false;
 			let escape = false;
-			for (let i = startIdx; i < trimmed.length; i++) {
+			for (let i = startIdx; i < trimmed.length; i += 1) {
 				const char = trimmed[i];
 				if (inString) {
 					if (escape) {
@@ -82,9 +82,9 @@ function parseJsonSafely(text: string): any {
 				} else if (char === '"') {
 					inString = true;
 				} else if (char === openChar) {
-					depth++;
+					depth += 1;
 				} else if (char === closeChar) {
-					depth--;
+					depth -= 1;
 					if (depth === 0) {
 						try {
 							return JSON.parse(trimmed.slice(startIdx, i + 1));
