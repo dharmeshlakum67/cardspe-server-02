@@ -362,6 +362,34 @@
 					box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 				}
 			}
+
+			&.btn-action-services,
+			&.btn-action-service {
+				background-color: #eff6ff !important;
+				color: #2563eb !important;
+				border-color: #dbeafe !important;
+
+				&:hover {
+					background-color: #dbeafe !important;
+					border-color: #bfdbfe !important;
+					color: #1d4ed8 !important;
+					box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+				}
+			}
+
+			&.btn-action-gateways,
+			&.btn-action-gateway {
+				background-color: #f0fdf4 !important;
+				color: #16a34a !important;
+				border-color: #dcfce7 !important;
+
+				&:hover {
+					background-color: #dcfce7 !important;
+					border-color: #bbf7d0 !important;
+					color: #15803d !important;
+					box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
+				}
+			}
 		}
 
 		// CIRCLE ACTION BUTTONS

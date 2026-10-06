@@ -35,6 +35,7 @@ import Modal, {
 	ModalTitle,
 } from '../../../../components/bootstrap/Modal';
 import ServiceAccessManager from './components/ServiceAccessManager';
+import PaymentGatewayAccessManager from './components/PaymentGatewayAccessManager';
 import './css/UserViewPage.scss';
 
 export type TUserDetailTab =
@@ -45,7 +46,8 @@ export type TUserDetailTab =
 	| 'sessions'
 	| 'block_history'
 	| 'activity_log'
-	| 'service_management';
+	| 'service_management'
+	| 'payment_gateway_management';
 
 // FORMAT KEY LABEL (e.g. pan_number -> Pan Number)
 const formatKeyLabel = (key: string): string => {
@@ -115,6 +117,7 @@ const USER_DETAIL_TABS: IUserDetailTabItem[] = [
 	{ id: 'kyc', label: 'KYC', icon: 'Assignment' },
 	{ id: 'wallet', label: 'Wallet', icon: 'AccountBalanceWallet' },
 	{ id: 'service_management', label: 'Service Management', icon: 'Settings' },
+	{ id: 'payment_gateway_management', label: 'Payment Gateways', icon: 'AccountBalanceWallet' },
 	{ id: 'sessions', label: 'Sessions', icon: 'Schedule' },
 	{ id: 'block_history', label: 'Block History', icon: 'Block' },
 	{ id: 'activity_log', label: 'Activity Log', icon: 'Article' },
@@ -134,12 +137,29 @@ export const UserViewPage: FC = () => {
 	// MANAGE SERVICE PERMISSION GUARD
 	const canManageService = Boolean(
 		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
-		hasPermission(PERMISSION_KEYS.MANAGE_SERVICES) ||
 		hasPermission('manage_service') ||
 		hasPermission('manage_services') ||
 		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+	);
+
+	// MANAGE PAYMENT GATEWAY PERMISSION GUARD
+	const canManageGateway = Boolean(
+		hasPermission(PERMISSION_KEYS.USERS, 'manage_gateway') ||
+		hasPermission(PERMISSION_KEYS.USER, 'manage_gateway') ||
+		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_gateway') ||
+		hasPermission('users', 'manage_gateway') ||
+		hasPermission('user', 'manage_gateway') ||
+		hasPermission('manage_gateway') ||
+		hasPermission('manage_gateways'),
+	);
+
+	const canViewGatewayAccess = Boolean(
+		canRead(PERMISSION_KEYS.USERS) ||
+		canRead(PERMISSION_KEYS.USER) ||
+		canRead(PERMISSION_KEYS.USER_MANAGEMENT) ||
+		canManageGateway,
 	);
 
 	// TABS FILTERED BY PERMISSION
@@ -148,9 +168,12 @@ export const UserViewPage: FC = () => {
 			if (tab.id === 'service_management') {
 				return canManageService;
 			}
+			if (tab.id === 'payment_gateway_management') {
+				return canViewGatewayAccess || canManageGateway;
+			}
 			return true;
 		});
-	}, [canManageService]);
+	}, [canManageService, canViewGatewayAccess, canManageGateway]);
 
 	// DECRYPT ID FROM URL
 	const decryptedId = useMemo(() => decryptId(rawId), [rawId]);
@@ -652,6 +675,16 @@ export const UserViewPage: FC = () => {
 									onClick={() => setActiveTab('service_management')}>
 									<Icon icon="Shield" size="sm" />
 									<span>Manage Services</span>
+								</button>
+							)}
+							{(canManageGateway || canViewGatewayAccess) && (
+								<button
+									type="button"
+									className="btn-header-manage-services"
+									style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#16a34a' }}
+									onClick={() => setActiveTab('payment_gateway_management')}>
+									<Icon icon="AccountBalanceWallet" size="sm" />
+									<span>Payment Gateways</span>
 								</button>
 							)}
 							{canUpdate(PERMISSION_KEYS.USERS) && (
@@ -1483,6 +1516,21 @@ export const UserViewPage: FC = () => {
 										</div>
 									</div>
 									<ServiceAccessManager
+										userId={decryptedId || user.id}
+										userName={user.name}
+										username={user.username}
+									/>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* PAYMENT GATEWAY MANAGEMENT TAB */}
+					{(canManageGateway || canViewGatewayAccess) && activeTab === 'payment_gateway_management' && (
+						<div className="row g-4">
+							<div className="col-12">
+								<div className="user-section-card p-4">
+									<PaymentGatewayAccessManager
 										userId={decryptedId || user.id}
 										userName={user.name}
 										username={user.username}

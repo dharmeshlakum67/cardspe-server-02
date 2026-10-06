@@ -1,6 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import React, { FC, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
 import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
@@ -9,6 +10,7 @@ import Icon from '../../../components/icon/Icon';
 import Spinner from '../../../components/bootstrap/Spinner';
 import usePermission from '../../../hooks/usePermission';
 import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
+import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import ServiceConfigurationModal from './components/ServiceConfigurationModal';
 import GeneralSettingModal from './components/GeneralSettingModal';
 import './css/SettingPage.scss';
@@ -40,27 +42,61 @@ const SETTING_MODULES: ISettingItem[] = [
 		iconBg: '#f0fdf4',
 		iconColor: '#16a34a',
 	},
+	{
+		id: 'payment-gateway',
+		title: 'Payment Gateway',
+		description: 'Manage and configure payment gateways, credentials, statuses, and icons.',
+		icon: 'AccountBalanceWallet',
+		iconBg: '#fdf2f8',
+		iconColor: '#db2777',
+	},
 ];
 
 export const SettingPage: FC = () => {
+	const navigate = useNavigate();
 	const { canRead, isLoadingPermissions } = usePermission();
-	const hasReadAccess = canRead(PERMISSION_KEYS.SETTING);
+
+	// SUB-PERMISSION CHECKS
+	const hasBasicSettingAccess =
+		canRead(PERMISSION_KEYS.BASIC_SETTING) || canRead('basic_setting');
+	const hasServiceConfigAccess =
+		canRead(PERMISSION_KEYS.SERVICE_CONFIGURATION) || canRead('service_configuration');
+	const hasPaymentGatewayAccess =
+		canRead(PERMISSION_KEYS.PAYMENT_GATEWAY) || canRead('payment_gateway');
+
+	// OVERALL SETTINGS ACCESS (IF USER HAS ACCESS TO ANY SUB-MODULE OR PARENT SETTING)
+	const hasAnySettingAccess =
+		hasBasicSettingAccess ||
+		hasServiceConfigAccess ||
+		hasPaymentGatewayAccess ||
+		canRead(PERMISSION_KEYS.SETTING) ||
+		canRead('setting');
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const [activeSettingId, setActiveSettingId] = useState<string | null>(null);
 	const [isServiceConfigModalOpen, setIsServiceConfigModalOpen] = useState<boolean>(false);
 	const [isGeneralSettingModalOpen, setIsGeneralSettingModalOpen] = useState<boolean>(false);
 
+	// FILTER SETTING MODULES BASED ON PERMISSION
+	const availableModules = useMemo(() => {
+		return SETTING_MODULES.filter((item) => {
+			if (item.id === 'general') return hasBasicSettingAccess;
+			if (item.id === 'service-configuration') return hasServiceConfigAccess;
+			if (item.id === 'payment-gateway') return hasPaymentGatewayAccess;
+			return false;
+		});
+	}, [hasBasicSettingAccess, hasServiceConfigAccess, hasPaymentGatewayAccess]);
+
 	// FILTER SETTINGS BASED ON SEARCH QUERY
 	const filteredSettings = useMemo(() => {
 		const query = searchTerm.trim().toLowerCase();
-		if (!query) return SETTING_MODULES;
-		return SETTING_MODULES.filter(
+		if (!query) return availableModules;
+		return availableModules.filter(
 			(item) =>
 				item.title.toLowerCase().includes(query) ||
 				item.description.toLowerCase().includes(query),
 		);
-	}, [searchTerm]);
+	}, [availableModules, searchTerm]);
 
 	const handleCardClick = (item: ISettingItem) => {
 		setActiveSettingId(item.id);
@@ -68,6 +104,8 @@ export const SettingPage: FC = () => {
 			setIsServiceConfigModalOpen(true);
 		} else if (item.id === 'general') {
 			setIsGeneralSettingModalOpen(true);
+		} else if (item.id === 'payment-gateway') {
+			navigate(`/${PAGE_ROUTES.SETTING_PAYMENT_GATEWAY}`);
 		}
 	};
 
@@ -83,7 +121,7 @@ export const SettingPage: FC = () => {
 		);
 	}
 
-	if (!hasReadAccess) {
+	if (!hasAnySettingAccess || availableModules.length === 0) {
 		return (
 			<PageWrapper title='Settings'>
 				<Page container='fluid'>
@@ -100,7 +138,7 @@ export const SettingPage: FC = () => {
 										</div>
 										<h4 className='fw-bold mb-2'>Access Denied</h4>
 										<p className='text-muted mb-0'>
-											You do not have permission to view the Settings page. Please
+											You do not have permission to view any Settings tabs. Please
 											contact your system administrator.
 										</p>
 									</CardBody>

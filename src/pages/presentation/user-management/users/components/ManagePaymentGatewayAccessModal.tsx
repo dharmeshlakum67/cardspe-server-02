@@ -2,9 +2,10 @@
 /* eslint-disable react/require-default-props */
 import React, { FC } from 'react';
 import Modal, { ModalBody, ModalHeader, ModalTitle } from '../../../../../components/bootstrap/Modal';
-import ServiceAccessManager from './ServiceAccessManager';
+import Icon from '../../../../../components/icon/Icon';
+import PaymentGatewayAccessManager from './PaymentGatewayAccessManager';
 
-export interface IManageServiceAccessModalProps {
+export interface IManagePaymentGatewayAccessModalProps {
 	isOpen: boolean;
 	setIsOpen: (open: boolean) => void;
 	user: {
@@ -15,7 +16,7 @@ export interface IManageServiceAccessModalProps {
 	onSuccess?: () => void;
 }
 
-export const ManageServiceAccessModal: FC<IManageServiceAccessModalProps> = ({
+export const ManagePaymentGatewayAccessModal: FC<IManagePaymentGatewayAccessModalProps> = ({
 	isOpen,
 	setIsOpen,
 	user,
@@ -23,7 +24,7 @@ export const ManageServiceAccessModal: FC<IManageServiceAccessModalProps> = ({
 }) => {
 	if (!isOpen || !user) return null;
 
-	const modalTitle = `Manage Service Access - ${user.name} (@${user.username})`;
+	const modalTitle = `Payment Gateway Access - ${user.name} (@${user.username})`;
 
 	return (
 		<Modal
@@ -34,15 +35,16 @@ export const ManageServiceAccessModal: FC<IManageServiceAccessModalProps> = ({
 			isScrollable
 			isStaticBackdrop>
 			<ModalHeader setIsOpen={setIsOpen}>
-				<ModalTitle id="manage-service-access-title">
+				<ModalTitle id="manage-gateway-access-title">
 					<div className="d-flex align-items-center gap-2">
+						<Icon icon="AccountBalanceWallet" color="primary" />
 						<span className="fw-bold">{modalTitle}</span>
 					</div>
 				</ModalTitle>
 			</ModalHeader>
 			<ModalBody>
 				<div className="p-1">
-					<ServiceAccessManager
+					<PaymentGatewayAccessManager
 						userId={user.id}
 						userName={user.name}
 						username={user.username}
@@ -58,4 +60,4 @@ export const ManageServiceAccessModal: FC<IManageServiceAccessModalProps> = ({
 	);
 };
 
-export default ManageServiceAccessModal;
+export default ManagePaymentGatewayAccessModal;

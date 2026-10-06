@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable jsx-a11y/label-has-associated-control */
+/* eslint-disable jsx-a11y/label-has-associated-control, no-nested-ternary */
 /* eslint-disable react/no-unstable-nested-components */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,7 @@ import constantService, { IConstantOption } from '../../../../services/constantS
 import { IUserItem } from './type/user-type';
 import { IRoleItem } from '../../role/type/role-type';
 import ManageServiceAccessModal from './components/ManageServiceAccessModal';
+import ManagePaymentGatewayAccessModal from './components/ManagePaymentGatewayAccessModal';
 import './css/UserManagement.scss';
 
 export const UserListPage: FC = () => {
@@ -38,6 +39,10 @@ export const UserListPage: FC = () => {
 	// SERVICE ACCESS MODAL STATES
 	const [isServiceModalOpen, setIsServiceModalOpen] = useState<boolean>(false);
 	const [selectedUserForServices, setSelectedUserForServices] = useState<IUserItem | null>(null);
+
+	// PAYMENT GATEWAY ACCESS MODAL STATES
+	const [isGatewayModalOpen, setIsGatewayModalOpen] = useState<boolean>(false);
+	const [selectedUserForGateways, setSelectedUserForGateways] = useState<IUserItem | null>(null);
 
 	// AVAILABLE ROLES FOR DROPDOWN (FROM api/role/get-active)
 	const [roleOptions, setRoleOptions] = useState<IRoleItem[]>([]);
@@ -66,12 +71,22 @@ export const UserListPage: FC = () => {
 	// MANAGE SERVICE PERMISSION GUARD
 	const canManageService = Boolean(
 		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
-		hasPermission(PERMISSION_KEYS.MANAGE_SERVICES) ||
 		hasPermission('manage_service') ||
 		hasPermission('manage_services') ||
 		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+	);
+
+	// MANAGE PAYMENT GATEWAY PERMISSION GUARD
+	const canManageGateway = Boolean(
+		hasPermission(PERMISSION_KEYS.USERS, 'manage_gateway') ||
+		hasPermission(PERMISSION_KEYS.USER, 'manage_gateway') ||
+		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_gateway') ||
+		hasPermission('users', 'manage_gateway') ||
+		hasPermission('user', 'manage_gateway') ||
+		hasPermission('manage_gateway') ||
+		hasPermission('manage_gateways'),
 	);
 
 	// REF GUARDS TO PREVENT DUPLICATE FETCHES
@@ -534,23 +549,45 @@ export const UserListPage: FC = () => {
 					emptyIcon="Group"
 					actions={{
 						permissionKey: PERMISSION_KEYS.USERS,
-						actionColumnWidth: canManageService ? '290px' : '160px',
-						customActions: canManageService
-							? (user) => (
-									<button
-										type="button"
-										className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1"
-										title="Manage Services"
-										style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-										onClick={() => {
-											setSelectedUserForServices(user);
-											setIsServiceModalOpen(true);
-										}}>
-										<Icon icon="Shield" size="sm" />
-										<span>Manage Services</span>
-									</button>
-							  )
-							: undefined,
+						actionColumnWidth:
+							canManageService && canManageGateway
+								? '380px'
+								: canManageService || canManageGateway
+								? '280px'
+								: '160px',
+						customActions:
+							canManageService || canManageGateway
+								? (user) => (
+										<>
+											{canManageService && (
+												<button
+													type="button"
+													className="btn-action-pill btn-action-services"
+													title="Manage Services"
+													onClick={() => {
+														setSelectedUserForServices(user);
+														setIsServiceModalOpen(true);
+													}}>
+													<Icon icon="Shield" size="sm" />
+													<span>Services</span>
+												</button>
+											)}
+											{canManageGateway && (
+												<button
+													type="button"
+													className="btn-action-pill btn-action-gateways"
+													title="Manage Payment Gateways"
+													onClick={() => {
+														setSelectedUserForGateways(user);
+														setIsGatewayModalOpen(true);
+													}}>
+													<Icon icon="AccountBalanceWallet" size="sm" />
+													<span>Gateways</span>
+												</button>
+											)}
+										</>
+								  )
+								: undefined,
 						onView: (user) => {
 							navigate(`/${PAGE_ROUTES.USERS_VIEW.replace(':id', encryptId(user.id))}`);
 						},
@@ -581,6 +618,13 @@ export const UserListPage: FC = () => {
 					isOpen={isServiceModalOpen}
 					setIsOpen={setIsServiceModalOpen}
 					user={selectedUserForServices}
+				/>
+
+				{/* MANAGE PAYMENT GATEWAY ACCESS MODAL */}
+				<ManagePaymentGatewayAccessModal
+					isOpen={isGatewayModalOpen}
+					setIsOpen={setIsGatewayModalOpen}
+					user={selectedUserForGateways}
 				/>
 
 				{/* CONFIRMATION MODAL */}

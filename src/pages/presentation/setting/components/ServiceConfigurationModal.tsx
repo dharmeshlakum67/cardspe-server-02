@@ -13,6 +13,8 @@ import Icon from '../../../../components/icon/Icon';
 import settingService from '../service/settingService';
 import { IServiceConfigurationItem } from '../type/setting-type';
 import showNotification from '../../../../components/extras/showNotification';
+import usePermission from '../../../../hooks/usePermission';
+import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 
 interface IServiceConfigurationModalProps {
 	isOpen: boolean;
@@ -41,6 +43,12 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 	isOpen,
 	setIsOpen,
 }) => {
+	const { canUpdate } = usePermission();
+	const isUpdateAllowed =
+		canUpdate(PERMISSION_KEYS.SERVICE_CONFIGURATION) ||
+		canUpdate('service_configuration') ||
+		canUpdate(PERMISSION_KEYS.SETTING);
+
 	const [configs, setConfigs] = useState<IServiceConfigurationItem[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [fetchError, setFetchError] = useState<string | null>(null);
@@ -254,14 +262,16 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 														}`}>
 														{isActive ? 'ACTIVE' : 'INACTIVE'}
 													</span>
-													<Button
-														color='primary'
-														isLight
-														size='sm'
-														icon='Edit'
-														onClick={() => handleStartEdit(config)}>
-														Edit
-													</Button>
+													{isUpdateAllowed && (
+														<Button
+															color='primary'
+															isLight
+															size='sm'
+															icon='Edit'
+															onClick={() => handleStartEdit(config)}>
+															Edit
+														</Button>
+													)}
 												</>
 											)}
 										</div>

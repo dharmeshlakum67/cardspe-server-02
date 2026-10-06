@@ -14,6 +14,10 @@ import {
 	IServiceAccessResponse,
 	IUpdateServiceAccessPayload,
 } from '../type/service-access-type';
+import {
+	IPaymentGatewayAccessResponse,
+	IUpdatePaymentGatewayAccessPayload,
+} from '../type/payment-gateway-access-type';
 
 export const userService = {
 	// FETCH ALL USERS / ADMINS WITH FILTERS AND PAGINATION
@@ -130,6 +134,25 @@ export const userService = {
 		payload: IUpdateServiceAccessPayload,
 	): Promise<{ success: boolean; message: string; data?: any }> => {
 		return apiClient(ADMIN_ENDPOINTS.UPDATE_SERVICE_ACCESS(id), {
+			body: payload,
+		});
+	},
+
+	// GET USER / ADMIN PAYMENT GATEWAY ACCESS
+	getPaymentGatewayAccess: async (
+		id: number | string,
+	): Promise<IPaymentGatewayAccessResponse> => {
+		return apiClient<IPaymentGatewayAccessResponse>(
+			ADMIN_ENDPOINTS.GET_PAYMENT_GATEWAY_ACCESS(id),
+		);
+	},
+
+	// UPDATE USER / ADMIN PAYMENT GATEWAY ACCESS
+	updatePaymentGatewayAccess: async (
+		id: number | string,
+		payload: IUpdatePaymentGatewayAccessPayload,
+	): Promise<{ success: boolean; message: string; data?: any }> => {
+		return apiClient(ADMIN_ENDPOINTS.UPDATE_PAYMENT_GATEWAY_ACCESS(id), {
 			body: payload,
 		});
 	},

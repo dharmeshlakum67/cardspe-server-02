@@ -19,6 +19,7 @@ import {
 } from '../type/permission-type';
 import { getMenuMetadataForPermission } from '../config/menu-route.config';
 import { dashboardPagesMenu } from '../menu';
+import { PAGE_ROUTES } from '../constants/pageRoutes';
 import { ENV } from '../config/env.config';
 import authService from '../pages/presentation/auth/services/authService';
 
@@ -325,11 +326,24 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 		// RECURSIVE MENU BUILDER
 		const buildMenuItem = (perm: IPermissionItem): any | null => {
 			const key = perm.permission_key || perm.name;
-			const hasDirectRead = canRead(key) || canRead(perm.name);
+			const isSettingModule =
+				key?.toLowerCase().trim() === 'setting' ||
+				key?.toLowerCase().trim() === 'settings' ||
+				perm.name?.toLowerCase().trim() === 'setting' ||
+				perm.name?.toLowerCase().trim() === 'settings';
 
-			// PROCESS CHILDREN RECURSIVELY
+			const hasSettingRead =
+				isSettingModule &&
+				(canRead('setting') ||
+					canRead('basic_setting') ||
+					canRead('service_configuration') ||
+					canRead('payment_gateway'));
+
+			const hasDirectRead = canRead(key) || canRead(perm.name) || hasSettingRead;
+
+			// PROCESS CHILDREN RECURSIVELY (EXCEPT FOR SETTING PARENT)
 			let subMenuObj: Record<string, any> | null = null;
-			if (Array.isArray(perm.children) && perm.children.length > 0) {
+			if (!isSettingModule && Array.isArray(perm.children) && perm.children.length > 0) {
 				const sortedChildren = [...perm.children].sort((a, b) => {
 					const orderA = a.display_order !== undefined ? Number(a.display_order) : 999;
 					const orderB = b.display_order !== undefined ? Number(b.display_order) : 999;
@@ -355,20 +369,22 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				const metadata = getMenuMetadataForPermission(key, perm.name);
 
 				let resolvedPath: string | null = '';
-				if (metadata?.path !== undefined) {
+				if (isSettingModule) {
+					resolvedPath = PAGE_ROUTES.SETTING;
+				} else if (metadata?.path !== undefined) {
 					resolvedPath = metadata.path;
 				} else if (subMenuObj !== null) {
 					resolvedPath = null;
 				}
 
-				if (metadata || subMenuObj !== null) {
+				if (metadata || subMenuObj !== null || isSettingModule) {
 					return {
 						id: perm.id || key,
 						// Prefer API name so sidebar labels stay dynamic
 						text: perm.name || metadata?.text || key,
 						path: resolvedPath,
-						icon: metadata?.icon || (perm as any).icon || 'ListAlt',
-						subMenu: subMenuObj || metadata?.subMenu || null,
+						icon: metadata?.icon || (perm as any).icon || (isSettingModule ? 'Settings' : 'ListAlt'),
+						subMenu: isSettingModule ? null : subMenuObj || metadata?.subMenu || null,
 					};
 				}
 			}

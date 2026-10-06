@@ -83,6 +83,9 @@ const BankDetailListPage = lazy(
 const ApiKeyRequestListPage = lazy(
 	() => import('../pages/presentation/developer/api-key-request/ApiKeyRequestListPage'),
 );
+const PaymentGatewayListPage = lazy(
+	() => import('../pages/presentation/setting/payment-gateway/PaymentGatewayListPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -224,6 +227,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.SETTING,
 		element: <SettingPage />,
+	},
+	{
+		path: PAGE_ROUTES.SETTING_PAYMENT_GATEWAY,
+		element: <PaymentGatewayListPage />,
 	},
 	{
 		path: PAGE_ROUTES.BANK_DETAILS,

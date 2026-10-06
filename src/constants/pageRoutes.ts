@@ -57,6 +57,7 @@ export const PAGE_ROUTES = {
 
 	// SETTINGS
 	SETTING: 'setting',
+	SETTING_PAYMENT_GATEWAY: 'setting/payment-gateway',
 
 	// DEVELOPER / API KEY REQUESTS
 	API_KEY_REQUEST: 'developer/api-key',

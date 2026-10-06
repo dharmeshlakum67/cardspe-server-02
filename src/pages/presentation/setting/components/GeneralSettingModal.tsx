@@ -14,6 +14,8 @@ import Icon from '../../../../components/icon/Icon';
 import settingService from '../service/settingService';
 import { IUpdateCompanySettingPayload } from '../type/setting-type';
 import showNotification from '../../../../components/extras/showNotification';
+import usePermission from '../../../../hooks/usePermission';
+import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 
 interface IGeneralSettingModalProps {
 	isOpen: boolean;
@@ -24,6 +26,12 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 	isOpen,
 	setIsOpen,
 }) => {
+	const { canUpdate } = usePermission();
+	const isUpdateAllowed =
+		canUpdate(PERMISSION_KEYS.BASIC_SETTING) ||
+		canUpdate('basic_setting') ||
+		canUpdate(PERMISSION_KEYS.SETTING);
+
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [isSaving, setIsSaving] = useState<boolean>(false);
 	const [fetchError, setFetchError] = useState<string | null>(null);
@@ -178,6 +186,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.company_name || ''}
 									onChange={(e) => handleChange('company_name', e.target.value)}
 									style={inputStyle}
+									disabled={!isUpdateAllowed || isSaving}
 									required
 								/>
 							</div>
@@ -195,6 +204,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.support_email_address || ''}
 									onChange={(e) => handleChange('support_email_address', e.target.value)}
 									style={inputStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 
@@ -211,6 +221,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.customer_care_number || ''}
 									onChange={(e) => handleChange('customer_care_number', e.target.value)}
 									style={inputStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 
@@ -227,6 +238,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.whatsapp_number || ''}
 									onChange={(e) => handleChange('whatsapp_number', e.target.value)}
 									style={inputStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 
@@ -243,6 +255,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.support_time || ''}
 									onChange={(e) => handleChange('support_time', e.target.value)}
 									style={inputStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 
@@ -259,6 +272,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.address || ''}
 									onChange={(e) => handleChange('address', e.target.value)}
 									style={textareaStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 
@@ -275,6 +289,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 									value={formData.about_company || ''}
 									onChange={(e) => handleChange('about_company', e.target.value)}
 									style={textareaStyle}
+									disabled={!isUpdateAllowed || isSaving}
 								/>
 							</div>
 						</div>
@@ -286,21 +301,23 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 							color="light"
 							onClick={handleClose}
 							isDisable={isSaving}>
-							Cancel
+							{isUpdateAllowed ? 'Cancel' : 'Close'}
 						</Button>
-						<Button type="submit" color="primary" isDisable={isSaving}>
-							{isSaving ? (
-								<>
-									<Spinner isSmall inButton isGrow className="me-2" />
-									Saving...
-								</>
-							) : (
-								<>
-									<Icon icon="Save" className="me-1" />
-									Save Changes
-								</>
-							)}
-						</Button>
+						{isUpdateAllowed && (
+							<Button type="submit" color="primary" isDisable={isSaving}>
+								{isSaving ? (
+									<>
+										<Spinner isSmall inButton isGrow className="me-2" />
+										Saving...
+									</>
+								) : (
+									<>
+										<Icon icon="Save" className="me-1" />
+										Save Changes
+									</>
+								)}
+							</Button>
+						)}
 					</ModalFooter>
 				</form>
 			)}

@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable jsx-a11y/label-has-associated-control, @typescript-eslint/naming-convention, no-nested-ternary */
+/* eslint-disable jsx-a11y/label-has-associated-control, @typescript-eslint/naming-convention, no-nested-ternary, react/require-default-props, react/default-props-match-prop-types */
 import React, { FC, useState } from 'react';
 import Icon from '../../../../../components/icon/Icon';
 import Spinner from '../../../../../components/bootstrap/Spinner';
@@ -15,7 +15,7 @@ import InstantGeneratedKeyModal from './InstantGeneratedKeyModal';
 import '../css/ApiKeyRequestPage.scss';
 
 interface IActiveApiKeysCardsProps {
-	myKeysData: IMyApiKeysData | null;
+	myKeysData?: IMyApiKeysData | null;
 	isLoading: boolean;
 	onRefresh: () => void;
 	onRequestKey: (type: TApiKeyType) => void;

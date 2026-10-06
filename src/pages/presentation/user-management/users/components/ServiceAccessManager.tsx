@@ -36,7 +36,6 @@ export const ServiceAccessManager: FC<IServiceAccessManagerProps> = ({
 	// MANAGE SERVICE PERMISSION GUARD (PERMISSION IS REQUIRED FOR UPDATE ONLY; VIEWING IS ALLOWED)
 	const canManageService = Boolean(
 		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
-		hasPermission(PERMISSION_KEYS.MANAGE_SERVICES) ||
 		hasPermission('manage_service') ||
 		hasPermission('manage_services') ||
 		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||

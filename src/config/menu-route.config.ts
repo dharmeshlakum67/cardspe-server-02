@@ -163,7 +163,7 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
-	// SETTINGS MODULE (PARENT)
+	// SETTINGS MODULE (PARENT ONLY - NO CHILDREN IN SIDEBAR)
 	setting: {
 		path: PAGE_ROUTES.SETTING,
 		icon: 'Settings',

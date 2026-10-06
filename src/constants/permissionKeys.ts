@@ -21,9 +21,10 @@ export const PERMISSION_KEYS = {
 	PAYMENTS: 'payments',
 	BANK_DETAILS: 'bank_details',
 	SETTING: 'setting',
-	SETTINGS: 'settings',
+	BASIC_SETTING: 'basic_setting',
+	SERVICE_CONFIGURATION: 'service_configuration',
+	PAYMENT_GATEWAY: 'payment_gateway',
 	MANAGE_SERVICE: 'manage_service',
-	MANAGE_SERVICES: 'manage_services',
 	DEVELOPER: 'developer',
 	API_REQUEST: 'api_request',
 } as const;

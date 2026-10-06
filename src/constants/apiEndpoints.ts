@@ -471,6 +471,30 @@ export const SETTING_ENDPOINTS = {
 	},
 } as const;
 
+// PAYMENT GATEWAY ENDPOINTS
+export const PAYMENT_GATEWAY_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/setting/payment-gateway/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ACTIVE: {
+		url: '/api/setting/payment-gateway/get-active',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	CREATE: {
+		url: '/api/setting/payment-gateway/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	UPDATE: (id: string | number) => ({
+		url: `/api/setting/payment-gateway/update/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+} as const;
+
 // ADMIN / USER ENDPOINTS
 export const ADMIN_ENDPOINTS = {
 	GET_ALL: {
@@ -530,6 +554,16 @@ export const ADMIN_ENDPOINTS = {
 	}),
 	UPDATE_SERVICE_ACCESS: (id: string | number) => ({
 		url: `/api/admin/service-access/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	GET_PAYMENT_GATEWAY_ACCESS: (id: string | number) => ({
+		url: `/api/admin/payment-gateway-access/get/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	UPDATE_PAYMENT_GATEWAY_ACCESS: (id: string | number) => ({
+		url: `/api/admin/payment-gateway-access/update/${id}`,
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
@@ -679,6 +713,7 @@ export const API_ENDPOINTS = {
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,
 	SETTING: SETTING_ENDPOINTS,
+	PAYMENT_GATEWAY: PAYMENT_GATEWAY_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
 	API_REQUEST: API_KEY_REQUEST_ENDPOINTS,
 	API_KEY_REQUEST: API_KEY_REQUEST_ENDPOINTS,
