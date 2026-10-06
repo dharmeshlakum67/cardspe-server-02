@@ -349,6 +349,19 @@
 					box-shadow: 0 2px 8px rgba(29, 78, 216, 0.2);
 				}
 			}
+
+			&.btn-action-review {
+				background: #eff6ff !important;
+				color: #2563eb !important;
+				border-color: #dbeafe !important;
+
+				&:hover {
+					background: #dbeafe !important;
+					border-color: #bfdbfe !important;
+					color: #1d4ed8 !important;
+					box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+				}
+			}
 		}
 
 		// CIRCLE ACTION BUTTONS

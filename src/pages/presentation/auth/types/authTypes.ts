@@ -38,6 +38,7 @@ export interface IAuthUser {
 	current_balance?: string | number;
 	created_at?: string;
 	is_super_admin?: boolean;
+	is_api_user?: boolean;
 	role?: IRole;
 	profile?: IAdminProfile | null;
 }

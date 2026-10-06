@@ -80,6 +80,9 @@ const BlockHistoryListPage = lazy(
 const BankDetailListPage = lazy(
 	() => import('../pages/presentation/payments/bank-detail/BankDetailListPage'),
 );
+const ApiKeyRequestListPage = lazy(
+	() => import('../pages/presentation/developer/api-key-request/ApiKeyRequestListPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -225,6 +228,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.BANK_DETAILS,
 		element: <BankDetailListPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_KEY_REQUEST,
+		element: <ApiKeyRequestListPage />,
 	},
 	{
 		path: '*',

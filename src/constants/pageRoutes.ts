@@ -57,6 +57,9 @@ export const PAGE_ROUTES = {
 
 	// SETTINGS
 	SETTING: 'setting',
+
+	// DEVELOPER / API KEY REQUESTS
+	API_KEY_REQUEST: 'developer/api-key',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

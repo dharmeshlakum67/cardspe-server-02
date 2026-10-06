@@ -170,6 +170,22 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Settings',
 		subMenu: null,
 	},
+
+	// DEVELOPER PARENT (PATH NULL = EXPANDABLE GROUP)
+	developer: {
+		path: null,
+		icon: 'Code',
+		text: 'Developer',
+		subMenu: null,
+	},
+
+	// API REQUEST CHILD MODULE (Permission key: api_request)
+	api_request: {
+		path: PAGE_ROUTES.API_KEY_REQUEST,
+		icon: 'VpnKey',
+		text: 'API Requests',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

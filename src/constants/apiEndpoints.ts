@@ -623,6 +623,42 @@ export const NOTIFICATION_ENDPOINTS = {
 	}),
 } as const;
 
+// DEVELOPER / API KEY REQUEST ENDPOINTS
+export const API_KEY_REQUEST_ENDPOINTS = {
+	CREATE: {
+		url: '/api/developer/api-key/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	GENERATE: {
+		url: '/api/developer/api-key/generate',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	GET_ALL: {
+		url: '/api/developer/api-key/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	MY_KEYS: {
+		url: '/api/developer/api-key/my-keys',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/developer/api-key/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	REVIEW: (id: string | number) => ({
+		url: `/api/developer/api-key/review/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+} as const;
+
+export const DEVELOPER_ENDPOINTS = API_KEY_REQUEST_ENDPOINTS;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
@@ -644,6 +680,9 @@ export const API_ENDPOINTS = {
 	LOGIN_HISTORY: LOGIN_HISTORY_ENDPOINTS,
 	SETTING: SETTING_ENDPOINTS,
 	CONSTANT: CONSTANT_ENDPOINTS,
+	API_REQUEST: API_KEY_REQUEST_ENDPOINTS,
+	API_KEY_REQUEST: API_KEY_REQUEST_ENDPOINTS,
+	DEVELOPER: API_KEY_REQUEST_ENDPOINTS,
 } as const;
 
 export default API_ENDPOINTS;

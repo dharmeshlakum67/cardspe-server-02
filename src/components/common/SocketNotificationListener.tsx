@@ -43,12 +43,18 @@ export const SocketNotificationListener: FC = () => {
 		const kycSubmittedHandler = handleNotification(SOCKET_EVENT_CONSTANT.KYC_REQUEST.SUBMITTED);
 		const kycApprovedHandler = handleNotification(SOCKET_EVENT_CONSTANT.KYC_REQUEST.APPROVED);
 		const kycRejectedHandler = handleNotification(SOCKET_EVENT_CONSTANT.KYC_REQUEST.REJECTED);
+		const apiKeySubmittedHandler = handleNotification(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.SUBMITTED);
+		const apiKeyApprovedHandler = handleNotification(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.APPROVED);
+		const apiKeyRejectedHandler = handleNotification(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.REJECTED);
 
 		socket.on(SOCKET_EVENT_CONSTANT.NEW_NOTIFICATION, newNotifHandler);
 		socket.on(SOCKET_EVENT_CONSTANT.NOTIFICATION, notifHandler);
 		socket.on(SOCKET_EVENT_CONSTANT.KYC_REQUEST.SUBMITTED, kycSubmittedHandler);
 		socket.on(SOCKET_EVENT_CONSTANT.KYC_REQUEST.APPROVED, kycApprovedHandler);
 		socket.on(SOCKET_EVENT_CONSTANT.KYC_REQUEST.REJECTED, kycRejectedHandler);
+		socket.on(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.SUBMITTED, apiKeySubmittedHandler);
+		socket.on(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.APPROVED, apiKeyApprovedHandler);
+		socket.on(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.REJECTED, apiKeyRejectedHandler);
 
 		// Also listen to lower-case / generic aliases if any
 		socket.on('notification', notifHandler);
@@ -60,6 +66,9 @@ export const SocketNotificationListener: FC = () => {
 			socket.off(SOCKET_EVENT_CONSTANT.KYC_REQUEST.SUBMITTED, kycSubmittedHandler);
 			socket.off(SOCKET_EVENT_CONSTANT.KYC_REQUEST.APPROVED, kycApprovedHandler);
 			socket.off(SOCKET_EVENT_CONSTANT.KYC_REQUEST.REJECTED, kycRejectedHandler);
+			socket.off(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.SUBMITTED, apiKeySubmittedHandler);
+			socket.off(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.APPROVED, apiKeyApprovedHandler);
+			socket.off(SOCKET_EVENT_CONSTANT.API_KEY_REQUEST.REJECTED, apiKeyRejectedHandler);
 			socket.off('notification', notifHandler);
 			socket.off('new_notification', newNotifHandler);
 		};
