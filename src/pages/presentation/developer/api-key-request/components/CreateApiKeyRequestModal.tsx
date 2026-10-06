@@ -10,6 +10,7 @@ import Modal, {
 import Spinner from '../../../../../components/bootstrap/Spinner';
 import Icon from '../../../../../components/icon/Icon';
 import showNotification from '../../../../../components/extras/showNotification';
+import { isKycRequiredError } from '../../../../../components/common';
 import { TApiKeyType, ICreateApiKeyRequestPayload } from '../../../../../type/api-key-request.type';
 import apiKeyRequestService from '../service/apiKeyRequestService';
 import '../css/ApiKeyRequestPage.scss';
@@ -62,11 +63,19 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 			onSuccess();
 			handleClose();
 		} catch (error: any) {
-			showNotification(
-				'Submission Failed',
-				error?.data?.message || error?.message || 'Could not submit API key request.',
-				'danger',
-			);
+			if (isKycRequiredError(error)) {
+				showNotification(
+					'KYC Verification Required',
+					error?.data?.message || error?.message || 'Please complete your KYC verification before requesting API credentials.',
+					'warning',
+				);
+			} else {
+				showNotification(
+					'Submission Failed',
+					error?.data?.message || error?.message || 'Could not submit API key request.',
+					'danger',
+				);
+			}
 		} finally {
 			setIsSubmitting(false);
 		}

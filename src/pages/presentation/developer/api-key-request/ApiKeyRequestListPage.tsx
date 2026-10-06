@@ -4,8 +4,14 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState, useContex
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import { ListingPage, IListingColumn } from '../../../../components/common/ListingPage';
-import { PillBadge } from '../../../../components/common/PillBadge';
-import { DateRangePicker } from '../../../../components/common';
+import {
+	PillBadge,
+	DateRangePicker,
+	KycRestrictedCard,
+	isKycRequiredError,
+	extractKycErrorInfo,
+	IKycRequiredError,
+} from '../../../../components/common';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
 import usePermission from '../../../../hooks/usePermission';
@@ -39,6 +45,9 @@ export const ApiKeyRequestListPage: FC = () => {
 	// ACTIVE KEYS & GENERATION STATUS
 	const [myKeysData, setMyKeysData] = useState<IMyApiKeysData | null>(null);
 	const [isLoadingMyKeys, setIsLoadingMyKeys] = useState<boolean>(true);
+
+	// KYC RESTRICTION STATE
+	const [kycRestriction, setKycRestriction] = useState<IKycRequiredError | null>(null);
 
 	// MODAL STATES
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -93,6 +102,8 @@ export const ApiKeyRequestListPage: FC = () => {
 	const lastFetchKeyRef = useRef<string>('');
 	const isFetchingRef = useRef<boolean>(false);
 	const prevDebouncedSearchRef = useRef<string>(debouncedSearch);
+	const isFetchingMyKeysRef = useRef<boolean>(false);
+	const hasFetchedMyKeysRef = useRef<boolean>(false);
 
 	// ACTIVE FILTER COUNT
 	const activeFilterCount =
@@ -204,11 +215,15 @@ export const ApiKeyRequestListPage: FC = () => {
 				setRequests(fetchedList);
 				setTotalDocuments(totalCount);
 			} catch (error: any) {
-				showNotification(
-					'Error',
-					error?.data?.message || error?.message || 'Failed to fetch API key requests.',
-					'danger',
-				);
+				if (isKycRequiredError(error)) {
+					setKycRestriction(extractKycErrorInfo(error) || error?.data || error);
+				} else {
+					showNotification(
+						'Error',
+						error?.data?.message || error?.message || 'Failed to fetch API key requests.',
+						'danger',
+					);
+				}
 				setRequests([]);
 				setTotalDocuments(0);
 			} finally {
@@ -229,35 +244,54 @@ export const ApiKeyRequestListPage: FC = () => {
 	);
 
 	// FETCH CURRENT USER'S ACTIVE KEYS & GENERATION STATUS (ONLY FOR API USERS)
-	const fetchMyKeys = useCallback(async () => {
-		if (isLoadingPermissions || !isApiUser) {
-			setIsLoadingMyKeys(false);
-			return;
-		}
-		setIsLoadingMyKeys(true);
-		try {
-			const res: any = await apiKeyRequestService.getMyApiKeys();
-			const data: IMyApiKeysData =
-				res?.data?.test !== undefined
-					? res.data
-					: res?.data?.data?.test !== undefined
-					? res.data.data
-					: res?.result?.test !== undefined
-					? res.result
-					: res;
-			setMyKeysData(data);
-		} catch (error: any) {
-			console.error('Failed to fetch active API keys:', error);
-		} finally {
-			setIsLoadingMyKeys(false);
-		}
-	}, [isLoadingPermissions, isApiUser]);
+	const fetchMyKeys = useCallback(
+		async (force = false) => {
+			if (isLoadingPermissions || !isApiUser) {
+				setIsLoadingMyKeys(false);
+				return;
+			}
+			if (!force && isFetchingMyKeysRef.current) {
+				return;
+			}
+			isFetchingMyKeysRef.current = true;
+			setIsLoadingMyKeys(true);
+			try {
+				const res: any = await apiKeyRequestService.getMyApiKeys();
+				const data: IMyApiKeysData =
+					res?.data?.test !== undefined
+						? res.data
+						: res?.data?.data?.test !== undefined
+						? res.data.data
+						: res?.result?.test !== undefined
+						? res.result
+						: res;
+				setMyKeysData(data);
+				hasFetchedMyKeysRef.current = true;
+			} catch (error: any) {
+				if (isKycRequiredError(error)) {
+					setKycRestriction(extractKycErrorInfo(error) || error?.data || error);
+				} else {
+					console.error('Failed to fetch active API keys:', error);
+				}
+			} finally {
+				setIsLoadingMyKeys(false);
+				isFetchingMyKeysRef.current = false;
+			}
+		},
+		[isLoadingPermissions, isApiUser],
+	);
 
-	// FETCH EFFECT
+	// FETCH LISTING DATA ON FILTER/PAGINATION CHANGE
 	useEffect(() => {
 		fetchApiKeyRequests();
-		fetchMyKeys();
-	}, [fetchApiKeyRequests, fetchMyKeys]);
+	}, [fetchApiKeyRequests]);
+
+	// FETCH ACTIVE KEYS ONCE ON MOUNT OR PERMISSIONS LOADED
+	useEffect(() => {
+		if (!isLoadingPermissions && isApiUser && !hasFetchedMyKeysRef.current) {
+			fetchMyKeys();
+		}
+	}, [isLoadingPermissions, isApiUser, fetchMyKeys]);
 
 	// REAL-TIME SOCKET LISTENER (REFRESH ON NEW/APPROVED/REJECTED REQUESTS)
 	useEffect(() => {
@@ -474,6 +508,34 @@ export const ApiKeyRequestListPage: FC = () => {
 		return cols;
 	}, [isApiUser]);
 
+	if (kycRestriction) {
+		return (
+			<PageWrapper
+				isProtected
+				permissionKey={hasReadPermission ? PERMISSION_KEYS.API_REQUEST : undefined}
+				title='API Key Requests'>
+				<Page container='fluid'>
+					<KycRestrictedCard
+						showBreadcrumbs
+						breadcrumbs={[
+							{ label: 'Developer' },
+							{ label: 'API Key Requests', current: true },
+						]}
+						title='KYC Verification Required'
+						subTitle='Access to developer API keys requires an active and verified KYC status.'
+						errorData={kycRestriction}
+						onRetry={() => {
+							setKycRestriction(null);
+							fetchApiKeyRequests(true);
+							fetchMyKeys(true);
+						}}
+						isRetrying={isLoading}
+					/>
+				</Page>
+			</PageWrapper>
+		);
+	}
+
 	return (
 		<PageWrapper
 			isProtected
@@ -608,7 +670,7 @@ export const ApiKeyRequestListPage: FC = () => {
 									myKeysData={myKeysData}
 									isLoading={isLoadingMyKeys}
 									onRefresh={() => {
-										fetchMyKeys();
+										fetchMyKeys(true);
 										fetchApiKeyRequests(true);
 									}}
 									onRequestKey={handleOpenCreate}
@@ -652,7 +714,7 @@ export const ApiKeyRequestListPage: FC = () => {
 					setIsOpen={setIsCreateModalOpen}
 					defaultKeyType={createDefaultType}
 					onSuccess={() => {
-						fetchMyKeys();
+						fetchMyKeys(true);
 						fetchApiKeyRequests(true);
 					}}
 				/>
@@ -663,7 +725,7 @@ export const ApiKeyRequestListPage: FC = () => {
 					setIsOpen={setIsReviewModalOpen}
 					request={requestToReview}
 					onSuccess={() => {
-						fetchMyKeys();
+						fetchMyKeys(true);
 						fetchApiKeyRequests(true);
 					}}
 				/>
