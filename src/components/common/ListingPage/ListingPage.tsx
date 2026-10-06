@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable react/require-default-props, react/forbid-prop-types, jsx-a11y/control-has-associated-label */
+/* eslint-disable react/require-default-props, react/forbid-prop-types, jsx-a11y/control-has-associated-label, no-nested-ternary */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
@@ -52,7 +52,7 @@ export const ListingPage = <T,>({
 	className,
 }: IListingPageProps<T>): React.ReactElement | null => {
 	const navigate = useNavigate();
-	const { canCreate, canRead, isLoadingPermissions } = usePermission();
+	const { canCreate, canRead, canUpdate, canDelete, isLoadingPermissions } = usePermission();
 	const [isFilterOpen, setIsFilterOpen] = useState<boolean>(isFilterOpenDefault);
 
 	// DETERMINE ADD NEW BUTTON VISIBILITY BASED ON PERMISSION
@@ -62,6 +62,51 @@ export const ListingPage = <T,>({
 		isCreateAllowed = canCreate(effectivePermKey);
 	}
 	const showAddNewButton = Boolean(onAddNew && isCreateAllowed);
+
+	// DETERMINE IF ACTION COLUMN HAS ANY ACCESSIBLE / ALLOWED ACTION
+	const isActionColumnVisible = React.useMemo(() => {
+		if (!actions) return false;
+		if (actions.showActionColumn === false) return false;
+
+		const permKey = actions.permissionKey || permissionKey;
+
+		// Check View action
+		const isViewPossible = Boolean(
+			actions.onView &&
+			actions.showView !== false &&
+			(!permKey || canRead(permKey)),
+		);
+
+		// Check Edit action
+		const isEditPossible = Boolean(
+			actions.onEdit &&
+			actions.showEdit !== false &&
+			(!permKey || canUpdate(permKey)),
+		);
+
+		// Check Delete action
+		const isDeletePossible = Boolean(
+			actions.onDelete &&
+			actions.showDelete !== false &&
+			(!permKey || canDelete(permKey)),
+		);
+
+		// Check Custom actions
+		const hasCustomActions = Boolean(actions.customActions);
+
+		return isViewPossible || isEditPossible || isDeletePossible || hasCustomActions;
+	}, [actions, permissionKey, canRead, canUpdate, canDelete]);
+
+	// ACTION COLUMN ALIGNMENT CLASSES & STYLES
+	let actionAlignClass = 'text-center';
+	let actionTextAlign: React.CSSProperties['textAlign'] = 'center';
+	if (actions?.actionColumnAlign === 'start') {
+		actionAlignClass = 'text-start';
+		actionTextAlign = 'left';
+	} else if (actions?.actionColumnAlign === 'end') {
+		actionAlignClass = 'text-end';
+		actionTextAlign = 'right';
+	}
 
 	// TOGGLE FILTER VISIBILITY
 	const handleToggleFilter = () => {
@@ -199,17 +244,17 @@ export const ListingPage = <T,>({
 									);
 								})}
 
-								{/* ACTION COLUMN HEADER */}
-								{actions && (
+								{/* ACTION COLUMN HEADER (ONLY SHOWN IF AT LEAST ONE ACTION IS ACCESSIBLE) */}
+								{isActionColumnVisible && (
 									<th
-										className='text-end text-nowrap'
+										className={classNames(actionAlignClass, 'text-nowrap')}
 										style={{
-											width: actions.actionColumnWidth || 'auto',
-											minWidth: actions.actionColumnWidth || '160px',
+											width: actions?.actionColumnWidth || 'auto',
+											minWidth: actions?.actionColumnWidth || '160px',
 											whiteSpace: 'nowrap',
-											textAlign: 'right',
+											textAlign: actionTextAlign,
 										}}>
-										{actions.actionColumnHeader || 'Action'}
+										{actions?.actionColumnHeader || 'Action'}
 									</th>
 								)}
 							</tr>
@@ -219,7 +264,7 @@ export const ListingPage = <T,>({
 							{isLoading && (
 								<tr>
 									<td
-										colSpan={columns.length + (actions ? 1 : 0)}
+										colSpan={columns.length + (isActionColumnVisible ? 1 : 0)}
 										className='text-center py-5'>
 										<div className='d-flex flex-column align-items-center justify-content-center gap-2'>
 											<Spinner color='primary' size='2rem' isGrow={false} />
@@ -233,7 +278,7 @@ export const ListingPage = <T,>({
 							{!isLoading && data.length === 0 && (
 								<tr>
 									<td
-										colSpan={columns.length + (actions ? 1 : 0)}
+										colSpan={columns.length + (isActionColumnVisible ? 1 : 0)}
 										className='text-center py-5'>
 										<div className='d-flex flex-column align-items-center justify-content-center text-muted'>
 											<Icon
@@ -285,15 +330,15 @@ export const ListingPage = <T,>({
 												);
 											})}
 
-											{/* ACTION BUTTONS COLUMN (ALWAYS AT THE END) */}
-											{actions && (
+											{/* ACTION BUTTONS COLUMN (SHOWN ONLY IF ACCESSIBLE) */}
+											{isActionColumnVisible && (
 												<td
-													className='text-end text-nowrap'
+													className={classNames(actionAlignClass, 'text-nowrap')}
 													style={{
-														width: actions.actionColumnWidth || 'auto',
-														minWidth: actions.actionColumnWidth || '160px',
+														width: actions?.actionColumnWidth || 'auto',
+														minWidth: actions?.actionColumnWidth || '160px',
 														whiteSpace: 'nowrap',
-														textAlign: 'right',
+														textAlign: actionTextAlign,
 													}}>
 													<ListingActionButtons
 														row={row}
@@ -322,6 +367,6 @@ export const ListingPage = <T,>({
 			</div>
 		</div>
 	);
-}
+};
 
 export default ListingPage;

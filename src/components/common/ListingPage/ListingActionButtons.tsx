@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable react/require-default-props, react/forbid-prop-types */
+/* eslint-disable react/require-default-props, react/forbid-prop-types, no-nested-ternary */
 import React, { FC } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
@@ -72,13 +72,32 @@ export const ListingActionButtons: FC<IListingActionButtonsProps> = ({
 		isViewAllowed || isEditAllowed || isDeleteAllowed || !!actions.customActions;
 
 	if (!hasAnyAction) {
-		return <span className='text-muted'>-</span>;
+		return null;
+	}
+
+	const actionAlign = actions.actionColumnAlign || 'center';
+	let justifyClass = 'justify-content-center';
+	let justifyStyle = 'center';
+	if (actionAlign === 'start') {
+		justifyClass = 'justify-content-start';
+		justifyStyle = 'flex-start';
+	} else if (actionAlign === 'end') {
+		justifyClass = 'justify-content-end';
+		justifyStyle = 'flex-end';
 	}
 
 	return (
 		<div
-			className='listing-action-buttons-group d-inline-flex align-items-center justify-content-end gap-2 flex-nowrap text-nowrap'
-			style={{ display: 'inline-flex', flexWrap: 'nowrap', whiteSpace: 'nowrap', justifyContent: 'flex-end' }}>
+			className={classNames(
+				'listing-action-buttons-group d-inline-flex align-items-center gap-2 flex-nowrap text-nowrap',
+				justifyClass,
+			)}
+			style={{
+				display: 'inline-flex',
+				flexWrap: 'nowrap',
+				whiteSpace: 'nowrap',
+				justifyContent: justifyStyle,
+			}}>
 			{/* CUSTOM ROW ACTIONS */}
 			{actions.customActions && actions.customActions(row)}
 

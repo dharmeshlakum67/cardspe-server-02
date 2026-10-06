@@ -26,6 +26,7 @@ export interface IListingColumn<T = any> {
 
 export interface IListingActionConfig<T = any> {
 	permissionKey?: string;
+	showActionColumn?: boolean;
 	showView?: boolean | ((row: T) => boolean);
 	showEdit?: boolean | ((row: T) => boolean);
 	showDelete?: boolean | ((row: T) => boolean);
@@ -39,6 +40,7 @@ export interface IListingActionConfig<T = any> {
 	customActions?: (row: T) => ReactNode;
 	actionColumnHeader?: string;
 	actionColumnWidth?: string | number;
+	actionColumnAlign?: 'start' | 'center' | 'end';
 }
 
 export interface IListingPaginationConfig {

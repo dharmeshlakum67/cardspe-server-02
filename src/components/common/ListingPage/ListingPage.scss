@@ -245,12 +245,11 @@
 			}
 		}
 
-		// ACTION BUTTONS CONTAINER (ALWAYS AT THE END)
+		// ACTION BUTTONS CONTAINER
 		.listing-action-buttons-group {
 			display: inline-flex !important;
 			flex-direction: row !important;
 			align-items: center !important;
-			justify-content: flex-end !important;
 			flex-wrap: nowrap !important;
 			white-space: nowrap !important;
 			gap: 0.5rem !important;
