@@ -52,6 +52,9 @@ const OperatorViewPage = lazy(
 );
 const ProfilePage = lazy(() => import('../pages/presentation/profile/ProfilePage'));
 const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
+const ProfileWalletPage = lazy(
+	() => import('../pages/presentation/profile/wallet/ProfileWalletPage'),
+);
 const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
 const LoginHistoryListPage = lazy(
 	() => import('../pages/presentation/login-history/LoginHistoryListPage'),
@@ -79,6 +82,12 @@ const BlockHistoryListPage = lazy(
 );
 const BankDetailListPage = lazy(
 	() => import('../pages/presentation/payments/bank-detail/BankDetailListPage'),
+);
+const WalletTransactionListPage = lazy(
+	() => import('../pages/presentation/payments/wallet-transaction/WalletTransactionListPage'),
+);
+const WalletTransactionViewPage = lazy(
+	() => import('../pages/presentation/payments/wallet-transaction/WalletTransactionViewPage'),
 );
 const ApiKeyRequestListPage = lazy(
 	() => import('../pages/presentation/developer/api-key-request/ApiKeyRequestListPage'),
@@ -115,6 +124,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.PROFILE,
 		element: <ProfilePage />,
+	},
+	{
+		path: PAGE_ROUTES.PROFILE_WALLET,
+		element: <ProfileWalletPage />,
 	},
 	{
 		path: PAGE_ROUTES.KYC,
@@ -235,6 +248,14 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.BANK_DETAILS,
 		element: <BankDetailListPage />,
+	},
+	{
+		path: PAGE_ROUTES.WALLET_TRANSACTION,
+		element: <WalletTransactionListPage />,
+	},
+	{
+		path: PAGE_ROUTES.WALLET_TRANSACTION_VIEW,
+		element: <WalletTransactionViewPage />,
 	},
 	{
 		path: PAGE_ROUTES.API_KEY_REQUEST,

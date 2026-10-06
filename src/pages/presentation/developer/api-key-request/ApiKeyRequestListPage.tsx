@@ -286,6 +286,24 @@ export const ApiKeyRequestListPage: FC = () => {
 		fetchApiKeyRequests();
 	}, [fetchApiKeyRequests]);
 
+	// AUTO-REFRESH ON REAL-TIME SOCKET NOTIFICATIONS
+	useEffect(() => {
+		const handleSocketNotification = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const payload = customEvent?.detail;
+			const evtType = (payload?.event || payload?.notification_type || '').toUpperCase();
+			if (!evtType || evtType.includes('API_KEY') || payload?.model_name === 'api_key_request' || payload?.model_name === 'api_key') {
+				fetchApiKeyRequests(true);
+				fetchMyKeys(true);
+			}
+		};
+
+		window.addEventListener('SOCKET_NOTIFICATION_RECEIVED', handleSocketNotification);
+		return () => {
+			window.removeEventListener('SOCKET_NOTIFICATION_RECEIVED', handleSocketNotification);
+		};
+	}, [fetchApiKeyRequests, fetchMyKeys]);
+
 	// FETCH ACTIVE KEYS ONCE ON MOUNT OR PERMISSIONS LOADED
 	useEffect(() => {
 		if (!isLoadingPermissions && isApiUser && !hasFetchedMyKeysRef.current) {

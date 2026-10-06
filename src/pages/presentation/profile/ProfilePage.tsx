@@ -1,7 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 import React, { FC, useContext, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
 import AppBreadcrumbs from '../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
@@ -19,6 +19,7 @@ import USERS from '../../../common/data/userDummyData';
 import './ProfilePage.scss';
 
 const ProfilePage: FC = () => {
+	const navigate = useNavigate();
 	const { authUser, userData, refetchMe } = useContext(AuthContext);
 
 	// REAL USER DETAILS WITH DESTRUCTURING FROM API RESPONSE
@@ -199,7 +200,17 @@ const ProfilePage: FC = () => {
 					<div className='row g-4 mb-4 align-items-stretch'>
 						{/* WALLET CARD */}
 						<div className={`col-12 ${isSuperAdmin ? 'col-md-12' : 'col-md-6'} d-flex`}>
-							<div className='profile-card metric-card profile-card-hover w-100 h-100'>
+							<div
+								role='button'
+								tabIndex={0}
+								className='profile-card metric-card profile-card-hover w-100 h-100 cursor-pointer'
+								onClick={() => navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`);
+									}
+								}}>
 								<div className='metric-card-left'>
 									<div className='metric-icon-box bg-wallet'>
 										<Icon icon='AccountBalanceWallet' />
@@ -207,14 +218,21 @@ const ProfilePage: FC = () => {
 									<div className='metric-info'>
 										<div className='metric-title'>Wallet</div>
 										<div className='metric-value mt-1'>₹ {currentBalance}</div>
-										<a href='#/wallet' className='metric-link link-blue mt-2'>
+										<Link
+											to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
+											className='metric-link link-blue mt-2'
+											onClick={(e) => e.stopPropagation()}>
 											View Wallet
-										</a>
+										</Link>
 									</div>
 								</div>
-								<div className='metric-arrow-btn' title='View Wallet'>
+								<Link
+									to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
+									className='metric-arrow-btn'
+									title='View Wallet'
+									onClick={(e) => e.stopPropagation()}>
 									<Icon icon='ChevronRight' />
-								</div>
+								</Link>
 							</div>
 						</div>
 

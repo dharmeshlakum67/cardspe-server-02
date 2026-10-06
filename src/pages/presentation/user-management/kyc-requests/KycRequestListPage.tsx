@@ -142,7 +142,6 @@ export const KycRequestListPage: FC = () => {
 		) {
 			fetchKycRequests();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		debouncedSearchTerm,
 		debouncedAdminName,
@@ -154,6 +153,23 @@ export const KycRequestListPage: FC = () => {
 		perPage,
 		isLoadingPermissions,
 	]);
+
+	// AUTO-REFRESH ON REAL-TIME SOCKET NOTIFICATIONS
+	useEffect(() => {
+		const handleSocketNotification = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const payload = customEvent?.detail;
+			const evtType = (payload?.event || payload?.notification_type || '').toUpperCase();
+			if (!evtType || evtType.includes('KYC') || payload?.model_name === 'kyc_request' || payload?.model_name === 'user_kyc') {
+				fetchKycRequests(true);
+			}
+		};
+
+		window.addEventListener('SOCKET_NOTIFICATION_RECEIVED', handleSocketNotification);
+		return () => {
+			window.removeEventListener('SOCKET_NOTIFICATION_RECEIVED', handleSocketNotification);
+		};
+	}, [fetchKycRequests]);
 
 	// FETCH DYNAMIC CONSTANT STATUS OPTIONS & ACTIVE DOCUMENT TYPES ONCE ON MOUNT
 	useEffect(() => {

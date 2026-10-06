@@ -20,6 +20,7 @@ export const PERMISSION_KEYS = {
 	OPERATOR: 'operator',
 	PAYMENTS: 'payments',
 	BANK_DETAILS: 'bank_details',
+	WALLET_TRANSACTION: 'wallet_transaction',
 	SETTING: 'setting',
 	BASIC_SETTING: 'basic_setting',
 	SERVICE_CONFIGURATION: 'service_configuration',

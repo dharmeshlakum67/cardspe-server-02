@@ -638,6 +638,45 @@ export const BANK_DETAIL_ENDPOINTS = {
 	}),
 } as const;
 
+// WALLET TRANSACTION ENDPOINTS
+export const WALLET_TRANSACTION_ENDPOINTS = {
+	GET_CONSTANTS: {
+		url: '/api/wallet-transaction/constant',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ALL: {
+		url: '/api/wallet-transaction/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/wallet-transaction/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	ADD_MONEY: (type: string = 'custom') => ({
+		url: `/api/wallet-transaction/add-money/${type}`,
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	}),
+	GET_MY_TRANSACTIONS: {
+		url: '/api/wallet-transaction/my-transactions',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	APPROVE: (id: string | number) => ({
+		url: `/api/wallet-transaction/approve/${id}`,
+		method: HTTP_METHODS.PUT,
+		requiresAuth: true,
+	}),
+	REJECT: (id: string | number) => ({
+		url: `/api/wallet-transaction/reject/${id}`,
+		method: HTTP_METHODS.PUT,
+		requiresAuth: true,
+	}),
+} as const;
+
 // NOTIFICATION ENDPOINTS
 export const NOTIFICATION_ENDPOINTS = {
 	GET_ALL: {
@@ -708,6 +747,7 @@ export const API_ENDPOINTS = {
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	OPERATOR: OPERATOR_ENDPOINTS,
 	BANK_DETAIL: BANK_DETAIL_ENDPOINTS,
+	WALLET_TRANSACTION: WALLET_TRANSACTION_ENDPOINTS,
 	NOTIFICATION: NOTIFICATION_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,

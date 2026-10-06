@@ -16,6 +16,9 @@ export const PAGE_ROUTES = {
 	// ADMIN & PROFILE
 	PROFILE: 'admin/profile',
 	KYC: 'profile/kyc',
+	PROFILE_WALLET: 'profile/wallet',
+	MY_WALLET: 'profile/wallet',
+	MY_WALLET_TRANSACTIONS: 'profile/wallet',
 
 	// USER MANAGEMENT / ROLES, USERS, KYC REQUESTS & BLOCK HISTORY
 	USERS: 'users',
@@ -49,8 +52,10 @@ export const PAGE_ROUTES = {
 	OPERATOR_EDIT: 'service-management/operators/edit/:id',
 	OPERATOR_VIEW: 'service-management/operators/view/:id',
 
-	// PAYMENTS / BANK DETAILS
+	// PAYMENTS / BANK DETAILS & WALLET TRANSACTIONS
 	BANK_DETAILS: 'payments/bank-details',
+	WALLET_TRANSACTION: 'payments/wallet-transactions',
+	WALLET_TRANSACTION_VIEW: 'payments/wallet-transactions/view/:id',
 
 	// LOGIN HISTORY
 	LOGIN_HISTORY: 'login-history',

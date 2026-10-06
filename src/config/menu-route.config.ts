@@ -155,6 +155,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// WALLET TRANSACTIONS CHILD MODULE
+	wallet_transaction: {
+		path: PAGE_ROUTES.WALLET_TRANSACTION,
+		icon: 'ReceiptLong',
+		text: 'Wallet Transactions',
+		subMenu: null,
+	},
+
 	// LOGIN HISTORY (TOP-LEVEL PARENT MENU)
 	login_history: {
 		path: PAGE_ROUTES.LOGIN_HISTORY,

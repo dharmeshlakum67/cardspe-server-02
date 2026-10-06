@@ -1,0 +1,292 @@
+// WALLET TRANSACTION PAGE & VIEW MODAL STYLING
+
+.wallet-tx-page {
+	.profile-wallet-balance-banner {
+		.balance-banner-card {
+			background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+			border-radius: 16px;
+			padding: 1.5rem 1.75rem;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 1.25rem;
+			box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+			color: #ffffff;
+			border: 1px solid rgba(255, 255, 255, 0.08);
+
+			.balance-banner-left {
+				display: flex;
+				align-items: center;
+				gap: 1.25rem;
+
+				.balance-icon-box {
+					width: 54px;
+					height: 54px;
+					border-radius: 14px;
+					background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: #ffffff;
+					font-size: 1.75rem;
+					box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+					flex-shrink: 0;
+				}
+
+				.balance-text-group {
+					display: flex;
+					flex-direction: column;
+
+					.balance-label {
+						font-size: 0.8125rem;
+						font-weight: 500;
+						color: #94a3b8;
+						text-transform: uppercase;
+						letter-spacing: 0.05em;
+						margin-bottom: 0.25rem;
+					}
+
+					.balance-amount {
+						font-size: 1.85rem;
+						font-weight: 700;
+						color: #ffffff;
+						margin: 0;
+						line-height: 1.1;
+						letter-spacing: -0.02em;
+					}
+				}
+			}
+
+			.balance-banner-actions {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+
+				.btn-refresh-balance {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+					padding: 0.65rem 1.15rem;
+					font-size: 0.875rem;
+					font-weight: 600;
+					color: #cbd5e1;
+					background: rgba(255, 255, 255, 0.08);
+					border: 1px solid rgba(255, 255, 255, 0.15);
+					border-radius: 10px;
+					cursor: pointer;
+					transition: all 0.2s ease;
+
+					&:hover {
+						background: rgba(255, 255, 255, 0.15);
+						color: #ffffff;
+					}
+				}
+
+				.btn-add-money-banner {
+					display: inline-flex;
+					align-items: center;
+					gap: 0.5rem;
+					padding: 0.65rem 1.35rem;
+					font-size: 0.875rem;
+					font-weight: 600;
+					color: #ffffff;
+					background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					border-radius: 10px;
+					cursor: pointer;
+					box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+					transition: all 0.2s ease;
+
+					&:hover {
+						background: linear-gradient(135deg, #059669 0%, #047857 100%);
+						transform: translateY(-1px);
+						box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+					}
+				}
+			}
+		}
+	}
+
+	.copy-badge {
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.2rem 0.5rem;
+		background: #f1f5f9;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.375rem;
+		font-family: var(--bs-font-monospace);
+		font-size: 0.8rem;
+		color: #334155;
+		transition: all 0.15s ease;
+
+		&:hover {
+			background: #e2e8f0;
+			color: #0f172a;
+		}
+
+		.copy-icon {
+			opacity: 0.6;
+			font-size: 0.9rem;
+		}
+	}
+
+	.invoice-badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.15rem 0.45rem;
+		font-size: 0.725rem;
+		font-weight: 600;
+		background: #f8fafc;
+		color: #64748b;
+		border: 1px solid #cbd5e1;
+		border-radius: 0.25rem;
+		letter-spacing: 0.02em;
+	}
+
+	.category-tag {
+		font-size: 0.75rem;
+		font-weight: 600;
+		padding: 0.2rem 0.5rem;
+		border-radius: 0.375rem;
+		display: inline-block;
+		text-transform: capitalize;
+	}
+
+	.mode-tag {
+		font-size: 0.7rem;
+		color: #64748b;
+		text-transform: capitalize;
+		margin-top: 0.15rem;
+	}
+
+	.amount-display {
+		font-size: 0.925rem;
+		font-weight: 700;
+		line-height: 1.2;
+
+		&.credit {
+			color: #16a34a;
+		}
+
+		&.debit {
+			color: #dc2626;
+		}
+	}
+
+	.charge-tag {
+		font-size: 0.725rem;
+		color: #64748b;
+	}
+
+	.balance-flow {
+		font-size: 0.775rem;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: #475569;
+
+		.balance-arrow {
+			color: #94a3b8;
+			font-size: 0.7rem;
+		}
+
+		.post-bal {
+			font-weight: 600;
+			color: #0f172a;
+		}
+	}
+
+	.btn-proof-preview {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+		padding: 0.25rem 0.55rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #2563eb;
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		border-radius: 9999px;
+		cursor: pointer;
+		transition: all 0.15s ease;
+
+		&:hover {
+			background: #dbeafe;
+			color: #1d4ed8;
+		}
+	}
+}
+
+// VIEW MODAL MODERN FINTECH STYLES
+.tx-view-modal {
+	.tx-hero-card {
+		border-radius: 12px;
+		padding: 1.25rem 1.5rem;
+		border: 1px solid #e2e8f0;
+	}
+
+	.tx-section-card {
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 1.15rem 1.25rem;
+	}
+
+	.tx-stat-box {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 0.85rem 1rem;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+
+		.tx-stat-label {
+			font-size: 0.775rem;
+			font-weight: 600;
+			color: #475569;
+			margin-bottom: 0.35rem;
+			letter-spacing: 0.01em;
+		}
+
+		.tx-stat-value {
+			font-size: 1.05rem;
+			font-weight: 700;
+			color: #0f172a;
+			line-height: 1.2;
+		}
+	}
+
+	.tx-detail-row {
+		background: #f8fafc;
+		border: 1px solid #e2e8f0;
+		border-radius: 8px;
+		padding: 0.75rem 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+
+		.tx-row-label {
+			font-size: 0.8125rem;
+			font-weight: 600;
+			color: #475569;
+			flex-shrink: 0;
+		}
+
+		.tx-row-value {
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #0f172a;
+			text-align: right;
+			word-break: break-word;
+		}
+	}
+}
+
