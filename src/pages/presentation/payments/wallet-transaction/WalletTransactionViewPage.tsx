@@ -400,9 +400,8 @@ export const WalletTransactionViewPage: FC = () => {
 	const modeLabel =
 		modeMeta?.label || transaction.transaction_mode?.replace(/_/g, ' ') || 'Manual';
 
-	const user = transaction.admin;
+	const { admin: user, reviewer } = transaction;
 	const userRole = user?.role;
-	const reviewer = transaction.reviewer;
 	const screenshotUrl = getImageUrl(transaction.screenshot);
 	const isFromProfileWallet = (location.state as any)?.from === 'profile_wallet';
 	const backRoute = isFromProfileWallet

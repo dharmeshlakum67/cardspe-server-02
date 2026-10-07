@@ -142,6 +142,7 @@ export const KycRequestListPage: FC = () => {
 		) {
 			fetchKycRequests();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		debouncedSearchTerm,
 		debouncedAdminName,

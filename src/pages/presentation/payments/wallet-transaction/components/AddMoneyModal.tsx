@@ -190,7 +190,6 @@ export const AddMoneyModal: FC<IAddMoneyModalProps> = ({
 								value={amount}
 								onChange={(e) => setAmount(e.target.value)}
 								required
-								autoFocus
 							/>
 						</div>
 

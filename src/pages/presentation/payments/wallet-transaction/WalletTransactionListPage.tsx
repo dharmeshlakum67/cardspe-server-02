@@ -149,11 +149,14 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 		hasFetchedConstantsRef.current = true;
 		try {
 			const res = await walletTransactionService.getWalletTransactionConstants();
-			const constantsPayload = (res as any)?.data?.status
-				? (res as any).data
-				: (res as any)?.status
-				? res
-				: (res as any)?.data || null;
+			let constantsPayload = null;
+			if ((res as any)?.data?.status) {
+				constantsPayload = (res as any).data;
+			} else if ((res as any)?.status) {
+				constantsPayload = res;
+			} else {
+				constantsPayload = (res as any)?.data || null;
+			}
 			if (constantsPayload) {
 				setConstants(constantsPayload);
 			}
@@ -384,7 +387,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 							header: 'User Name',
 							minWidth: '220px',
 							render: (item: IWalletTransaction) => {
-								const admin = item.admin;
+								const { admin } = item;
 								if (!admin) {
 									return (
 										<div className='d-flex align-items-center gap-2'>
@@ -469,7 +472,10 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 				render: (item) => {
 					const meta = getMeta(constants?.transaction_type, item.transaction_type);
 					const isCredit = item.transaction_type === 'credit';
-					const label = meta?.label ? meta.label.toUpperCase() : isCredit ? 'CREDIT' : 'DEBIT';
+					let label = isCredit ? 'CREDIT' : 'DEBIT';
+					if (meta?.label) {
+						label = meta.label.toUpperCase();
+					}
 					const style = getCustomBadgeStyle(
 						meta,
 						isCredit ? '#f0fdf4' : '#fff1f2',
@@ -933,6 +939,10 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 			</Page>
 		</PageWrapper>
 	);
+};
+
+WalletTransactionListPage.defaultProps = {
+	isSelf: false,
 };
 
 export default WalletTransactionListPage;
