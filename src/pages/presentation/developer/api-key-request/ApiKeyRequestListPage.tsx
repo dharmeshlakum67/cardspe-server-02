@@ -257,14 +257,13 @@ export const ApiKeyRequestListPage: FC = () => {
 			setIsLoadingMyKeys(true);
 			try {
 				const res: any = await apiKeyRequestService.getMyApiKeys();
+				const resolvedData = res?.data !== undefined ? res.data : res;
 				const data: IMyApiKeysData =
-					res?.data?.test !== undefined
-						? res.data
-						: res?.data?.data?.test !== undefined
-						? res.data.data
-						: res?.result?.test !== undefined
-						? res.result
-						: res;
+					resolvedData?.test !== undefined || resolvedData?.live !== undefined
+						? resolvedData
+						: resolvedData?.data !== undefined
+						? resolvedData.data
+						: resolvedData;
 				setMyKeysData(data);
 				hasFetchedMyKeysRef.current = true;
 			} catch (error: any) {

@@ -28,6 +28,7 @@ export const PERMISSION_KEYS = {
 	MANAGE_SERVICE: 'manage_service',
 	DEVELOPER: 'developer',
 	API_REQUEST: 'api_request',
+	API_DOCUMENTATION: 'api_documentation',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

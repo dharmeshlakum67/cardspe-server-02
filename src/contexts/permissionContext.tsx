@@ -285,6 +285,11 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 		[hasPermission],
 	);
 
+	const canPortal = useCallback(
+		(permissionKeyOrName: string): boolean => hasPermission(permissionKeyOrName, 'portal'),
+		[hasPermission],
+	);
+
 	// DYNAMICALLY GENERATE MENU BASED ON PERMISSIONS AND USER READ ACCESS (INCLUDING NESTED CHILDREN)
 	const dynamicMenu = useMemo<Record<string, any>>(() => {
 		if (!authUser) {
@@ -332,6 +337,19 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				perm.name?.toLowerCase().trim() === 'setting' ||
 				perm.name?.toLowerCase().trim() === 'settings';
 
+			const isApiDocModule =
+				key?.toLowerCase().includes('api_documentation') ||
+				perm.name?.toLowerCase().includes('api documentation') ||
+				key?.toLowerCase() === 'api_documentation';
+
+			const hasPortalPerm =
+				isApiDocModule &&
+				(hasPermission(key, 'portal') ||
+					hasPermission('api_documentation', 'portal') ||
+					hasPermission('developer', 'portal'));
+
+			const hasDirectReadAccess = canRead(key) || canRead(perm.name);
+
 			const hasSettingRead =
 				isSettingModule &&
 				(canRead('setting') ||
@@ -339,7 +357,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 					canRead('service_configuration') ||
 					canRead('payment_gateway'));
 
-			const hasDirectRead = canRead(key) || canRead(perm.name) || hasSettingRead;
+			const hasDirectRead = hasDirectReadAccess || hasSettingRead || hasPortalPerm;
 
 			// PROCESS CHILDREN RECURSIVELY (EXCEPT FOR SETTING PARENT)
 			let subMenuObj: Record<string, any> | null = null;
@@ -371,6 +389,9 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				let resolvedPath: string | null = '';
 				if (isSettingModule) {
 					resolvedPath = PAGE_ROUTES.SETTING;
+				} else if (isApiDocModule && hasPortalPerm && !hasDirectReadAccess) {
+					// PORTAL ONLY: DIRECTLY OPEN DEVELOPER PORTAL
+					resolvedPath = PAGE_ROUTES.API_DOCUMENTATION_PORTAL;
 				} else if (metadata?.path !== undefined) {
 					resolvedPath = metadata.path;
 				} else if (subMenuObj !== null) {
@@ -418,7 +439,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 
 		return menuObj;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isUserLoggedIn, userRoleId, permissions, canRead]);
+	}, [isUserLoggedIn, userRoleId, permissions, canRead, hasPermission]);
 
 	const value: IPermissionContextProps = useMemo(
 		() => ({
@@ -434,6 +455,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canReview,
 			canDelete,
 			canResetPassword,
+			canPortal,
 			refetchPermissions,
 		}),
 		[
@@ -448,6 +470,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canReview,
 			canDelete,
 			canResetPassword,
+			canPortal,
 			refetchPermissions,
 		],
 	);

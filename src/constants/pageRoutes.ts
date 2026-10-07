@@ -64,8 +64,14 @@ export const PAGE_ROUTES = {
 	SETTING: 'setting',
 	SETTING_PAYMENT_GATEWAY: 'setting/payment-gateway',
 
-	// DEVELOPER / API KEY REQUESTS
+	// DEVELOPER / API KEY REQUESTS & DOCUMENTATION
 	API_KEY_REQUEST: 'developer/api-key',
+	API_DOCUMENTATION: 'developer/api-documentation',
+	API_DOCUMENTATION_ADD: 'developer/api-documentation/add',
+	API_DOCUMENTATION_EDIT: 'developer/api-documentation/edit/:id',
+	API_DOCUMENTATION_VIEW: 'developer/api-documentation/view/:id',
+	API_DOCUMENTATION_PORTAL: 'developer/api-documentation/portal',
+	API_DOCUMENTATION_PREVIEW: 'developer/api-documentation/preview/:slug',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

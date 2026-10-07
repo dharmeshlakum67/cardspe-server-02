@@ -735,6 +735,60 @@ export const API_KEY_REQUEST_ENDPOINTS = {
 	}),
 } as const;
 
+// DEVELOPER / API DOCUMENTATION ENDPOINTS
+export const API_DOCUMENTATION_ENDPOINTS = {
+	CREATE: {
+		url: '/api/developer/api-documentation/create',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	GET_ALL: {
+		url: '/api/developer/api-documentation/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	CATEGORIES: {
+		url: '/api/developer/api-documentation/categories',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	PORTAL: {
+		url: '/api/developer/api-documentation/portal',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_ONE: (id: string | number) => ({
+		url: `/api/developer/api-documentation/get-one/${id}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	GET_BY_SLUG: (slug: string) => ({
+		url: `/api/developer/api-documentation/get-by-slug/${slug}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	PREVIEW: (slug: string) => ({
+		url: `/api/developer/api-documentation/preview/${slug}`,
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
+	UPDATE: (id: string | number) => ({
+		url: `/api/developer/api-documentation/update/${id}`,
+		method: HTTP_METHODS.PUT,
+		requiresAuth: true,
+	}),
+	UPDATE_STATUS: (id: string | number) => ({
+		url: `/api/developer/api-documentation/update-status/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
+	DELETE: (id: string | number) => ({
+		url: `/api/developer/api-documentation/delete/${id}`,
+		method: HTTP_METHODS.DELETE,
+		requiresAuth: true,
+	}),
+} as const;
+
 export const DEVELOPER_ENDPOINTS = API_KEY_REQUEST_ENDPOINTS;
 
 // COMBINED API ENDPOINTS
@@ -762,6 +816,7 @@ export const API_ENDPOINTS = {
 	CONSTANT: CONSTANT_ENDPOINTS,
 	API_REQUEST: API_KEY_REQUEST_ENDPOINTS,
 	API_KEY_REQUEST: API_KEY_REQUEST_ENDPOINTS,
+	API_DOCUMENTATION: API_DOCUMENTATION_ENDPOINTS,
 	DEVELOPER: API_KEY_REQUEST_ENDPOINTS,
 } as const;
 

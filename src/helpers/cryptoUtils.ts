@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable no-bitwise */
+/* eslint-disable no-bitwise, no-await-in-loop, no-continue */
 import { ENV } from '../config/env.config';
 
 // GET SECRET CRYPTO ENCRYPTION KEY FROM ENVIRONMENT
@@ -51,6 +51,18 @@ const getSubtleCryptoKey = async (secret: string): Promise<CryptoKey> => {
 	);
 };
 
+// GET CANDIDATE SECRET KEYS FOR DECRYPTION WITH FALLBACKS
+const getCandidateKeys = (customKey?: string): string[] => {
+	const candidates: string[] = [];
+	if (customKey) candidates.push(customKey);
+	if (process.env.REACT_APP_CRYPTO_ENCRYPTION_KEY) candidates.push(process.env.REACT_APP_CRYPTO_ENCRYPTION_KEY);
+	if (process.env.REACT_APP_ENCRYPTION_KEY) candidates.push(process.env.REACT_APP_ENCRYPTION_KEY);
+	if (ENV.CRYPTO_ENCRYPTION_KEY) candidates.push(ENV.CRYPTO_ENCRYPTION_KEY);
+	candidates.push('LOygQaVibJdeIXTtMve3C1iJieD9');
+	candidates.push('default_secret_key_change_in_production');
+	return Array.from(new Set(candidates.filter(Boolean)));
+};
+
 // DECRYPT ENCRYPTED DATA STRING (MATCHES BACKEND AES-256-CBC WITH SHA-256 HASHED SECRET)
 export const decryptAccountInfo = async (
 	cipherText?: string | null,
@@ -71,24 +83,82 @@ export const decryptAccountInfo = async (
 			return cleanCipher;
 		}
 
-		const secret = customKey || getCryptoKey();
 		const [ivHex, encryptedDataHex] = cleanCipher.split(':');
 		const ivBytes = hexToUint8Array(ivHex);
 		const encryptedBytes = hexToUint8Array(encryptedDataHex);
 
-		const cryptoKey = await getSubtleCryptoKey(secret);
-		const decryptedBuffer = await window.crypto.subtle.decrypt(
-			{ name: 'AES-CBC', iv: ivBytes.buffer as ArrayBuffer },
-			cryptoKey,
-			encryptedBytes.buffer as ArrayBuffer,
-		);
+		const keys = getCandidateKeys(customKey);
+		for (const secret of keys) {
+			try {
+				const cryptoKey = await getSubtleCryptoKey(secret);
+				const decryptedBuffer = await window.crypto.subtle.decrypt(
+					{ name: 'AES-CBC', iv: ivBytes.buffer as ArrayBuffer },
+					cryptoKey,
+					encryptedBytes.buffer as ArrayBuffer,
+				);
 
-		const decoder = new TextDecoder();
-		return decoder.decode(decryptedBuffer);
+				const decoder = new TextDecoder();
+				const result = decoder.decode(decryptedBuffer);
+				if (result) {
+					return result;
+				}
+			} catch {
+				// Try next candidate key
+				continue;
+			}
+		}
+
+		return cleanCipher;
 	} catch (error) {
 		// If decryption fails, return original text safely
 		return cleanCipher;
 	}
+};
+
+// DECRYPT GENERIC DATA OR RESPONSE OBJECTS (AUTOMATICALLY PARSES JSON IF APPLICABLE)
+export const decryptData = async <T = any>(
+	payload?: any,
+	customKey?: string,
+): Promise<T> => {
+	if (!payload) return payload;
+
+	// 1. If payload itself is an encrypted string
+	if (typeof payload === 'string') {
+		const clean = payload.trim();
+		if (isEncryptedFormat(clean)) {
+			const decryptedStr = await decryptAccountInfo(clean, customKey);
+			try {
+				return JSON.parse(decryptedStr);
+			} catch {
+				return decryptedStr as unknown as T;
+			}
+		}
+		return payload as unknown as T;
+	}
+
+	// 2. If payload is an API response object where data property is encrypted
+	if (
+		typeof payload === 'object' &&
+		payload !== null &&
+		typeof payload.data === 'string' &&
+		isEncryptedFormat(payload.data)
+	) {
+		const decryptedStr = await decryptAccountInfo(payload.data, customKey);
+		try {
+			const parsed = JSON.parse(decryptedStr);
+			return {
+				...payload,
+				data: parsed,
+			};
+		} catch {
+			return {
+				...payload,
+				data: decryptedStr,
+			};
+		}
+	}
+
+	return payload;
 };
 
 // ENCRYPT PLAIN DATA STRING (AES-256-CBC MATCHING BACKEND FORMAT)
@@ -127,5 +197,6 @@ export default {
 	getCryptoKey,
 	isEncryptedFormat,
 	decryptAccountInfo,
+	decryptData,
 	encryptAccountInfo,
 };

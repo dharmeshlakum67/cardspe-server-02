@@ -1,5 +1,6 @@
 import apiClient from '../../../../../services/apiClient';
 import { API_KEY_REQUEST_ENDPOINTS } from '../../../../../constants/apiEndpoints';
+import { decryptData } from '../../../../../helpers/cryptoUtils';
 import {
 	ICreateApiKeyRequestPayload,
 	IReviewApiKeyRequestPayload,
@@ -14,18 +15,20 @@ export const apiKeyRequestService = {
 	createApiKeyRequest: async (
 		payload: ICreateApiKeyRequestPayload,
 	): Promise<IApiKeyRequestSingleResponse> => {
-		return apiClient<IApiKeyRequestSingleResponse>(API_KEY_REQUEST_ENDPOINTS.CREATE, {
+		const res = await apiClient<IApiKeyRequestSingleResponse>(API_KEY_REQUEST_ENDPOINTS.CREATE, {
 			body: payload,
 		});
+		return decryptData(res);
 	},
 
 	// 1b. INSTANT GENERATE API KEY (FIRST-TIME USERS)
 	generateApiKey: async (payload: {
 		key_type: TApiKeyType;
 	}): Promise<any> => {
-		return apiClient<any>(API_KEY_REQUEST_ENDPOINTS.GENERATE, {
+		const res = await apiClient<any>(API_KEY_REQUEST_ENDPOINTS.GENERATE, {
 			body: payload,
 		});
+		return decryptData(res);
 	},
 
 	// 2. GET ALL API KEY REQUESTS (PAGINATED WITH FILTERS & SEARCH)
@@ -48,16 +51,18 @@ export const apiKeyRequestService = {
 			if (params.sortOrder) apiParams.sortOrder = params.sortOrder;
 		}
 
-		return apiClient<IApiKeyRequestListResponse>(API_KEY_REQUEST_ENDPOINTS.GET_ALL, {
+		const res = await apiClient<IApiKeyRequestListResponse>(API_KEY_REQUEST_ENDPOINTS.GET_ALL, {
 			params: apiParams,
 		});
+		return decryptData(res);
 	},
 
 	// 3. GET SINGLE API KEY REQUEST BY ID
 	getApiKeyRequestById: async (
 		id: number | string,
 	): Promise<IApiKeyRequestSingleResponse> => {
-		return apiClient<IApiKeyRequestSingleResponse>(API_KEY_REQUEST_ENDPOINTS.GET_ONE(id));
+		const res = await apiClient<IApiKeyRequestSingleResponse>(API_KEY_REQUEST_ENDPOINTS.GET_ONE(id));
+		return decryptData(res);
 	},
 
 	// 4. REVIEW API KEY REQUEST (APPROVE / REJECT - SUPER USER)
@@ -65,14 +70,16 @@ export const apiKeyRequestService = {
 		id: number | string,
 		payload: IReviewApiKeyRequestPayload,
 	): Promise<{ success: boolean; statusCode?: number; message?: string; data?: any }> => {
-		return apiClient(API_KEY_REQUEST_ENDPOINTS.REVIEW(id), {
+		const res = await apiClient(API_KEY_REQUEST_ENDPOINTS.REVIEW(id), {
 			body: payload,
 		});
+		return decryptData(res);
 	},
 
 	// 5. GET CURRENT USER'S ACTIVE KEYS & GENERATION STATUS
 	getMyApiKeys: async (): Promise<any> => {
-		return apiClient<any>(API_KEY_REQUEST_ENDPOINTS.MY_KEYS);
+		const res = await apiClient<any>(API_KEY_REQUEST_ENDPOINTS.MY_KEYS);
+		return decryptData(res);
 	},
 };
 

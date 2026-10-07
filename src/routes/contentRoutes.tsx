@@ -92,6 +92,21 @@ const WalletTransactionViewPage = lazy(
 const ApiKeyRequestListPage = lazy(
 	() => import('../pages/presentation/developer/api-key-request/ApiKeyRequestListPage'),
 );
+const ApiDocumentationListPage = lazy(
+	() => import('../pages/presentation/developer/api-documentation/ApiDocumentationListPage'),
+);
+const ApiDocumentationAddPage = lazy(
+	() => import('../pages/presentation/developer/api-documentation/ApiDocumentationAddPage'),
+);
+const ApiDocumentationEditPage = lazy(
+	() => import('../pages/presentation/developer/api-documentation/ApiDocumentationEditPage'),
+);
+const ApiDocumentationViewPage = lazy(
+	() => import('../pages/presentation/developer/api-documentation/ApiDocumentationViewPage'),
+);
+const ApiDocumentationPortalPage = lazy(
+	() => import('../pages/presentation/developer/api-documentation/ApiDocumentationPortalPage'),
+);
 const PaymentGatewayListPage = lazy(
 	() => import('../pages/presentation/setting/payment-gateway/PaymentGatewayListPage'),
 );
@@ -260,6 +275,30 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.API_KEY_REQUEST,
 		element: <ApiKeyRequestListPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION,
+		element: <ApiDocumentationListPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION_ADD,
+		element: <ApiDocumentationAddPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION_EDIT,
+		element: <ApiDocumentationEditPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION_VIEW,
+		element: <ApiDocumentationViewPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION_PORTAL,
+		element: <ApiDocumentationPortalPage />,
+	},
+	{
+		path: PAGE_ROUTES.API_DOCUMENTATION_PREVIEW,
+		element: <ApiDocumentationPortalPage />,
 	},
 	{
 		path: '*',

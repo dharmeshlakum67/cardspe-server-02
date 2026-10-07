@@ -194,6 +194,20 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'API Requests',
 		subMenu: null,
 	},
+
+	// API DOCUMENTATION CHILD MODULE (Permission key: api_documentation)
+	api_documentation: {
+		path: PAGE_ROUTES.API_DOCUMENTATION,
+		icon: 'MenuBook',
+		text: 'API Documentation',
+		subMenu: null,
+	},
+	api_documentations: {
+		path: PAGE_ROUTES.API_DOCUMENTATION,
+		icon: 'MenuBook',
+		text: 'API Documentation',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY
