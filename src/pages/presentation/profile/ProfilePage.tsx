@@ -43,9 +43,99 @@ const ProfilePage: FC = () => {
 			: '0.00';
 	const isSuperAdmin = Boolean(
 		authUser?.is_super_admin ||
-		authUser?.role?.role_type?.toLowerCase() === 'super_user',
+		authUser?.role?.role_type?.toLowerCase() === 'super_user' ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_admin' ||
+		authUser?.role?.role_type?.toLowerCase().includes('super'),
 	);
-	const kycStatus = authUser?.kyc_status || 'Pending';
+
+	// NORMALIZED KYC STATUS DERIVATION FROM ME API
+	const rawKycStatus = (
+		authUser?.kyc_status ||
+		(authUser as any)?.user?.kyc_status ||
+		(authUser as any)?.kycStatus ||
+		(authUser as any)?.kyc?.status ||
+		'pending'
+	)
+		.toString()
+		.toLowerCase()
+		.trim();
+
+	const isKycApproved =
+		rawKycStatus === 'approved' ||
+		rawKycStatus === 'verified' ||
+		rawKycStatus === 'completed';
+	const isKycRejected = rawKycStatus === 'rejected';
+	const isKycSubmitted =
+		rawKycStatus === 'submitted' ||
+		rawKycStatus === 'in_review' ||
+		rawKycStatus === 'under_review';
+
+	const getKycStatusLabel = () => {
+		if (isKycApproved) return 'Approved';
+		if (isKycRejected) return 'Rejected';
+		if (isKycSubmitted) return 'In Review';
+		return 'Pending';
+	};
+
+	const getKycStatusBadgeStyle = () => {
+		if (isKycApproved) {
+			return {
+				backgroundColor: '#dcfce7',
+				color: '#15803d',
+				border: '1px solid #bbf7d0',
+			};
+		}
+		if (isKycRejected) {
+			return {
+				backgroundColor: '#fee2e2',
+				color: '#b91c1c',
+				border: '1px solid #fecaca',
+			};
+		}
+		if (isKycSubmitted) {
+			return {
+				backgroundColor: '#dbeafe',
+				color: '#1d4ed8',
+				border: '1px solid #bfdbfe',
+			};
+		}
+		return {
+			backgroundColor: '#fef3c7',
+			color: '#b45309',
+			border: '1px solid #fde68a',
+		};
+	};
+
+	const getKycActionLabel = () => {
+		if (isKycApproved) return 'View KYC';
+		if (isKycRejected) return 'Re-submit KYC';
+		if (isKycSubmitted) return 'View Status';
+		return 'Complete KYC';
+	};
+
+	let kycIconCircleClass = 'pending';
+	if (isKycApproved) {
+		kycIconCircleClass = 'verified';
+	} else if (isKycRejected) {
+		kycIconCircleClass = 'unverified';
+	}
+
+	let kycStatusTextClass = 'text-pending';
+	if (isKycApproved) {
+		kycStatusTextClass = 'text-verified';
+	} else if (isKycRejected) {
+		kycStatusTextClass = 'text-unverified';
+	}
+
+	let kycIconName = 'PendingActions';
+	if (isKycApproved) {
+		kycIconName = 'CheckCircle';
+	} else if (isKycRejected) {
+		kycIconName = 'Cancel';
+	} else if (rawKycStatus === 'pending') {
+		kycIconName = 'Error';
+	}
+
 	const isEmailVerified = authUser?.is_email_verified ?? false;
 	const isMobileVerified = authUser?.is_mobile_verified ?? false;
 
@@ -54,6 +144,41 @@ const ProfilePage: FC = () => {
 	const address = profile?.address?.trim() || '-';
 	const stateName = (profile?.state?.name || (typeof profile?.state === 'string' ? profile.state : ''))?.trim() || '-';
 	const postalCode = profile?.postal_code?.trim() || '-';
+
+	// FETCH / REFRESH ME DATA ON MOUNT
+	useEffect(() => {
+		if (refetchMe) {
+			refetchMe();
+		}
+	}, [refetchMe]);
+
+	// AUTO-REFRESH ON REAL-TIME SOCKET NOTIFICATIONS
+	useEffect(() => {
+		const handleSocketNotification = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const payload = customEvent?.detail;
+			const evtType = (payload?.event || payload?.notification_type || '').toUpperCase();
+			if (
+				!evtType ||
+				evtType.includes('KYC') ||
+				evtType.includes('PROFILE') ||
+				evtType.includes('WALLET') ||
+				evtType.includes('USER') ||
+				payload?.model_name === 'kyc_request' ||
+				payload?.model_name === 'user_kyc' ||
+				payload?.model_name === 'user'
+			) {
+				if (refetchMe) {
+					refetchMe();
+				}
+			}
+		};
+
+		window.addEventListener('socket_notification', handleSocketNotification);
+		return () => {
+			window.removeEventListener('socket_notification', handleSocketNotification);
+		};
+	}, [refetchMe]);
 
 	// EDIT PROFILE MODAL STATE
 	const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState<boolean>(false);
@@ -196,50 +321,60 @@ const ProfilePage: FC = () => {
 						</div>
 					</div>
 
-					{/* 2. METRIC STAT CARDS ROW (WALLET & KYC) */}
-					<div className='row g-4 mb-4 align-items-stretch'>
-						{/* WALLET CARD */}
-						<div className={`col-12 ${isSuperAdmin ? 'col-md-12' : 'col-md-6'} d-flex`}>
-							<div
-								role='button'
-								tabIndex={0}
-								className='profile-card metric-card profile-card-hover w-100 h-100 cursor-pointer'
-								onClick={() => navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`)}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`);
-									}
-								}}>
-								<div className='metric-card-left'>
-									<div className='metric-icon-box bg-wallet'>
-										<Icon icon='AccountBalanceWallet' />
-									</div>
-									<div className='metric-info'>
-										<div className='metric-title'>Wallet</div>
-										<div className='metric-value mt-1'>₹ {currentBalance}</div>
-										<Link
-											to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
-											className='metric-link link-blue mt-2'
-											onClick={(e) => e.stopPropagation()}>
-											View Wallet
-										</Link>
-									</div>
-								</div>
-								<Link
-									to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
-									className='metric-arrow-btn'
-									title='View Wallet'
-									onClick={(e) => e.stopPropagation()}>
-									<Icon icon='ChevronRight' />
-								</Link>
-							</div>
-						</div>
-
-						{/* KYC CARD (ONLY FOR REGULAR USERS / MERCHANTS) */}
-						{!isSuperAdmin && (
+					{/* 2. METRIC STAT CARDS ROW (WALLET & KYC - ONLY FOR REGULAR / MERCHANT USERS) */}
+					{!isSuperAdmin && (
+						<div className='row g-4 mb-4 align-items-stretch'>
+							{/* WALLET CARD */}
 							<div className='col-12 col-md-6 d-flex'>
-								<div className='profile-card metric-card profile-card-hover w-100 h-100'>
+								<div
+									role='button'
+									tabIndex={0}
+									className='profile-card metric-card profile-card-hover w-100 h-100 cursor-pointer'
+									onClick={() => navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											navigate(`/${PAGE_ROUTES.PROFILE_WALLET}`);
+										}
+									}}>
+									<div className='metric-card-left'>
+										<div className='metric-icon-box bg-wallet'>
+											<Icon icon='AccountBalanceWallet' />
+										</div>
+										<div className='metric-info'>
+											<div className='metric-title'>Wallet</div>
+											<div className='metric-value mt-1'>₹ {currentBalance}</div>
+											<Link
+												to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
+												className='metric-link link-blue mt-2'
+												onClick={(e) => e.stopPropagation()}>
+												View Wallet
+											</Link>
+										</div>
+									</div>
+									<Link
+										to={`/${PAGE_ROUTES.PROFILE_WALLET}`}
+										className='metric-arrow-btn'
+										title='View Wallet'
+										onClick={(e) => e.stopPropagation()}>
+										<Icon icon='ChevronRight' />
+									</Link>
+								</div>
+							</div>
+
+							{/* KYC CARD */}
+							<div className='col-12 col-md-6 d-flex'>
+								<div
+									role='button'
+									tabIndex={0}
+									className='profile-card metric-card profile-card-hover w-100 h-100 cursor-pointer'
+									onClick={() => navigate(`/${PAGE_ROUTES.KYC}`)}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											navigate(`/${PAGE_ROUTES.KYC}`);
+										}
+									}}>
 									<div className='metric-card-left'>
 										<div className='metric-icon-box bg-kyc'>
 											<Icon icon='Shield' />
@@ -247,25 +382,31 @@ const ProfilePage: FC = () => {
 										<div className='metric-info'>
 											<div className='d-flex align-items-center gap-2'>
 												<div className='metric-title mb-0'>KYC</div>
-												<span className='kyc-status-pill'>{kycStatus}</span>
+												<span
+													className='kyc-status-pill text-capitalize fw-bold'
+													style={getKycStatusBadgeStyle()}>
+													{getKycStatusLabel()}
+												</span>
 											</div>
 											<Link
 												to={`/${PAGE_ROUTES.KYC}`}
-												className='metric-link link-purple mt-3'>
-												Complete KYC
+												className='metric-link link-purple mt-3'
+												onClick={(e) => e.stopPropagation()}>
+												{getKycActionLabel()}
 											</Link>
 										</div>
 									</div>
 									<Link
 										to={`/${PAGE_ROUTES.KYC}`}
 										className='metric-arrow-btn'
-										title='Complete KYC'>
+										title={getKycActionLabel()}
+										onClick={(e) => e.stopPropagation()}>
 										<Icon icon='ChevronRight' />
 									</Link>
 								</div>
 							</div>
-						)}
-					</div>
+						</div>
+					)}
 
 					{/* 3. MAIN CONTENT TWO-COLUMN LAYOUT (ACCOUNT STATUS & RECENT ACTIVITY) */}
 					<div className='row g-4 align-items-stretch'>
@@ -329,6 +470,36 @@ const ProfilePage: FC = () => {
 											<Icon icon='ChevronRight' className='chevron-icon' />
 										</div>
 									</div>
+
+									{/* KYC VERIFICATION STATUS ROW (FOR REGULAR USERS) */}
+									{!isSuperAdmin && (
+										<div
+											role='button'
+											tabIndex={0}
+											className='status-row-item'
+											style={{ cursor: 'pointer' }}
+											title='Click to view KYC details'
+											onKeyDown={(e) => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault();
+													navigate(`/${PAGE_ROUTES.KYC}`);
+												}
+											}}
+											onClick={() => navigate(`/${PAGE_ROUTES.KYC}`)}>
+											<div className='status-row-left'>
+												<div className={`status-icon-circle ${kycIconCircleClass}`}>
+													<Icon icon={kycIconName} />
+												</div>
+												<span className='status-title'>KYC Verification</span>
+											</div>
+											<div className='status-row-right'>
+												<span className={`status-text ${kycStatusTextClass}`}>
+													{getKycStatusLabel()}
+												</span>
+												<Icon icon='ChevronRight' className='chevron-icon' />
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 						</div>

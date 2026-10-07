@@ -466,6 +466,11 @@
 						background-color: #fee2e2;
 						color: #dc2626;
 					}
+
+					&.pending {
+						background-color: #fef3c7;
+						color: #d97706;
+					}
 				}
 
 				.status-title {
@@ -490,6 +495,10 @@
 
 					&.text-unverified {
 						color: #dc2626;
+					}
+
+					&.text-pending {
+						color: #d97706;
 					}
 				}
 
