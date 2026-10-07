@@ -12,7 +12,7 @@ import Input from '../../../../components/bootstrap/forms/Input';
 import AppBreadcrumbs from '../../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import { encryptId } from '../../../../helpers/routeEncryption';
-import { IApiDocumentation } from './type/api-documentation.type';
+import { ApiDocNavigationItem, IApiDocumentation } from './type/api-documentation.type';
 import apiDocumentationService from './service/apiDocumentationService';
 import ApiDocMethodBadge from './components/ApiDocMethodBadge';
 import ApiDocumentationViewContent from './components/ApiDocumentationViewContent';
@@ -51,13 +51,16 @@ export const ApiDocumentationPortalPage: FC = () => {
 	}, [isLoadingPermissions, hasRead, hasPortal, navigate]);
 
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [isLoadingDoc, setIsLoadingDoc] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
-	const [groups, setGroups] = useState<Record<string, IApiDocumentation[]>>({});
+	const [groups, setGroups] = useState<Record<string, ApiDocNavigationItem[]>>({});
+	const [activeNav, setActiveNav] = useState<ApiDocNavigationItem | null>(null);
 	const [selectedDoc, setSelectedDoc] = useState<IApiDocumentation | null>(null);
 	const [sidebarSearch, setSidebarSearch] = useState<string>('');
 
 	const isFetchingPortalRef = useRef<boolean>(false);
-	const fetchedSlugRef = useRef<string | null>(null);
+	const docCacheRef = useRef<Record<string | number, IApiDocumentation>>({});
+	const activeFetchingKeyRef = useRef<string | number | null>(null);
 
 	// DYNAMIC BREADCRUMBS (HIDE LINK TO LIST PAGE IF USER HAS ONLY PORTAL ACCESS)
 	const breadcrumbItems = useMemo(() => {
@@ -74,15 +77,50 @@ export const ApiDocumentationPortalPage: FC = () => {
 		];
 	}, [hasRead]);
 
-	// FETCH PORTAL DATA
-	useEffect(() => {
-		const fetchPortalData = async () => {
-			const currentSlugKey = slug || '__ALL__';
-			if (isFetchingPortalRef.current || fetchedSlugRef.current === currentSlugKey) {
+	// FETCH ACTIVE DOCUMENTATION DETAIL (EXACTLY ONCE PER ITEM, CACHED)
+	const handleSelectDoc = useCallback(
+		async (navItem: ApiDocNavigationItem) => {
+			if (!navItem) return;
+			setActiveNav(navItem);
+
+			const cacheKey = navItem.slug || navItem.id;
+			if (docCacheRef.current[cacheKey]) {
+				setSelectedDoc(docCacheRef.current[cacheKey]);
 				return;
 			}
+
+			if (activeFetchingKeyRef.current === cacheKey) {
+				return;
+			}
+			activeFetchingKeyRef.current = cacheKey;
+			setIsLoadingDoc(true);
+
+			try {
+				const res = navItem.slug
+					? await apiDocumentationService.getApiDocumentationBySlug(navItem.slug)
+					: await apiDocumentationService.getApiDocumentationById(navItem.id);
+
+				if (res?.data) {
+					docCacheRef.current[cacheKey] = res.data;
+					if (navItem.id) docCacheRef.current[navItem.id] = res.data;
+					if (navItem.slug) docCacheRef.current[navItem.slug] = res.data;
+					setSelectedDoc(res.data);
+				}
+			} catch (err) {
+				console.error('Failed to load documentation details:', err);
+			} finally {
+				setIsLoadingDoc(false);
+				activeFetchingKeyRef.current = null;
+			}
+		},
+		[],
+	);
+
+	// FETCH PORTAL SIDEBAR DATA (ONCE ON MOUNT)
+	useEffect(() => {
+		const fetchPortalData = async () => {
+			if (isFetchingPortalRef.current) return;
 			isFetchingPortalRef.current = true;
-			fetchedSlugRef.current = currentSlugKey;
 			setIsLoading(true);
 			try {
 				const res = await apiDocumentationService.getPublicDocumentationPortal();
@@ -91,43 +129,44 @@ export const ApiDocumentationPortalPage: FC = () => {
 				setGroups(data.groups || {});
 
 				// SELECT INITIAL DOC (EITHER MATCHING SLUG OR FIRST AVAILABLE)
-				let foundDoc: IApiDocumentation | null = null;
+				let initialNavItem: ApiDocNavigationItem | null = null;
 				if (slug) {
 					for (const cat of Object.keys(data.groups || {})) {
-						const match = data.groups[cat].find(
+						const match = data.groups[cat]?.find(
 							(d) => d.slug === slug || String(d.id) === slug,
 						);
 						if (match) {
-							foundDoc = match;
+							initialNavItem = match;
 							break;
 						}
 					}
 				}
 
-				if (!foundDoc && data.categories && data.categories.length > 0) {
+				if (!initialNavItem && data.categories && data.categories.length > 0) {
 					const firstCat = data.categories[0];
 					if (data.groups[firstCat] && data.groups[firstCat].length > 0) {
-						foundDoc = data.groups[firstCat][0];
+						initialNavItem = data.groups[firstCat][0];
 					}
 				}
 
-				setSelectedDoc(foundDoc);
+				if (initialNavItem) {
+					handleSelectDoc(initialNavItem);
+				}
 			} catch (error) {
 				console.error('Failed to load developer portal:', error);
 			} finally {
 				setIsLoading(false);
-				isFetchingPortalRef.current = false;
 			}
 		};
 
 		fetchPortalData();
-	}, [slug]);
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// FILTERED GROUPS BY SIDEBAR SEARCH
 	const filteredGroups = useMemo(() => {
 		if (!sidebarSearch.trim()) return groups;
 		const query = sidebarSearch.toLowerCase().trim();
-		const result: Record<string, IApiDocumentation[]> = {};
+		const result: Record<string, ApiDocNavigationItem[]> = {};
 
 		Object.entries(groups).forEach(([cat, docs]) => {
 			const matched = docs.filter(
@@ -143,10 +182,6 @@ export const ApiDocumentationPortalPage: FC = () => {
 
 		return result;
 	}, [groups, sidebarSearch]);
-
-	const totalEndpointsCount = useMemo(() => {
-		return Object.values(groups).reduce((acc, curr) => acc + (curr?.length || 0), 0);
-	}, [groups]);
 
 	return (
 		<PageWrapper title='Developer Documentation Portal'>
@@ -234,16 +269,18 @@ export const ApiDocumentationPortalPage: FC = () => {
 													<span className='category-count'>{docs.length}</span>
 												</div>
 												<div className='category-items'>
-													{docs.map((doc) => {
-														const isActive = selectedDoc?.id === doc.id;
+													{docs.map((docItem) => {
+														const isActive =
+															(activeNav?.id === docItem.id) ||
+															(selectedDoc?.id === docItem.id);
 														return (
 															<button
-																key={doc.id}
+																key={docItem.id}
 																type='button'
 																className={`portal-endpoint-link ${isActive ? 'active' : ''}`}
-																onClick={() => setSelectedDoc(doc)}>
-																<span className='item-title'>{doc.title}</span>
-																<ApiDocMethodBadge method={doc.method} size='sm' />
+																onClick={() => handleSelectDoc(docItem)}>
+																<span className='item-title'>{docItem.title}</span>
+																<ApiDocMethodBadge method={docItem.method} size='sm' />
 															</button>
 														);
 													})}
@@ -256,7 +293,12 @@ export const ApiDocumentationPortalPage: FC = () => {
 
 							{/* MAIN DOCUMENTATION CONTENT */}
 							<main className='portal-content-card'>
-								{selectedDoc ? (
+								{isLoadingDoc ? (
+									<div className='text-center py-5'>
+										<Spinner color='primary' size='2.5rem' />
+										<p className='text-muted mt-2 mb-0 small'>Loading endpoint specification...</p>
+									</div>
+								) : selectedDoc ? (
 									<ApiDocumentationViewContent
 										doc={selectedDoc}
 										onEdit={(d) =>
@@ -285,3 +327,4 @@ export const ApiDocumentationPortalPage: FC = () => {
 };
 
 export default ApiDocumentationPortalPage;
+

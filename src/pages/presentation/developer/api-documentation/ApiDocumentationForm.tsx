@@ -7,6 +7,7 @@ import AppBreadcrumbs from '../../../../components/common/AppBreadcrumbs/AppBrea
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import {
 	IApiDocumentation,
+	IBodyParameterItem,
 	ICreateApiDocumentationPayload,
 	IPathParameterItem,
 	IQueryParameterItem,
@@ -74,9 +75,64 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		return [];
 	};
 
+	const parseBodyParams = (val: any): IBodyParameterItem[] => {
+		if (Array.isArray(val)) return val;
+		if (typeof val === 'string') {
+			try {
+				const parsed = JSON.parse(val);
+				if (Array.isArray(parsed)) return parsed;
+				if (typeof parsed === 'object' && parsed !== null) {
+					return Object.entries(parsed).map(([k, v]) => ({
+						key: k,
+						type: Array.isArray(v) ? 'array' : typeof v === 'object' && v !== null ? 'object' : typeof v,
+						required: true,
+						value: typeof v === 'object' ? JSON.stringify(v) : String(v ?? ''),
+						description: '',
+					}));
+				}
+			} catch {
+				return [];
+			}
+		}
+		if (typeof val === 'object' && val !== null) {
+			return Object.entries(val).map(([k, v]) => ({
+				key: k,
+				type: Array.isArray(v) ? 'array' : typeof v === 'object' && v !== null ? 'object' : typeof v,
+				required: true,
+				value: typeof v === 'object' ? JSON.stringify(v) : String(v ?? ''),
+				description: '',
+			}));
+		}
+		return [];
+	};
+
+	const generateJsonFromBodyParams = (params: IBodyParameterItem[]) => {
+		const obj: Record<string, any> = {};
+		params.forEach((p) => {
+			if (!p.key || !p.key.trim()) return;
+			const k = p.key.trim();
+			let v: any = p.value ?? '';
+			if (p.type === 'number') {
+				const num = Number(v);
+				v = isNaN(num) ? v : num;
+			} else if (p.type === 'boolean') {
+				v = v === 'true' || v === true;
+			} else if (p.type === 'object' || p.type === 'array') {
+				try {
+					v = JSON.parse(v);
+				} catch {
+					// keep as string
+				}
+			}
+			obj[k] = v;
+		});
+		return obj;
+	};
+
 	const [headers, setHeaders] = useState<IRequestHeaderItem[]>(parseArray(initialValues?.request_headers));
 	const [pathParams, setPathParams] = useState<IPathParameterItem[]>(parseArray(initialValues?.path_parameters));
 	const [queryParams, setQueryParams] = useState<IQueryParameterItem[]>(parseArray(initialValues?.query_parameters));
+	const [bodyParams, setBodyParams] = useState<IBodyParameterItem[]>(() => parseBodyParams(initialValues?.request_body));
 	const [requestBodyJson, setRequestBodyJson] = useState<string>(() => {
 		if (initialValues?.request_body) {
 			return typeof initialValues.request_body === 'object'
@@ -186,7 +242,11 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		}
 
 		// 3. Add Request Body
-		if (
+		const activeBodyParams = bodyParams.filter((b) => b.key && b.key.trim() !== '');
+		if (['POST', 'PUT', 'PATCH'].includes(method) && activeBodyParams.length > 0) {
+			const bodyObj = generateJsonFromBodyParams(activeBodyParams);
+			curl += ` \\\n  -d '${JSON.stringify(bodyObj)}'`;
+		} else if (
 			['POST', 'PUT', 'PATCH'].includes(method) &&
 			requestBodyJson &&
 			requestBodyJson.trim() !== '{}' &&
@@ -209,16 +269,6 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 	};
 
 	// FORMAT JSON HELPERS
-	const formatRequestBody = () => {
-		try {
-			const parsed = JSON.parse(requestBodyJson);
-			setRequestBodyJson(JSON.stringify(parsed, null, 2));
-			showNotification('Formatted', 'Request body JSON formatted successfully.', 'success');
-		} catch {
-			showNotification('Invalid JSON', 'Request body is not valid JSON format.', 'danger');
-		}
-	};
-
 	const formatResponseExample = () => {
 		try {
 			const parsed = JSON.parse(responseExampleJson);
@@ -266,6 +316,33 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		setHeaders(next);
 	};
 
+	// BODY PARAMETER HANDLERS & SYNC
+	const syncBodyParamsToJson = (params: IBodyParameterItem[]) => {
+		if (params.length === 0) {
+			setRequestBodyJson('{\n  \n}');
+			return;
+		}
+		const obj = generateJsonFromBodyParams(params);
+		setRequestBodyJson(JSON.stringify(obj, null, 2));
+	};
+
+	const addBodyParam = () => {
+		const next = [...bodyParams, { key: '', type: 'string', required: true, value: '', description: '' }];
+		setBodyParams(next);
+		syncBodyParamsToJson(next);
+	};
+	const removeBodyParam = (idx: number) => {
+		const next = bodyParams.filter((_, i) => i !== idx);
+		setBodyParams(next);
+		syncBodyParamsToJson(next);
+	};
+	const updateBodyParam = (idx: number, field: keyof IBodyParameterItem, val: any) => {
+		const next = [...bodyParams];
+		next[idx] = { ...next[idx], [field]: val };
+		setBodyParams(next);
+		syncBodyParamsToJson(next);
+	};
+
 	// SUBMIT HANDLER
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -286,7 +363,9 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		const formattedEndpoint = endpoint.trim().startsWith('/') ? endpoint.trim() : `/${endpoint.trim()}`;
 
 		let parsedBody: any = {};
-		if (requestBodyJson.trim() && requestBodyJson.trim() !== '{\n  \n}') {
+		if (bodyParams.length > 0) {
+			parsedBody = generateJsonFromBodyParams(bodyParams);
+		} else if (requestBodyJson.trim() && requestBodyJson.trim() !== '{\n  \n}' && requestBodyJson.trim() !== '{}') {
 			try {
 				parsedBody = JSON.parse(requestBodyJson);
 			} catch {
@@ -308,6 +387,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		const cleanHeaders = headers.filter((h) => h.key.trim() !== '');
 		const cleanPathParams = pathParams.filter((p) => p.name.trim() !== '');
 		const cleanQueryParams = queryParams.filter((q) => q.name.trim() !== '');
+		const cleanBodyParams = bodyParams.filter((b) => b.key.trim() !== '');
 
 		const autoSlug = initialValues?.slug || slugify(title);
 
@@ -321,7 +401,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 			request_headers: cleanHeaders,
 			path_parameters: cleanPathParams,
 			query_parameters: cleanQueryParams,
-			request_body: parsedBody,
+			request_body: cleanBodyParams,
 			request_example: requestExample.trim() || undefined,
 			response_example: parsedResponse,
 			status,
@@ -890,35 +970,108 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 						</div>
 
 						{/* REQUEST BODY PAYLOAD SCHEMA */}
-						{['POST', 'PUT', 'PATCH'].includes(method) && (
-							<div>
-								<div className='d-flex align-items-center justify-content-between mb-2'>
-									<div>
-										<h3 className='fw-bold text-dark mb-0' style={{ fontSize: '0.95rem' }}>
-											<Icon icon='DataArray' className='me-2 text-primary' /> Request Body Payload Schema (JSON)
-										</h3>
-										<small className='text-muted'>Define the JSON body structure and properties required for {method} requests.</small>
-									</div>
-									<button type='button' className='btn btn-outline-secondary btn-sm' onClick={formatRequestBody}>
-										<Icon icon='AutoFixHigh' className='me-1' /> Format JSON
-									</button>
+						<div className='mb-0'>
+							<div className='d-flex align-items-center justify-content-between mb-3'>
+								<div>
+									<h3 className='fw-bold text-dark mb-0' style={{ fontSize: '0.95rem' }}>
+										<Icon icon='DataArray' className='me-2 text-primary' /> Request Body Parameters
+									</h3>
+									<small className='text-muted'>Define the JSON body payload fields, data types, sample values, and descriptions.</small>
 								</div>
-								<textarea
-									className='form-control font-monospace'
-									rows={7}
-									style={{
-										backgroundColor: '#0f172a',
-										color: '#38bdf8',
-										borderRadius: '0.65rem',
-										fontSize: '0.85rem',
-										lineHeight: '1.5',
-									}}
-									placeholder='{\n  "name": "Jane Cooper",\n  "email": "jane@example.com"\n}'
-									value={requestBodyJson}
-									onChange={(e) => setRequestBodyJson(e.target.value)}
-								/>
+								<button type='button' className='btn-add-field-action' onClick={addBodyParam}>
+									<Icon icon='Add' /> Add Body Parameter
+								</button>
 							</div>
-						)}
+
+							{bodyParams.length === 0 ? (
+								<div className='p-3 bg-light rounded text-muted text-center small border'>
+									No request body parameters defined. Click "Add Body Parameter" to define request body fields.
+								</div>
+							) : (
+								<div className='fields-builder-container'>
+									{bodyParams.map((b, idx) => (
+										<div key={`body-param-${idx}`} className='field-item-card'>
+											<div className='field-card-header'>
+												<div className='d-flex align-items-center gap-2'>
+													<span className='field-index-badge bg-primary text-white'>BODY #{idx + 1}</span>
+													<span className='field-header-title'>{b.key || 'Unnamed Parameter'}</span>
+												</div>
+												<button
+													type='button'
+													className='btn-delete-field'
+													onClick={() => removeBodyParam(idx)}>
+													<Icon icon='Delete' /> Remove
+												</button>
+											</div>
+
+											<div className='row g-3'>
+												<div className='col-md-3'>
+													<label className='form-label small fw-bold text-dark mb-1'>Parameter Name</label>
+													<input
+														type='text'
+														className='form-control form-control-sm font-monospace'
+														placeholder='e.g. name, email, amount'
+														value={b.key}
+														onChange={(e) => updateBodyParam(idx, 'key', e.target.value)}
+													/>
+												</div>
+
+												<div className='col-md-2'>
+													<label className='form-label small fw-bold text-dark mb-1'>Data Type</label>
+													<select
+														className='form-select form-select-sm'
+														value={b.type || 'string'}
+														onChange={(e) => updateBodyParam(idx, 'type', e.target.value)}>
+														<option value='string'>String</option>
+														<option value='number'>Number</option>
+														<option value='boolean'>Boolean</option>
+														<option value='object'>Object</option>
+														<option value='array'>Array</option>
+													</select>
+												</div>
+
+												<div className='col-md-2'>
+													<label className='form-label small fw-bold text-dark mb-1'>Default Value</label>
+													<input
+														type='text'
+														className='form-control form-control-sm font-monospace'
+														placeholder='e.g. 100'
+														value={b.value !== undefined ? String(b.value) : ''}
+														onChange={(e) => updateBodyParam(idx, 'value', e.target.value)}
+													/>
+												</div>
+
+												<div className='col-md-2 d-flex align-items-center pt-3'>
+													<div className='form-check'>
+														<input
+															type='checkbox'
+															className='form-check-input custom-checkbox-styled'
+															id={`body-req-${idx}`}
+															checked={b.required}
+															onChange={(e) => updateBodyParam(idx, 'required', e.target.checked)}
+														/>
+														<label htmlFor={`body-req-${idx}`} className='form-check-label small fw-bold ms-1'>
+															Required
+														</label>
+													</div>
+												</div>
+
+												<div className='col-md-3'>
+													<label className='form-label small fw-bold text-dark mb-1'>Description</label>
+													<input
+														type='text'
+														className='form-control form-control-sm'
+														placeholder='e.g. Unique customer identifier'
+														value={b.description || ''}
+														onChange={(e) => updateBodyParam(idx, 'description', e.target.value)}
+													/>
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 
@@ -948,7 +1101,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 									</label>
 									<button
 										type='button'
-										className='btn btn-outline-primary btn-sm'
+										className='btn btn-outline-primary btn-sm fw-semibold'
 										onClick={handleGenerateCurl}>
 										<Icon icon='AutoAwesome' className='me-1' /> Auto-Generate cURL
 									</button>
@@ -980,7 +1133,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 									</label>
 									<button
 										type='button'
-										className='btn btn-outline-secondary btn-sm'
+										className='btn btn-outline-primary btn-sm fw-semibold'
 										onClick={formatResponseExample}>
 										<Icon icon='AutoFixHigh' className='me-1' /> Format JSON
 									</button>

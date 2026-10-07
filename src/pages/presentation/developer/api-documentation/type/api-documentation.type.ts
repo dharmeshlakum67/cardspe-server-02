@@ -27,6 +27,15 @@ export interface IQueryParameterItem {
 	description?: string;
 }
 
+export interface IBodyParameterItem {
+	key: string;
+	type: string;
+	required: boolean;
+	value?: any;
+	default?: any;
+	description?: string;
+}
+
 export interface IApiDocumentation {
 	id: number;
 	title: string;
@@ -38,7 +47,7 @@ export interface IApiDocumentation {
 	request_headers?: IRequestHeaderItem[] | string;
 	path_parameters?: IPathParameterItem[] | string;
 	query_parameters?: IQueryParameterItem[] | string;
-	request_body?: Record<string, any> | string;
+	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string | null;
 	response_example?: any;
 	response_description?: string | null;
@@ -59,7 +68,7 @@ export interface ICreateApiDocumentationPayload {
 	request_headers?: IRequestHeaderItem[] | string;
 	path_parameters?: IPathParameterItem[] | string;
 	query_parameters?: IQueryParameterItem[] | string;
-	request_body?: Record<string, any> | string;
+	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string;
 	response_example?: any;
 	response_description?: string;
@@ -78,7 +87,7 @@ export interface IUpdateApiDocumentationPayload {
 	request_headers?: IRequestHeaderItem[] | string;
 	path_parameters?: IPathParameterItem[] | string;
 	query_parameters?: IQueryParameterItem[] | string;
-	request_body?: Record<string, any> | string;
+	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string;
 	response_example?: any;
 	response_description?: string;
@@ -109,13 +118,43 @@ export interface IApiDocumentationResponse {
 	total_document: number;
 }
 
+export interface ApiDocNavigationItem {
+	id: number;
+	title: string;
+	slug: string;
+	method: TApiDocMethod;
+	endpoint: string;
+}
+
+export interface ApiDocPortalResponse {
+	categories: string[];
+	groups: Record<string, ApiDocNavigationItem[]>;
+	total: number;
+}
+
+export interface ApiDocDetail {
+	id: number;
+	title: string;
+	slug: string;
+	category_group: string;
+	description: string | null;
+	method: TApiDocMethod;
+	endpoint: string;
+	request_headers: Array<{ key: string; value?: string; required: boolean; description?: string }>;
+	path_parameters: Array<{ name: string; type: string; required: boolean; description?: string }>;
+	query_parameters: Array<{ name: string; type: string; required: boolean; default?: any; description?: string }>;
+	request_body: any;
+	request_example: string | null;
+	response_example: any;
+	response_description: string | null;
+	status: TApiDocStatus;
+	display_order: number;
+	published_at: string | null;
+}
+
 export interface IPortalDocumentationResponse {
 	status?: boolean;
 	success?: boolean;
 	message?: string;
-	data: {
-		categories: string[];
-		groups: Record<string, IApiDocumentation[]>;
-		total: number;
-	};
+	data: ApiDocPortalResponse;
 }

@@ -7,6 +7,7 @@ import ApiDocMethodBadge from './ApiDocMethodBadge';
 import { PillBadge } from '../../../../../components/common/PillBadge';
 import {
 	IApiDocumentation,
+	IBodyParameterItem,
 	IPathParameterItem,
 	IQueryParameterItem,
 	IRequestHeaderItem,
@@ -54,21 +55,78 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 	const pathParams: IPathParameterItem[] = parseArrayField(doc.path_parameters);
 	const queryParams: IQueryParameterItem[] = parseArrayField(doc.query_parameters);
 
+	const bodyParams: IBodyParameterItem[] = useMemo(() => {
+		if (!doc?.request_body) return [];
+		if (Array.isArray(doc.request_body)) return doc.request_body;
+		if (typeof doc.request_body === 'string') {
+			try {
+				const parsed = JSON.parse(doc.request_body);
+				if (Array.isArray(parsed)) return parsed;
+				if (typeof parsed === 'object' && parsed !== null) {
+					return Object.entries(parsed).map(([k, v]) => ({
+						key: k,
+						type: Array.isArray(v) ? 'array' : typeof v === 'object' && v !== null ? 'object' : typeof v,
+						required: true,
+						value: typeof v === 'object' ? JSON.stringify(v) : String(v ?? ''),
+						description: '',
+					}));
+				}
+			} catch {
+				return [];
+			}
+		}
+		if (typeof doc.request_body === 'object' && doc.request_body !== null) {
+			return Object.entries(doc.request_body).map(([k, v]) => ({
+				key: k,
+				type: Array.isArray(v) ? 'array' : typeof v === 'object' && v !== null ? 'object' : typeof v,
+				required: true,
+				value: typeof v === 'object' ? JSON.stringify(v) : String(v ?? ''),
+				description: '',
+			}));
+		}
+		return [];
+	}, [doc]);
+
 	// FORMAT REQUEST BODY & RESPONSE JSON
 	const formattedRequestBody = useMemo(() => {
+		if (bodyParams && bodyParams.length > 0) {
+			const obj = bodyParams.reduce((acc: Record<string, any>, item: any) => {
+				const k = item.key || item.name;
+				if (!k) return acc;
+				let v: any = item.value ?? item.default ?? '';
+				if (item.type === 'number') {
+					const num = Number(v);
+					v = isNaN(num) ? v : num;
+				} else if (item.type === 'boolean') {
+					v = v === 'true' || v === true;
+				} else if (item.type === 'object' || item.type === 'array') {
+					try {
+						v = JSON.parse(v);
+					} catch {
+						// string
+					}
+				}
+				acc[k] = v;
+				return acc;
+			}, {});
+			return JSON.stringify(obj, null, 2);
+		}
 		if (!doc?.request_body) return null;
 		if (typeof doc.request_body === 'object') {
+			if (Object.keys(doc.request_body).length === 0) return null;
 			return JSON.stringify(doc.request_body, null, 2);
 		}
-		if (typeof doc.request_body === 'string' && doc.request_body !== '{}' && doc.request_body !== '') {
+		if (typeof doc.request_body === 'string' && doc.request_body !== '{}' && doc.request_body.trim() !== '') {
 			try {
-				return JSON.stringify(JSON.parse(doc.request_body), null, 2);
+				const parsed = JSON.parse(doc.request_body);
+				if (typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length === 0) return null;
+				return JSON.stringify(parsed, null, 2);
 			} catch {
 				return doc.request_body;
 			}
 		}
 		return null;
-	}, [doc]);
+	}, [bodyParams, doc]);
 
 	const formattedResponse = useMemo(() => {
 		if (!doc?.response_example) return null;
@@ -431,20 +489,57 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 						</div>
 					)}
 
-					{/* REQUEST BODY */}
-					{formattedRequestBody && (
+					{/* REQUEST BODY PARAMETERS */}
+					{bodyParams.length > 0 && (
 						<div className='merchant-card mb-4'>
 							<div className='d-flex align-items-center justify-content-between mb-3'>
 								<h3 className='merchant-card-title m-0'>
 									<Icon icon='DataArray' className='text-primary me-2' />
-									Request Body Schema
+									Request Body Parameters
 								</h3>
-								<span className='text-muted small font-monospace'>application/json</span>
+								<span className='text-muted small'>{bodyParams.length} parameter(s)</span>
 							</div>
+
 							<div className='spec-table-container'>
-								<pre className='code-terminal m-0'>
-									<code>{formattedRequestBody}</code>
-								</pre>
+								<table className='spec-table'>
+									<thead>
+										<tr>
+											<th>Field Name</th>
+											<th>Type</th>
+											<th>Sample / Value</th>
+											<th>Required</th>
+											<th>Description</th>
+										</tr>
+									</thead>
+									<tbody>
+										{bodyParams.map((b, idx) => (
+											<tr key={`body-spec-${idx}`}>
+												<td>
+													<span className='param-key font-monospace'>{b.key}</span>
+												</td>
+												<td>
+													<PillBadge color='teal' isPill size='sm'>
+														{b.type || 'string'}
+													</PillBadge>
+												</td>
+												<td>
+													<span className='font-monospace small text-muted'>
+														{b.value !== undefined && b.value !== '' ? String(b.value) : '-'}
+													</span>
+												</td>
+												<td>
+													<PillBadge
+														color={b.required ? 'danger' : 'gray'}
+														isPill
+														size='sm'>
+														{b.required ? 'Required' : 'Optional'}
+													</PillBadge>
+												</td>
+												<td className='text-muted small'>{b.description || '-'}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
 							</div>
 						</div>
 					)}
