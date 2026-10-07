@@ -5,6 +5,7 @@ import Page from '../../../../layout/Page/Page';
 import { ListingPage, IListingColumn } from '../../../../components/common/ListingPage';
 import { PillBadge } from '../../../../components/common/PillBadge';
 import { DateRangePicker, ImagePreviewModal } from '../../../../components/common';
+import AppBreadcrumbs from '../../../../components/common/AppBreadcrumbs/AppBreadcrumbs';
 import {
 	KycRestrictedCard,
 	isKycRequiredError,
@@ -94,6 +95,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 	const [transactions, setTransactions] = useState<IWalletTransaction[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [totalDocuments, setTotalDocuments] = useState<number>(0);
+	const [walletBalance, setWalletBalance] = useState<string | number | null>(null);
 
 	// KYC RESTRICTION STATE
 	const [kycRestriction, setKycRestriction] = useState<IKycRequiredError | null>(null);
@@ -265,6 +267,14 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 
 				setTransactions(fetchedList);
 				setTotalDocuments(totalCount);
+
+				const rawBalance =
+					respAny?.data?.current_balance ??
+					respAny?.current_balance ??
+					respAny?.result?.current_balance;
+				if (rawBalance !== undefined && rawBalance !== null) {
+					setWalletBalance(rawBalance);
+				}
 			} catch (error: any) {
 				if (isKycRequiredError(error)) {
 					setKycRestriction(extractKycErrorInfo(error) || error?.data || error);
@@ -647,6 +657,19 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 		);
 	}
 
+	let currentDisplayBalance = '0.00';
+	if (walletBalance !== null && walletBalance !== undefined) {
+		currentDisplayBalance = Number(walletBalance).toLocaleString('en-IN', {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		});
+	} else if (authUser?.current_balance !== undefined && authUser?.current_balance !== null) {
+		currentDisplayBalance = Number(authUser.current_balance).toLocaleString('en-IN', {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		});
+	}
+
 	return (
 		<PageWrapper
 			isProtected
@@ -654,7 +677,19 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 			title={isSelf ? 'My Wallet Transactions' : 'Wallet Transactions'}>
 			<Page container='fluid'>
 				<div className='wallet-tx-page'>
-					{/* TOP BALANCE BANNER (WHEN IN MY WALLET VIEW) */}
+					{/* TOP BREADCRUMB BAR (FOR MY WALLET VIEW) */}
+					{isSelf && (
+						<div className='mb-3'>
+							<AppBreadcrumbs
+								items={[
+									{ label: 'Profile', to: `/${PAGE_ROUTES.PROFILE}` },
+									{ label: 'My Wallet', current: true },
+								]}
+							/>
+						</div>
+					)}
+
+					{/* BALANCE BANNER (SHOWN BELOW BREADCRUMBS) */}
 					{isSelf && (
 						<div className='profile-wallet-balance-banner mb-4'>
 							<div className='balance-banner-card'>
@@ -665,13 +700,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 									<div className='balance-text-group'>
 										<span className='balance-label'>Current Available Balance</span>
 										<h2 className='balance-amount'>
-											₹{' '}
-											{authUser?.current_balance !== undefined && authUser?.current_balance !== null
-												? Number(authUser.current_balance).toLocaleString('en-IN', {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-												  })
-												: '0.00'}
+											₹ {currentDisplayBalance}
 										</h2>
 									</div>
 								</div>
@@ -708,10 +737,10 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 						}
 						breadcrumbs={
 							isSelf
-								? [{ text: 'Profile', to: `/${PAGE_ROUTES.PROFILE}` }, { text: 'My Wallet' }]
+								? undefined
 								: [{ text: 'Payments' }, { text: 'Wallet Transactions' }]
 						}
-						permissionKey={!isSelf && hasReadPermission ? PERMISSION_KEYS.WALLET_TRANSACTION : undefined}
+						permissionKey={isSelf ? undefined : PERMISSION_KEYS.WALLET_TRANSACTION}
 						onAddNew={hasCreatePermission ? () => setIsAddMoneyModalOpen(true) : undefined}
 						addNewText='Add Money'
 						addNewIcon='AddCard'
@@ -902,7 +931,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 						emptyMessage='No wallet transactions found.'
 						emptyIcon='AccountBalanceWallet'
 						actions={{
-							permissionKey: PERMISSION_KEYS.WALLET_TRANSACTION,
+							permissionKey: isSelf ? undefined : PERMISSION_KEYS.WALLET_TRANSACTION,
 							actionColumnWidth: '100px',
 							onView: handleOpenView,
 						}}

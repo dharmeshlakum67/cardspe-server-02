@@ -665,6 +665,11 @@ export const WALLET_TRANSACTION_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	GET_PAYMENT_METHODS: () => ({
+		url: '/api/wallet-transaction/payment-methods',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	}),
 	APPROVE: (id: string | number) => ({
 		url: `/api/wallet-transaction/approve/${id}`,
 		method: HTTP_METHODS.PUT,

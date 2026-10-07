@@ -44,6 +44,7 @@ export interface IWalletTransaction {
 	reviewed_by: number | null;
 	reviewed_at: string | null;
 	rejection_reason: string | null;
+	remark?: string | null;
 	created_at: string;
 	updated_at?: string;
 	can_review?: boolean;
@@ -89,4 +90,44 @@ export interface IAddMoneyPayload {
 	amount: number;
 	screenshot?: File | null;
 	type?: TAddMoneyType;
+}
+
+export interface IPaymentMethodBankDetail {
+	id: number;
+	bank_name: string;
+	ifsc_code: string;
+	account_holder_name: string;
+	account_number: string;
+	account_type?: string;
+	branch_name?: string | null;
+	branch_code?: string | null;
+	bank_address?: string | null;
+	is_primary?: boolean;
+}
+
+export interface IPaymentMethod {
+	id: number;
+	payment_gateway_id?: number | null;
+	name: string;
+	code: string;
+	icon?: string | null;
+	description?: string | null;
+	type: TAddMoneyType | string;
+	is_primary?: boolean;
+	is_custom?: boolean;
+	bank_details?: IPaymentMethodBankDetail[];
+}
+
+export interface IPaymentMethodsData {
+	is_using_custom: boolean;
+	payment_methods: IPaymentMethod[];
+	default_method?: IPaymentMethod;
+	bank_details?: IPaymentMethodBankDetail[];
+}
+
+export interface IPaymentMethodsResponse {
+	status?: string;
+	success?: boolean;
+	message?: string;
+	data: IPaymentMethodsData;
 }

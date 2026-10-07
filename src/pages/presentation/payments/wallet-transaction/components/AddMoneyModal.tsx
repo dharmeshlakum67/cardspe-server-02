@@ -1,6 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/label-has-associated-control, react/require-default-props */
-import React, { FC, useState, useRef } from 'react';
+import React, { FC, useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal, {
 	ModalHeader,
@@ -14,52 +14,149 @@ import showNotification from '../../../../../components/extras/showNotification'
 import { isKycRequiredError } from '../../../../../components/common/KycRestrictedCard';
 import { PAGE_ROUTES } from '../../../../../constants/pageRoutes';
 import walletTransactionService from '../service/walletTransactionService';
-import { TAddMoneyType } from '../type/wallet-transaction.type';
+import { IPaymentMethod, IPaymentMethodBankDetail, IPaymentMethodsData, TAddMoneyType } from '../type/wallet-transaction.type';
+import { getAccountTypeLabel } from '../../bank-detail/type/bank-detail-type';
+import { getImageUrl } from '../../../../../helpers/helpers';
+import '../css/WalletTransactionPage.scss';
 
 interface IAddMoneyModalProps {
 	isOpen: boolean;
 	setIsOpen: (isOpen: boolean) => void;
 	onSuccess: () => void;
+	adminId?: number | string;
 }
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000];
+const PRESET_AMOUNTS = [100, 500, 1000, 2000, 5000, 10000, 25000];
+
+// Helper to render payment method icon using common getImageUrl
+const PaymentMethodIcon: FC<{ icon?: string | null; name: string; isCustom?: boolean }> = ({
+	icon,
+	name,
+	isCustom,
+}) => {
+	const [hasError, setHasError] = useState(false);
+	const fullUrl = icon ? getImageUrl(icon) : null;
+
+	if (fullUrl && !hasError) {
+		return (
+			<img
+				src={fullUrl}
+				alt={name}
+				onError={() => setHasError(true)}
+			/>
+		);
+	}
+
+	return <Icon icon={isCustom ? 'AccountBalance' : 'Payment'} />;
+};
 
 export const AddMoneyModal: FC<IAddMoneyModalProps> = ({
 	isOpen,
 	setIsOpen,
 	onSuccess,
+	adminId,
 }) => {
 	const navigate = useNavigate();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
+	// MODAL STEP: 'SELECT_METHOD' or 'FORM'
+	const [modalStep, setModalStep] = useState<'SELECT_METHOD' | 'FORM'>('SELECT_METHOD');
+
+	// PAYMENT METHODS STATE
+	const [isLoadingMethods, setIsLoadingMethods] = useState<boolean>(true);
+	const [paymentMethodsData, setPaymentMethodsData] = useState<IPaymentMethodsData | null>(null);
+	const [selectedMethod, setSelectedMethod] = useState<IPaymentMethod | null>(null);
+	const [selectedBankIndex, setSelectedBankIndex] = useState<number>(0);
+
+	// FORM STATE
 	const [amount, setAmount] = useState<string>('');
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-	const [paymentType] = useState<TAddMoneyType>('custom');
 	const [kycErrorMsg, setKycErrorMsg] = useState<string | null>(null);
+
+	// COPIED FEEDBACK STATE
+	const [copiedField, setCopiedField] = useState<string | null>(null);
+
+	// FETCH PAYMENT METHODS
+	const fetchPaymentMethods = useCallback(async () => {
+		setIsLoadingMethods(true);
+		try {
+			const res = await walletTransactionService.getPaymentMethods(adminId);
+			const data = (res as any)?.data?.data || (res as any)?.data || null;
+			if (data) {
+				setPaymentMethodsData(data);
+
+				const methods: IPaymentMethod[] = data.payment_methods || [];
+				const defaultMethod =
+					data.default_method ||
+					methods.find((m) => m.is_primary) ||
+					methods[0] ||
+					null;
+
+				setSelectedMethod(defaultMethod);
+				setSelectedBankIndex(0);
+			}
+		} catch (err: any) {
+			showNotification(
+				'Error',
+				err?.message || 'Failed to load active payment methods.',
+				'danger',
+			);
+		} finally {
+			setIsLoadingMethods(false);
+		}
+	}, [adminId]);
+
+	useEffect(() => {
+		if (isOpen) {
+			setModalStep('SELECT_METHOD');
+			fetchPaymentMethods();
+		}
+	}, [isOpen, fetchPaymentMethods]);
 
 	const handleClose = () => {
 		if (isSubmitting) return;
 		setIsOpen(false);
+		setModalStep('SELECT_METHOD');
 		setAmount('');
 		setSelectedFile(null);
-		setPreviewUrl(null);
+		if (previewUrl) {
+			URL.revokeObjectURL(previewUrl);
+			setPreviewUrl(null);
+		}
+		setKycErrorMsg(null);
+		setCopiedField(null);
+	};
+
+	const handleSelectMethod = (method: IPaymentMethod) => {
+		setSelectedMethod(method);
+		setModalStep('FORM');
+	};
+
+	const handleBackToMethods = () => {
+		setModalStep('SELECT_METHOD');
 		setKycErrorMsg(null);
 	};
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (file) {
-			// Validate file type
 			const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 			if (!validTypes.includes(file.type)) {
-				showNotification('Invalid File', 'Please upload a JPG, PNG, or WEBP image file.', 'warning');
+				showNotification(
+					'Invalid File Format',
+					'Please upload a valid JPG, PNG, or WEBP receipt image.',
+					'warning',
+				);
 				return;
 			}
-			// Validate size (< 5MB)
 			if (file.size > 5 * 1024 * 1024) {
-				showNotification('File Too Large', 'Screenshot must be under 5MB.', 'warning');
+				showNotification(
+					'File Too Large',
+					'Payment proof image size must be under 5MB.',
+					'warning',
+				);
 				return;
 			}
 
@@ -84,232 +181,643 @@ export const AddMoneyModal: FC<IAddMoneyModalProps> = ({
 		setAmount(String(presetAmount));
 	};
 
+	const handleCopy = (textToCopy: string, fieldKey: string) => {
+		if (!textToCopy) return;
+		navigator.clipboard.writeText(textToCopy);
+		setCopiedField(fieldKey);
+		setTimeout(() => {
+			setCopiedField(null);
+		}, 2000);
+	};
+
+	const isCustomMethod =
+		!selectedMethod ||
+		selectedMethod.is_custom ||
+		selectedMethod.type === 'custom' ||
+		paymentMethodsData?.is_using_custom;
+
+	const defaultBankFallback: IPaymentMethodBankDetail[] = [
+		{
+			id: 1,
+			bank_name: 'HDFC Bank',
+			account_number: '50200012345678',
+			ifsc_code: 'HDFC0001234',
+			account_holder_name: 'Nexora Technologies Pvt Ltd',
+			account_type: 'savings',
+			branch_name: 'Navrangpura',
+			is_primary: true,
+		},
+		{
+			id: 2,
+			bank_name: 'State Bank of India',
+			account_number: '38192000192831',
+			ifsc_code: 'SBIN0004512',
+			account_holder_name: 'Nexora Technologies Pvt Ltd',
+			account_type: 'current',
+			branch_name: 'Main Branch',
+			is_primary: false,
+		},
+	];
+
+	let activeBankList: IPaymentMethodBankDetail[] = defaultBankFallback;
+	if (selectedMethod?.bank_details && selectedMethod.bank_details.length > 0) {
+		activeBankList = selectedMethod.bank_details;
+	} else if (paymentMethodsData?.bank_details && paymentMethodsData.bank_details.length > 0) {
+		activeBankList = paymentMethodsData.bank_details;
+	}
+
+	const currentBank = activeBankList[selectedBankIndex] || activeBankList[0] || defaultBankFallback[0];
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const numAmount = Number(amount);
 
 		if (!numAmount || numAmount <= 0) {
-			showNotification('Validation Error', 'Please enter a valid positive amount.', 'warning');
+			showNotification('Validation Error', 'Please enter a valid deposit amount.', 'warning');
 			return;
 		}
 
-		if (!selectedFile) {
-			showNotification('Proof Required', 'Please upload a payment screenshot/receipt.', 'warning');
+		if (isCustomMethod && !selectedFile) {
+			showNotification(
+				'Proof Required',
+				'Please upload your payment receipt / proof image.',
+				'warning',
+			);
 			return;
 		}
 
 		setIsSubmitting(true);
 		setKycErrorMsg(null);
 
+		const requestType: TAddMoneyType = isCustomMethod
+			? 'custom'
+			: 'merchant_payment_gateway';
+
 		try {
 			await walletTransactionService.addMoneyRequest({
 				amount: numAmount,
-				screenshot: selectedFile,
-				type: paymentType,
+				screenshot: selectedFile as File,
+				type: requestType,
 			});
 
 			showNotification(
-				'Request Submitted',
-				`Wallet top-up request for ₹${numAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })} has been submitted for approval.`,
+				'Deposit Submitted',
+				`Wallet deposit request for ₹${numAmount.toLocaleString('en-IN', {
+					minimumFractionDigits: 2,
+				})} has been submitted for verification.`,
 				'success',
 			);
 			onSuccess();
 			handleClose();
 		} catch (error: any) {
 			if (isKycRequiredError(error)) {
-				const msg = error?.data?.message || error?.message || 'KYC verification required before requesting wallet top-up.';
+				const msg =
+					error?.data?.message ||
+					error?.message ||
+					'KYC verification required before requesting wallet top-up.';
 				setKycErrorMsg(msg);
 				showNotification('KYC Required', msg, 'warning');
 			} else {
 				showNotification(
-					'Submission Failed',
-					error?.data?.message || error?.message || 'Failed to submit wallet top-up request.',
+					'Deposit Failed',
+					error?.data?.message ||
+						error?.message ||
+						'Failed to submit wallet top-up request. Please try again.',
 					'danger',
 				);
 			}
 		} finally {
 			setIsSubmitting(false);
 		}
-	};
-
-	return (
-		<Modal isOpen={isOpen} setIsOpen={handleClose} size='lg' isStaticBackdrop={isSubmitting} isCentered>
-			<ModalHeader setIsOpen={handleClose} className='border-bottom-0 pb-0 pt-4 px-4'>
-				<ModalTitle id='add-money-modal-title'>
-					<div className='d-flex align-items-center gap-3'>
-						<div
-							className='d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary border flex-shrink-0'
-							style={{ width: '44px', height: '44px' }}>
-							<Icon icon='AccountBalanceWallet' size='lg' />
-						</div>
-						<div>
-							<h5 className='mb-0 fw-bold text-dark'>Wallet Top-Up Request</h5>
-							<small className='text-muted'>
-								Submit a deposit proof to add funds to your wallet account
-							</small>
-						</div>
-					</div>
-				</ModalTitle>
-			</ModalHeader>
-
-			<form onSubmit={handleSubmit}>
-				<ModalBody className='px-4 pt-3 pb-2'>
-					{/* KYC WARNING BANNER IF TRIGGERED */}
-					{kycErrorMsg && (
-						<div className='alert alert-warning d-flex align-items-center justify-content-between p-3 mb-3 rounded-3 border'>
-							<div className='d-flex align-items-center gap-2'>
-								<Icon icon='Warning' className='text-warning flex-shrink-0' size='lg' />
-								<div className='small'>{kycErrorMsg}</div>
+	};	return (
+		<Modal
+			isOpen={isOpen}
+			setIsOpen={handleClose}
+			size='lg'
+			isCentered
+			isScrollable
+			className='fintech-light-modal'
+			isStaticBackdrop={isSubmitting}>
+			{modalStep === 'SELECT_METHOD' ? (
+				<>
+					<ModalHeader setIsOpen={handleClose} className='fintech-modal-header'>
+						<ModalTitle id='add-money-modal-title'>
+							<div className='d-flex align-items-center gap-3'>
+								<div className='fintech-header-icon-box'>
+									<Icon icon='AccountBalanceWallet' />
+								</div>
+								<div>
+									<h4 className='fintech-modal-title'>Add Money / Top-Up</h4>
+									<p className='fintech-modal-subtitle'>
+										Select your preferred payment method to proceed
+									</p>
+								</div>
 							</div>
-							<button
-								type='button'
-								className='btn btn-warning btn-sm ms-2 flex-shrink-0'
-								onClick={() => {
-									handleClose();
-									navigate(`/${PAGE_ROUTES.KYC}`);
-								}}>
-								Go to KYC
-							</button>
-						</div>
-					)}
+						</ModalTitle>
+					</ModalHeader>
 
-					{/* AMOUNT INPUT */}
-					<div className='mb-3'>
-						<label htmlFor='topupAmountInput' className='form-label fw-bold small text-uppercase text-muted mb-2'>
-							Deposit Amount (INR) <span className='text-danger'>*</span>
-						</label>
-						<div className='input-group input-group-lg'>
-							<span className='input-group-text bg-light fw-bold text-muted'>₹</span>
-							<input
-								id='topupAmountInput'
-								type='number'
-								step='0.01'
-								min='1'
-								className='form-control fw-bold'
-								placeholder='0.00'
-								value={amount}
-								onChange={(e) => setAmount(e.target.value)}
-								required
-							/>
-						</div>
-
-						{/* QUICK AMOUNT CHIPS */}
-						<div className='d-flex align-items-center gap-2 mt-2 flex-wrap'>
-							<span className='text-muted small me-1'>Quick Add:</span>
-							{PRESET_AMOUNTS.map((preset) => (
-								<button
-									key={preset}
-									type='button'
-									className='btn btn-sm btn-outline-secondary rounded-pill px-3 py-1'
-									style={{ fontSize: '0.78rem' }}
-									onClick={() => handlePresetClick(preset)}>
-									+₹{preset.toLocaleString('en-IN')}
-								</button>
-							))}
-						</div>
-					</div>
-
-					{/* PAYMENT SCREENSHOT UPLOAD */}
-					<div className='mb-3'>
-						<label className='form-label fw-bold small text-uppercase text-muted mb-2'>
-							Payment Proof / Screenshot <span className='text-danger'>*</span>
-						</label>
-
-						<input
-							type='file'
-							ref={fileInputRef}
-							accept='image/jpeg,image/png,image/webp,image/jpg'
-							className='d-none'
-							onChange={handleFileChange}
-						/>
-
-						{previewUrl ? (
-							<div className='border rounded-3 p-3 bg-light position-relative'>
-								<div className='d-flex align-items-center gap-3'>
-									<img
-										src={previewUrl}
-										alt='Proof Preview'
-										className='rounded-2 border object-fit-cover'
-										style={{ width: '80px', height: '80px' }}
-									/>
-									<div className='flex-grow-1 text-truncate'>
-										<div className='fw-bold text-dark text-truncate small'>
-											{selectedFile?.name}
-										</div>
-										<div className='text-muted small'>
-											{selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}
-										</div>
-										<span className='badge bg-success-subtle text-success border border-success mt-1'>
-											Ready to submit
-										</span>
+					<ModalBody className='fintech-modal-body'>
+						<div className='d-flex flex-column gap-3'>
+							{/* KYC WARNING IF APPLICABLE */}
+							{kycErrorMsg && (
+								<div className='fintech-kyc-alert'>
+									<div className='d-flex align-items-center gap-2'>
+										<Icon icon='Warning' className='text-warning' size='lg' />
+										<span className='alert-text'>{kycErrorMsg}</span>
 									</div>
 									<button
 										type='button'
-										className='btn btn-outline-danger btn-sm rounded-circle p-2'
-										title='Remove image'
-										onClick={handleRemoveFile}>
-										<Icon icon='Delete' size='sm' />
+										className='fintech-kyc-btn'
+										onClick={() => {
+											handleClose();
+											navigate(`/${PAGE_ROUTES.KYC}`);
+										}}>
+										Complete KYC
 									</button>
 								</div>
-							</div>
-						) : (
-							<div
-								role='button'
-								tabIndex={0}
-								className='border border-2 border-dashed rounded-3 p-4 text-center bg-light-subtle'
-								style={{ cursor: 'pointer' }}
-								onClick={() => fileInputRef.current?.click()}
-								onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}>
-								<div className='mb-2 text-primary'>
-									<Icon icon='CloudUpload' size='3x' />
-								</div>
-								<div className='fw-bold text-dark mb-1' style={{ fontSize: '0.9rem' }}>
-									Click or drag payment screenshot here
-								</div>
-								<div className='text-muted small'>
-									Supports PNG, JPG, or WEBP up to 5MB (Bank receipt, UPI confirmation)
-								</div>
-							</div>
-						)}
-					</div>
+							)}
 
-					{/* INFORMATION NOTICE */}
-					<div className='d-flex align-items-start gap-2 p-3 rounded-3 bg-light text-muted small border'>
-						<Icon icon='Info' className='text-primary mt-1 flex-shrink-0' size='sm' />
-						<div>
-							Your deposit request will be reviewed and verified by an administrator. Once approved, the funds will immediately reflect in your wallet balance.
+							{/* LOADING SPINNER */}
+							{isLoadingMethods ? (
+								<div className='fintech-loading-container'>
+									<Spinner isGrow={false} size='3rem' color='primary' />
+									<div className='loading-text'>Loading available payment methods...</div>
+								</div>
+							) : (
+								<div>
+									<p className='fintech-section-caption'>
+										Choose a deposit method to top up your wallet balance:
+									</p>
+
+									{/* PAYMENT METHOD CARDS */}
+									<div className='d-flex flex-column gap-3'>
+										{paymentMethodsData?.payment_methods &&
+										paymentMethodsData.payment_methods.length > 0 ? (
+											paymentMethodsData.payment_methods.map((method) => {
+												const isCustom =
+													method.is_custom || method.type === 'custom';
+												return (
+													<div
+														key={method.id}
+														role='button'
+														tabIndex={0}
+														className='fintech-payment-method-card'
+														onClick={() => handleSelectMethod(method)}
+														onKeyDown={(e) => {
+															if (e.key === 'Enter' || e.key === ' ') {
+																handleSelectMethod(method);
+															}
+														}}>
+														<div className='method-left'>
+															<div className='method-icon-wrap'>
+																<PaymentMethodIcon
+																	icon={method.icon}
+																	name={method.name}
+																	isCustom={isCustom}
+																/>
+															</div>
+															<div className='method-info'>
+																<div className='d-flex align-items-center gap-2'>
+																	<span className='method-name'>
+																		{method.name}
+																	</span>
+																	{method.is_primary && (
+																		<span className='primary-pill'>
+																			Primary
+																		</span>
+																	)}
+																</div>
+																<span className='method-description'>
+																	{method.description ||
+																		(isCustom
+																			? 'Direct transfer via IMPS / NEFT / UPI & receipt upload'
+																			: 'Automated top-up')}
+																</span>
+															</div>
+														</div>
+
+														<div className='d-flex align-items-center gap-3'>
+															<span
+																className={`tag-pill ${
+																	isCustom ? 'tag-manual' : 'tag-instant'
+																}`}>
+																{isCustom
+																	? 'Manual Verification'
+																	: 'Instant Top-Up'}
+															</span>
+															<Icon
+																icon='ChevronRight'
+																className='chevron-icon'
+															/>
+														</div>
+													</div>
+												);
+											})
+										) : (
+											<div className='text-center py-4 text-muted'>
+												No payment methods configured.
+											</div>
+										)}
+									</div>
+								</div>
+							)}
 						</div>
-					</div>
-				</ModalBody>
+					</ModalBody>
 
-				<ModalFooter className='border-top-0 pt-0 pb-4 px-4 gap-2'>
-					<button
-						type='button'
-						className='btn btn-light border px-4'
-						onClick={handleClose}
-						disabled={isSubmitting}>
-						Cancel
-					</button>
-					<button
-						type='submit'
-						className='btn btn-primary px-4 d-inline-flex align-items-center gap-2'
-						disabled={isSubmitting}>
-						{isSubmitting ? (
-							<>
-								<Spinner isSmall isGrow={false} />
-								<span>Submitting Request...</span>
-							</>
-						) : (
-							<>
-								<Icon icon='Send' size='sm' />
-								<span>Submit Deposit Proof</span>
-							</>
-						)}
-					</button>
-				</ModalFooter>
-			</form>
+					<ModalFooter className='fintech-modal-footer'>
+						<button
+							type='button'
+							className='fintech-btn-secondary'
+							onClick={handleClose}>
+							Cancel
+						</button>
+					</ModalFooter>
+				</>
+			) : (
+				<>
+					<ModalHeader setIsOpen={handleClose} className='fintech-modal-header'>
+						<ModalTitle id='add-money-modal-title'>
+							<div className='d-flex align-items-center gap-3'>
+								<button
+									type='button'
+									className='fintech-back-btn'
+									onClick={handleBackToMethods}
+									disabled={isSubmitting}
+									title='Back to Payment Methods'>
+									<Icon icon='ArrowBack' />
+								</button>
+								<div>
+									<h4 className='fintech-modal-title'>
+										{selectedMethod?.name || 'Custom Payment / Bank Transfer'}
+									</h4>
+									<p className='fintech-modal-subtitle'>
+										{isCustomMethod
+											? 'Transfer funds to company bank account and submit deposit proof'
+											: 'Instant automated wallet top-up via payment gateway'}
+									</p>
+								</div>
+							</div>
+						</ModalTitle>
+					</ModalHeader>
+
+					<ModalBody className='fintech-modal-body'>
+						<form id='add-money-form' onSubmit={handleSubmit} className='d-flex flex-column gap-3'>
+							{/* KYC RESTRICTION ALERT */}
+							{kycErrorMsg && (
+								<div className='fintech-kyc-alert'>
+									<div className='d-flex align-items-center gap-2'>
+										<Icon icon='Warning' className='text-warning' size='lg' />
+										<span className='alert-text'>{kycErrorMsg}</span>
+									</div>
+									<button
+										type='button'
+										className='fintech-kyc-btn'
+										onClick={() => {
+											handleClose();
+											navigate(`/${PAGE_ROUTES.KYC}`);
+										}}>
+										Complete KYC
+									</button>
+								</div>
+							)}
+
+							{/* 1. ENTER DEPOSIT AMOUNT SECTION */}
+							<div className='fintech-card-section'>
+								<label
+									htmlFor='walletTopupAmountInput'
+									className='fintech-field-label'>
+									ENTER DEPOSIT AMOUNT (INR) <span className='text-danger'>*</span>
+								</label>
+
+								<div className='fintech-amount-input-box'>
+									<span className='fintech-currency-symbol'>₹</span>
+									<input
+										id='walletTopupAmountInput'
+										type='number'
+										step='0.01'
+										min='1'
+										className='fintech-amount-input'
+										placeholder='0.00'
+										value={amount}
+										onChange={(e) => setAmount(e.target.value)}
+										onWheel={(e) => (e.target as HTMLElement).blur()}
+										onKeyDown={(e) => {
+											if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+												e.preventDefault();
+											}
+										}}
+										required
+									/>
+								</div>
+
+								{/* QUICK ADD PRESET PILLS */}
+								<div className='fintech-quick-add-row'>
+									<span className='quick-add-label'>Quick Add:</span>
+									<div className='quick-add-chips'>
+										{PRESET_AMOUNTS.map((preset) => {
+											const isPresetActive = amount === String(preset);
+											return (
+												<button
+													key={preset}
+													type='button'
+													className={`fintech-preset-pill ${
+														isPresetActive ? 'active' : ''
+													}`}
+													onClick={() => handlePresetClick(preset)}>
+													+{preset.toLocaleString('en-IN')}
+												</button>
+											);
+										})}
+									</div>
+								</div>
+							</div>
+
+							{/* 2. COMPANY BANK ACCOUNT DETAILS SECTION (SINGLE UNIFIED CARD) */}
+							{isCustomMethod && currentBank && (
+								<div className='fintech-card-section'>
+									<div className='d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2'>
+										<span className='fintech-field-label mb-0'>
+											COMPANY BANK ACCOUNT DETAILS (TRANSFER TO)
+										</span>
+
+										{/* BANK SWITCHER PILLS (TOP RIGHT) */}
+										{activeBankList.length > 1 && (
+											<div className='fintech-bank-tabs'>
+												{activeBankList.map((b, idx) => (
+													<button
+														key={b.id || idx}
+														type='button'
+														className={`fintech-bank-tab-btn ${
+															selectedBankIndex === idx ? 'active' : ''
+														}`}
+														onClick={() => setSelectedBankIndex(idx)}>
+														{b.bank_name}
+													</button>
+												))}
+											</div>
+										)}
+									</div>
+
+									{/* SINGLE UNIFIED BANK CARD */}
+									<div className='fintech-bank-single-card'>
+										{/* BANK HEADER ROW */}
+										<div className='bank-header-row'>
+											<div>
+												<h5 className='bank-brand-title mb-0'>
+													{currentBank.bank_name}
+												</h5>
+												{currentBank.branch_name && (
+													<small className='text-muted'>
+														Branch: {currentBank.branch_name}
+													</small>
+												)}
+											</div>
+											{currentBank.account_type && (
+												<span className='fintech-account-type-badge'>
+													{getAccountTypeLabel(currentBank.account_type).toUpperCase()}
+												</span>
+											)}
+										</div>
+
+										{/* BANK DETAILS 4-CELL GRID */}
+										<div className='bank-details-grid'>
+											{/* ACCOUNT NUMBER */}
+											<div className='bank-detail-cell'>
+												<div className='cell-info'>
+													<span className='cell-label'>ACCOUNT NUMBER</span>
+													<span className='cell-val font-mono'>
+														{currentBank.account_number}
+													</span>
+												</div>
+												<button
+													type='button'
+													className={`fintech-copy-btn ${
+														copiedField === 'acc_num' ? 'copied' : ''
+													}`}
+													onClick={() =>
+														handleCopy(
+															currentBank.account_number,
+															'acc_num',
+														)
+													}
+													title='Copy Account Number'>
+													<Icon
+														icon={
+															copiedField === 'acc_num'
+																? 'Check'
+																: 'ContentCopy'
+														}
+													/>
+													<span>
+														{copiedField === 'acc_num'
+															? 'Copied'
+															: 'Copy'}
+													</span>
+												</button>
+											</div>
+
+											{/* IFSC CODE */}
+											<div className='bank-detail-cell'>
+												<div className='cell-info'>
+													<span className='cell-label'>IFSC CODE</span>
+													<span className='cell-val font-mono'>
+														{currentBank.ifsc_code}
+													</span>
+												</div>
+												<button
+													type='button'
+													className={`fintech-copy-btn ${
+														copiedField === 'ifsc' ? 'copied' : ''
+													}`}
+													onClick={() =>
+														handleCopy(currentBank.ifsc_code, 'ifsc')
+													}
+													title='Copy IFSC Code'>
+													<Icon
+														icon={
+															copiedField === 'ifsc'
+																? 'Check'
+																: 'ContentCopy'
+														}
+													/>
+													<span>
+														{copiedField === 'ifsc'
+															? 'Copied'
+															: 'Copy'}
+													</span>
+												</button>
+											</div>
+
+											{/* BENEFICIARY NAME */}
+											<div className='bank-detail-cell'>
+												<div className='cell-info'>
+													<span className='cell-label'>BENEFICIARY NAME</span>
+													<span
+														className='cell-val text-truncate'
+														title={currentBank.account_holder_name}>
+														{currentBank.account_holder_name}
+													</span>
+												</div>
+												<button
+													type='button'
+													className={`fintech-copy-btn ${
+														copiedField === 'holder' ? 'copied' : ''
+													}`}
+													onClick={() =>
+														handleCopy(
+															currentBank.account_holder_name,
+															'holder',
+														)
+													}
+													title='Copy Beneficiary Name'>
+													<Icon
+														icon={
+															copiedField === 'holder'
+																? 'Check'
+																: 'ContentCopy'
+														}
+													/>
+													<span>
+														{copiedField === 'holder'
+															? 'Copied'
+															: 'Copy'}
+													</span>
+												</button>
+											</div>
+
+											{/* BRANCH / BANK CODE */}
+											<div className='bank-detail-cell'>
+												<div className='cell-info'>
+													<span className='cell-label'>BRANCH</span>
+													<span className='cell-val text-capitalize'>
+														{currentBank.branch_name || 'Main Branch'}
+													</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{/* 3. UPLOAD PAYMENT RECEIPT / PROOF SECTION */}
+							{isCustomMethod && (
+								<div className='fintech-card-section'>
+									<label className='fintech-field-label'>
+										UPLOAD PAYMENT RECEIPT / PROOF <span className='text-danger'>*</span>
+									</label>
+
+									<input
+										type='file'
+										ref={fileInputRef}
+										accept='image/jpeg,image/png,image/webp,image/jpg'
+										className='d-none'
+										onChange={handleFileChange}
+									/>
+
+									{previewUrl ? (
+										<div className='fintech-proof-preview'>
+											<img
+												src={previewUrl}
+												alt='Payment Proof Preview'
+												className='proof-thumbnail'
+											/>
+											<div className='proof-info'>
+												<div className='proof-filename'>
+													{selectedFile?.name}
+												</div>
+												<div className='proof-filesize'>
+													{selectedFile
+														? `${(selectedFile.size / 1024).toFixed(1)} KB`
+														: ''}
+												</div>
+												<div className='proof-ready-tag'>
+													<Icon icon='CheckCircle' /> Ready to submit
+												</div>
+											</div>
+											<button
+												type='button'
+												className='fintech-remove-proof-btn'
+												title='Remove attached proof'
+												onClick={handleRemoveFile}>
+												<Icon icon='Delete' />
+											</button>
+										</div>
+									) : (
+										<div
+											role='button'
+											tabIndex={0}
+											className='fintech-upload-dropzone'
+											onClick={() => fileInputRef.current?.click()}
+											onKeyDown={(e) =>
+												e.key === 'Enter' && fileInputRef.current?.click()
+											}>
+											<div className='upload-cloud-icon'>
+												<svg
+													width='48'
+													height='48'
+													viewBox='0 0 24 24'
+													fill='none'
+													stroke='currentColor'
+													strokeWidth='1.6'
+													strokeLinecap='round'
+													strokeLinejoin='round'>
+													<path d='M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z' />
+													<path d='m12 13-3-3 3-3' transform='rotate(90 12 10)' />
+													<path d='M12 10v6' />
+												</svg>
+											</div>
+											<div className='upload-main-text'>
+												Upload Payment Receipt
+											</div>
+											<div className='upload-sub-text'>
+												Click to browse or drag & drop JPG, PNG, WEBP (Max 5MB)
+											</div>
+										</div>
+									)}
+								</div>
+							)}
+						</form>
+					</ModalBody>
+
+					<ModalFooter className='fintech-modal-footer'>
+						<button
+							type='button'
+							className='fintech-btn-secondary'
+							onClick={handleBackToMethods}
+							disabled={isSubmitting}>
+							Cancel
+						</button>
+						<button
+							type='submit'
+							form='add-money-form'
+							className='fintech-btn-submit'
+							disabled={isSubmitting || isLoadingMethods}>
+							{isSubmitting ? (
+								<>
+									<Spinner isSmall isGrow={false} />
+									<span>Submitting Proof...</span>
+								</>
+							) : (
+								<>
+									<Icon icon='CheckCircle' />
+									<span>
+										{isCustomMethod
+											? 'Submit Deposit Proof'
+											: `Proceed to ${selectedMethod?.name || 'Gateway'}`}
+									</span>
+								</>
+							)}
+						</button>
+					</ModalFooter>
+				</>
+			)}
 		</Modal>
 	);
 };
 
+AddMoneyModal.defaultProps = {
+	adminId: undefined,
+};
+
 export default AddMoneyModal;
+

@@ -1,6 +1,5 @@
-/* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable no-nested-ternary */
 import React, { FC, ReactNode, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Button, { IButtonProps } from '../../../components/bootstrap/Button';
@@ -11,6 +10,7 @@ import OffCanvas, {
 	OffCanvasTitle,
 } from '../../../components/bootstrap/OffCanvas';
 import ThemeContext from '../../../contexts/themeContext';
+import AuthContext from '../../../contexts/authContext';
 import Popovers from '../../../components/bootstrap/Popovers';
 import Spinner from '../../../components/bootstrap/Spinner';
 import Icon from '../../../components/icon/Icon';
@@ -20,6 +20,7 @@ import notificationService, {
 	extractNotificationResponse,
 } from '../../../services/notificationService';
 import { getNotificationVisuals } from '../../../constants/notificationConfig';
+import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import './CommonHeaderRight.scss';
 
 interface ICommonHeaderRightProps {
@@ -43,7 +44,17 @@ const formatTimeAgo = (dateStr?: string): string => {
 };
 
 const CommonHeaderRight: FC<ICommonHeaderRightProps> = ({ beforeChildren, afterChildren }) => {
+	const navigate = useNavigate();
 	const { fullScreenStatus, setFullScreenStatus } = useContext(ThemeContext);
+	const { authUser } = useContext(AuthContext);
+
+	const isSuperUser = Boolean(
+		authUser?.is_super_admin ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_user' ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_admin' ||
+		authUser?.role?.role_type?.toLowerCase().includes('super'),
+	);
+
 	const styledBtn: IButtonProps = {
 		color: 'light',
 		hoverShadow: 'default',
@@ -372,6 +383,24 @@ const CommonHeaderRight: FC<ICommonHeaderRightProps> = ({ beforeChildren, afterC
 						</div>
 					</Popovers>
 				</div>
+
+				{/* User Wallet Icon (Shown only if NOT a super user) */}
+				{!isSuperUser && (
+					<div className='col-auto'>
+						<Popovers trigger='hover' desc='My Wallet'>
+							<Button
+								// eslint-disable-next-line react/jsx-props-no-spreading
+								{...styledBtn}
+								icon='AccountBalanceWallet'
+								aria-label='My Wallet'
+								onClick={() => {
+									navigate(`/${PAGE_ROUTES.MY_WALLET}`);
+								}}
+							/>
+						</Popovers>
+					</div>
+				)}
+
 				{afterChildren}
 			</div>
 

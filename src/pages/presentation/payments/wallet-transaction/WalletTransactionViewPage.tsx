@@ -126,17 +126,20 @@ export const WalletTransactionViewPage: FC = () => {
 	const isFetchingRef = useRef<boolean>(false);
 	const hasFetchedConstantsRef = useRef<boolean>(false);
 
+	const isFromProfileWallet = (location.state as any)?.from === 'profile_wallet';
+
 	const hasReadPermission =
+		isFromProfileWallet ||
 		canRead(PERMISSION_KEYS.WALLET_TRANSACTION) ||
 		canRead('wallet_transaction') ||
 		canRead('payments') ||
 		true;
 
 	const hasUpdatePermission =
-		canUpdate(PERMISSION_KEYS.WALLET_TRANSACTION) ||
-		canUpdate('wallet_transaction') ||
-		canUpdate('payments') ||
-		true;
+		!isFromProfileWallet &&
+		(canUpdate(PERMISSION_KEYS.WALLET_TRANSACTION) ||
+			canUpdate('wallet_transaction') ||
+			canUpdate('payments'));
 
 	// REDIRECT IF PERMISSION DENIED
 	useEffect(() => {
@@ -151,11 +154,15 @@ export const WalletTransactionViewPage: FC = () => {
 		hasFetchedConstantsRef.current = true;
 		try {
 			const res = await walletTransactionService.getWalletTransactionConstants();
-			const constantsPayload = (res as any)?.data?.status
-				? (res as any).data
-				: (res as any)?.status
-				? res
-				: (res as any)?.data || null;
+			let constantsPayload = null;
+			const resAny = res as any;
+			if (resAny?.data?.status) {
+				constantsPayload = resAny.data;
+			} else if (resAny?.status) {
+				constantsPayload = resAny;
+			} else {
+				constantsPayload = resAny?.data || null;
+			}
 			if (constantsPayload) {
 				setConstants(constantsPayload);
 			}
@@ -330,7 +337,7 @@ export const WalletTransactionViewPage: FC = () => {
 		return (
 			<PageWrapper
 				isProtected
-				permissionKey={PERMISSION_KEYS.WALLET_TRANSACTION}
+				permissionKey={isFromProfileWallet ? undefined : PERMISSION_KEYS.WALLET_TRANSACTION}
 				title='Wallet Transaction Details'>
 				<Page container='fluid'>
 					<div
@@ -403,7 +410,6 @@ export const WalletTransactionViewPage: FC = () => {
 	const { admin: user, reviewer } = transaction;
 	const userRole = user?.role;
 	const screenshotUrl = getImageUrl(transaction.screenshot);
-	const isFromProfileWallet = (location.state as any)?.from === 'profile_wallet';
 	const backRoute = isFromProfileWallet
 		? `/${PAGE_ROUTES.PROFILE_WALLET}`
 		: `/${PAGE_ROUTES.WALLET_TRANSACTION}`;
@@ -809,6 +815,17 @@ export const WalletTransactionViewPage: FC = () => {
 												</div>
 											</div>
 										</div>
+
+										{/* FULL-WIDTH REMARK CALLOUT */}
+										{transaction.remark && (
+											<div className='remark-callout mt-3'>
+												<div className='callout-header'>
+													<Icon icon='Notes' className='text-info flex-shrink-0' size='sm' />
+													<span className='callout-title'>Transaction Remark / Note</span>
+												</div>
+												<p className='callout-body'>{transaction.remark}</p>
+											</div>
+										)}
 
 										{/* FULL-WIDTH REJECTION REASON CALLOUT IF REJECTED */}
 										{transaction.rejection_reason && (

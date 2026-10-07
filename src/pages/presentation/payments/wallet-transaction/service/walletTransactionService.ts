@@ -6,6 +6,7 @@ import {
 	IWalletTransactionResponse,
 	IWalletTransactionConstants,
 	TAddMoneyType,
+	IPaymentMethodsResponse,
 } from '../type/wallet-transaction.type';
 
 export const walletTransactionService = {
@@ -109,6 +110,13 @@ export const walletTransactionService = {
 		return apiClient<any>(WALLET_TRANSACTION_ENDPOINTS.ADD_MONEY(requestType), {
 			body: formData,
 		});
+	},
+
+	// 4.1 GET PAYMENT METHODS FOR USER (GATEWAYS OR CUSTOM BANK DETAILS)
+	getPaymentMethods: async (adminId?: number | string): Promise<IPaymentMethodsResponse> => {
+		return apiClient<IPaymentMethodsResponse>(
+			WALLET_TRANSACTION_ENDPOINTS.GET_PAYMENT_METHODS(),
+		);
 	},
 
 	// 5. APPROVE WALLET TRANSACTION

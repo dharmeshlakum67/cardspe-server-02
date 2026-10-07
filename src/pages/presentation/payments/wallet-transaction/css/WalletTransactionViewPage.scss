@@ -570,6 +570,41 @@
 		}
 	}
 
+	// FULL-WIDTH REMARK CALLOUT
+	.remark-callout {
+		background: #f0fdfa;
+		border: 1px solid #ccfbf1;
+		border-left: 4px solid #0d9488;
+		border-radius: 8px;
+		padding: 0.85rem 1.15rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+
+		.callout-header {
+			display: flex;
+			align-items: center;
+			gap: 0.45rem;
+
+			.callout-title {
+				font-size: 0.75rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				color: #0f766e;
+				letter-spacing: 0.04em;
+			}
+		}
+
+		.callout-body {
+			font-size: 0.875rem;
+			color: #134e4a;
+			font-weight: 600;
+			margin: 0;
+			word-break: break-word;
+			line-height: 1.45;
+		}
+	}
+
 	// FULL-WIDTH REJECTION REASON CALLOUT
 	.rejection-reason-callout {
 		background: #fff5f5;
