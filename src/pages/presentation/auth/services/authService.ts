@@ -173,13 +173,23 @@ export const authService = {
 	},
 
 	// LOGOUT
-	logout(): void {
-		localStorage.removeItem(ENV.TOKEN_KEY);
-		localStorage.removeItem('cardspe_user');
-		localStorage.removeItem('user');
-		sessionStorage.removeItem(ENV.TOKEN_KEY);
-		sessionStorage.removeItem('cardspe_user');
-		sessionStorage.removeItem('user');
+	async logout(): Promise<void> {
+		try {
+			await apiClient(AUTH_ENDPOINTS.LOGOUT, {
+				method: AUTH_ENDPOINTS.LOGOUT.method,
+				requiresAuth: true,
+			});
+		} catch (error) {
+			// Ignore if token already expired/invalidated
+			console.error('Logout error:', error);
+		} finally {
+			localStorage.removeItem(ENV.TOKEN_KEY);
+			localStorage.removeItem('cardspe_user');
+			localStorage.removeItem('user');
+			sessionStorage.removeItem(ENV.TOKEN_KEY);
+			sessionStorage.removeItem('cardspe_user');
+			sessionStorage.removeItem('user');
+		}
 	},
 
 	// GET TOKEN

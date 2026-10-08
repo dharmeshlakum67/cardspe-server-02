@@ -29,6 +29,7 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 }) => {
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
 	const [activeCodeTab, setActiveCodeTab] = useState<'curl' | 'javascript' | 'python'>('curl');
+	const [activeResponseTab, setActiveResponseTab] = useState<'success' | 'fail'>('success');
 
 	const copyToClipboard = (text: string, key: string) => {
 		navigator.clipboard.writeText(text);
@@ -138,6 +139,25 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 				return JSON.stringify(JSON.parse(doc.response_example), null, 2);
 			} catch {
 				return doc.response_example;
+			}
+		}
+		return null;
+	}, [doc]);
+
+	const formattedFailResponse = useMemo(() => {
+		if (!doc?.fail_response_example) return null;
+		if (typeof doc.fail_response_example === 'object') {
+			return JSON.stringify(doc.fail_response_example, null, 2);
+		}
+		if (
+			typeof doc.fail_response_example === 'string' &&
+			doc.fail_response_example !== '{}' &&
+			doc.fail_response_example !== ''
+		) {
+			try {
+				return JSON.stringify(JSON.parse(doc.fail_response_example), null, 2);
+			} catch {
+				return doc.fail_response_example;
 			}
 		}
 		return null;
@@ -601,33 +621,71 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 						</div>
 
 						{/* RESPONSE PREVIEW TERMINAL */}
-						{formattedResponse && (
-							<div className='dark-terminal-card'>
-								<div className='terminal-top-bar'>
-									<div className='d-flex align-items-center gap-2'>
+						<div className='dark-terminal-card'>
+							<div className='terminal-top-bar'>
+								<div className='d-flex align-items-center gap-2'>
+									{activeResponseTab === 'success' ? (
 										<span className='status-pill-green'>200 OK</span>
-										<span className='terminal-title'>RESPONSE SAMPLE</span>
-									</div>
-									<button
-										type='button'
-										className='btn-terminal-copy'
-										onClick={() =>
-											copyToClipboard(formattedResponse, 'response')
-										}>
-										<Icon
-											icon={copiedKey === 'response' ? 'Check' : 'ContentCopy'}
-											size='sm'
-										/>
-										<span>{copiedKey === 'response' ? 'Copied' : 'Copy'}</span>
-									</button>
+									) : (
+										<span className='badge bg-danger text-white px-2 py-1 small fw-bold'>
+											4xx / 5xx FAIL
+										</span>
+									)}
+									<span className='terminal-title'>
+										{activeResponseTab === 'success' ? 'SUCCESS RESPONSE' : 'FAILURE RESPONSE'}
+									</span>
 								</div>
-								<div className='terminal-code-body'>
-									<pre>
-										<code>{formattedResponse}</code>
-									</pre>
-								</div>
+								<button
+									type='button'
+									className='btn-terminal-copy'
+									onClick={() =>
+										copyToClipboard(
+											activeResponseTab === 'success'
+												? formattedResponse || '{\n  "status": true,\n  "message": "Success"\n}'
+												: formattedFailResponse || '{\n  "status": false,\n  "message": "Error"\n}',
+											'response',
+										)
+									}>
+									<Icon
+										icon={copiedKey === 'response' ? 'Check' : 'ContentCopy'}
+										size='sm'
+									/>
+									<span>{copiedKey === 'response' ? 'Copied' : 'Copy'}</span>
+								</button>
 							</div>
-						)}
+
+							{/* RESPONSE TABS */}
+							<div className='terminal-tabs'>
+								<button
+									type='button'
+									className={`terminal-tab-btn ${
+										activeResponseTab === 'success' ? 'active' : ''
+									}`}
+									onClick={() => setActiveResponseTab('success')}>
+									<span className='text-success me-1'>●</span> Success (200 OK)
+								</button>
+								<button
+									type='button'
+									className={`terminal-tab-btn ${
+										activeResponseTab === 'fail' ? 'active' : ''
+									}`}
+									onClick={() => setActiveResponseTab('fail')}>
+									<span className='text-danger me-1'>●</span> Error / Fail
+								</button>
+							</div>
+
+							<div className='terminal-code-body'>
+								<pre>
+									<code>
+										{activeResponseTab === 'success'
+											? formattedResponse ||
+											  '{\n  "status": true,\n  "message": "Success"\n}'
+											: formattedFailResponse ||
+											  '{\n  "status": false,\n  "message": "Invalid request or operation failed."\n}'}
+									</code>
+								</pre>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

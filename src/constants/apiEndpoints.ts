@@ -71,6 +71,11 @@ export const AUTH_ENDPOINTS = {
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	},
+	LOGOUT: {
+		url: '/api/auth/logout',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
 } as const;
 
 // ROLE ENDPOINTS
@@ -791,8 +796,18 @@ export const API_DOCUMENTATION_ENDPOINTS = {
 
 export const DEVELOPER_ENDPOINTS = API_KEY_REQUEST_ENDPOINTS;
 
+// DASHBOARD ENDPOINTS
+export const DASHBOARD_ENDPOINTS = {
+	GET_SUMMARY: {
+		url: '/api/dashboard',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
+	DASHBOARD: DASHBOARD_ENDPOINTS,
 	AUTH: AUTH_ENDPOINTS,
 	ADMIN: ADMIN_ENDPOINTS,
 	USER: USER_ENDPOINTS,

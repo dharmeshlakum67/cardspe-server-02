@@ -40,6 +40,7 @@ export const ApiDocumentationViewPage: FC = () => {
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
 	const [activeCodeTab, setActiveCodeTab] = useState<'curl' | 'javascript' | 'python'>('curl');
+	const [activeResponseTab, setActiveResponseTab] = useState<'success' | 'fail'>('success');
 
 	const fetchedIdRef = useRef<string>('');
 	const isFetchingRef = useRef<boolean>(false);
@@ -223,6 +224,25 @@ export const ApiDocumentationViewPage: FC = () => {
 				return JSON.stringify(JSON.parse(doc.response_example), null, 2);
 			} catch {
 				return doc.response_example;
+			}
+		}
+		return null;
+	}, [doc]);
+
+	const formattedFailResponse = useMemo(() => {
+		if (!doc?.fail_response_example) return null;
+		if (typeof doc.fail_response_example === 'object') {
+			return JSON.stringify(doc.fail_response_example, null, 2);
+		}
+		if (
+			typeof doc.fail_response_example === 'string' &&
+			doc.fail_response_example !== '{}' &&
+			doc.fail_response_example !== ''
+		) {
+			try {
+				return JSON.stringify(JSON.parse(doc.fail_response_example), null, 2);
+			} catch {
+				return doc.fail_response_example;
 			}
 		}
 		return null;
@@ -775,33 +795,69 @@ export const ApiDocumentationViewPage: FC = () => {
 								<div className='terminal-card'>
 									<div className='terminal-header'>
 										<div className='d-flex align-items-center gap-2'>
-											<span className='status-pill-green'>200 OK</span>
-											<span className='terminal-title ms-2'>RESPONSE SAMPLE</span>
+											{activeResponseTab === 'success' ? (
+												<span className='status-pill-green'>200 OK</span>
+											) : (
+												<span className='badge bg-danger text-white px-2 py-1 small fw-bold'>
+													4xx / 5xx FAIL
+												</span>
+											)}
+											<span className='terminal-title ms-2'>
+												{activeResponseTab === 'success' ? 'SUCCESS RESPONSE' : 'FAILURE RESPONSE'}
+											</span>
 										</div>
 
-										{formattedResponse && (
-											<button
-												type='button'
-												className='btn-terminal-copy'
-												onClick={() => copyToClipboard(formattedResponse, 'response')}>
-												<Icon
-													icon={
-														copiedKey === 'response' ? 'Check' : 'ContentCopy'
-													}
-													size='sm'
-												/>
-												<span>
-													{copiedKey === 'response' ? 'Copied' : 'Copy'}
-												</span>
-											</button>
-										)}
+										<button
+											type='button'
+											className='btn-terminal-copy'
+											onClick={() =>
+												copyToClipboard(
+													activeResponseTab === 'success'
+														? formattedResponse || '{\n  "status": true,\n  "message": "Success"\n}'
+														: formattedFailResponse || '{\n  "status": false,\n  "message": "Error"\n}',
+													'response',
+												)
+											}>
+											<Icon
+												icon={
+													copiedKey === 'response' ? 'Check' : 'ContentCopy'
+												}
+												size='sm'
+											/>
+											<span>
+												{copiedKey === 'response' ? 'Copied' : 'Copy'}
+											</span>
+										</button>
+									</div>
+
+									{/* RESPONSE STATUS TABS */}
+									<div className='terminal-tabs'>
+										<button
+											type='button'
+											className={`terminal-tab-btn ${
+												activeResponseTab === 'success' ? 'active' : ''
+											}`}
+											onClick={() => setActiveResponseTab('success')}>
+											<span className='text-success me-1'>●</span> Success (200 OK)
+										</button>
+										<button
+											type='button'
+											className={`terminal-tab-btn ${
+												activeResponseTab === 'fail' ? 'active' : ''
+											}`}
+											onClick={() => setActiveResponseTab('fail')}>
+											<span className='text-danger me-1'>●</span> Error / Fail
+										</button>
 									</div>
 
 									<div className='terminal-code-body'>
 										<pre>
 											<code>
-												{formattedResponse ||
-													'{\n  "status": true,\n  "message": "Success"\n}'}
+												{activeResponseTab === 'success'
+													? formattedResponse ||
+													  '{\n  "status": true,\n  "message": "Success"\n}'
+													: formattedFailResponse ||
+													  '{\n  "status": false,\n  "message": "Invalid request or operation failed."\n}'}
 											</code>
 										</pre>
 									</div>

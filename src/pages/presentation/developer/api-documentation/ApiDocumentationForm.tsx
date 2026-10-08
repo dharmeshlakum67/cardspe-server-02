@@ -142,7 +142,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		return '{\n  \n}';
 	});
 
-	// EXAMPLES
+	// EXAMPLES & RESPONSES
 	const [requestExample, setRequestExample] = useState<string>(initialValues?.request_example || '');
 	const [responseExampleJson, setResponseExampleJson] = useState<string>(() => {
 		if (initialValues?.response_example) {
@@ -151,6 +151,14 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 				: String(initialValues.response_example);
 		}
 		return '{\n  "status": true,\n  "message": "Success"\n}';
+	});
+	const [failResponseExampleJson, setFailResponseExampleJson] = useState<string>(() => {
+		if (initialValues?.fail_response_example) {
+			return typeof initialValues.fail_response_example === 'object'
+				? JSON.stringify(initialValues.fail_response_example, null, 2)
+				: String(initialValues.fail_response_example);
+		}
+		return '{\n  "status": false,\n  "message": "Invalid request parameter or operation failed."\n}';
 	});
 
 	// AUTO SLUG GENERATOR
@@ -273,9 +281,19 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 		try {
 			const parsed = JSON.parse(responseExampleJson);
 			setResponseExampleJson(JSON.stringify(parsed, null, 2));
-			showNotification('Formatted', 'Response example JSON formatted successfully.', 'success');
+			showNotification('Formatted', 'Success response example JSON formatted successfully.', 'success');
 		} catch {
-			showNotification('Invalid JSON', 'Response example is not valid JSON format.', 'danger');
+			showNotification('Invalid JSON', 'Success response example is not valid JSON format.', 'danger');
+		}
+	};
+
+	const formatFailResponseExample = () => {
+		try {
+			const parsed = JSON.parse(failResponseExampleJson);
+			setFailResponseExampleJson(JSON.stringify(parsed, null, 2));
+			showNotification('Formatted', 'Failure response example JSON formatted successfully.', 'success');
+		} catch {
+			showNotification('Invalid JSON', 'Failure response example is not valid JSON format.', 'danger');
 		}
 	};
 
@@ -379,7 +397,17 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 			try {
 				parsedResponse = JSON.parse(responseExampleJson);
 			} catch {
-				showNotification('Invalid JSON', 'Response example contains invalid JSON.', 'danger');
+				showNotification('Invalid JSON', 'Success response example contains invalid JSON.', 'danger');
+				return;
+			}
+		}
+
+		let parsedFailResponse: any = null;
+		if (failResponseExampleJson.trim()) {
+			try {
+				parsedFailResponse = JSON.parse(failResponseExampleJson);
+			} catch {
+				showNotification('Invalid JSON', 'Failure response example contains invalid JSON.', 'danger');
 				return;
 			}
 		}
@@ -404,6 +432,7 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 			request_body: cleanBodyParams,
 			request_example: requestExample.trim() || undefined,
 			response_example: parsedResponse,
+			fail_response_example: parsedFailResponse,
 			status,
 			display_order: Number(displayOrder) || 0,
 		};
@@ -1092,55 +1121,56 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 					</div>
 
 					<div className='card-body-content'>
-						<div className='row g-4'>
-							{/* REQUEST CURL COMMAND */}
-							<div className='col-lg-6'>
-								<div className='d-flex align-items-center justify-content-between mb-2'>
-									<label className='form-label fw-bold text-dark mb-0'>
-										Request Example (cURL Command)
-									</label>
-									<button
-										type='button'
-										className='btn btn-outline-primary btn-sm fw-semibold'
-										onClick={handleGenerateCurl}>
-										<Icon icon='AutoAwesome' className='me-1' /> Auto-Generate cURL
-									</button>
-								</div>
-								<textarea
-									className='form-control font-monospace'
-									rows={10}
-									style={{
-										backgroundColor: '#0f172a',
-										color: '#4ade80',
-										borderRadius: '0.65rem',
-										fontSize: '0.82rem',
-										lineHeight: '1.6',
-									}}
-									placeholder='curl -X POST https://api.example.com/api/v1/resource ...'
-									value={requestExample}
-									onChange={(e) => setRequestExample(e.target.value)}
-								/>
-								<small className='text-muted mt-1 d-block'>
-									This cURL command is showcased in the developer interactive terminal.
-								</small>
+						{/* ROW 1: REQUEST CURL COMMAND */}
+						<div className='mb-4'>
+							<div className='d-flex align-items-center justify-content-between mb-2'>
+								<label className='form-label fw-bold text-dark mb-0'>
+									Request Example (cURL Command)
+								</label>
+								<button
+									type='button'
+									className='btn btn-outline-primary btn-sm fw-semibold'
+									onClick={handleGenerateCurl}>
+									<Icon icon='AutoAwesome' className='me-1' /> Auto-Generate cURL
+								</button>
 							</div>
+							<textarea
+								className='form-control font-monospace'
+								rows={8}
+								style={{
+									backgroundColor: '#0f172a',
+									color: '#4ade80',
+									borderRadius: '0.65rem',
+									fontSize: '0.82rem',
+									lineHeight: '1.6',
+								}}
+								placeholder='curl -X POST https://api.example.com/api/v1/resource ...'
+								value={requestExample}
+								onChange={(e) => setRequestExample(e.target.value)}
+							/>
+							<small className='text-muted mt-1 d-block'>
+								This cURL command is showcased in the developer interactive terminal.
+							</small>
+						</div>
 
-							{/* RESPONSE JSON EXAMPLE */}
+						{/* ROW 2: SUCCESS AND FAILURE RESPONSE EXAMPLES */}
+						<div className='row g-4'>
+							{/* SUCCESS RESPONSE JSON EXAMPLE */}
 							<div className='col-lg-6'>
 								<div className='d-flex align-items-center justify-content-between mb-2'>
-									<label className='form-label fw-bold text-dark mb-0'>
-										Response Example (JSON)
+									<label className='form-label fw-bold text-success mb-0'>
+										<Icon icon='CheckCircle' className='me-1' /> Success Response Example (JSON)
 									</label>
 									<button
 										type='button'
-										className='btn btn-outline-primary btn-sm fw-semibold'
+										className='btn btn-outline-success btn-sm fw-semibold'
 										onClick={formatResponseExample}>
 										<Icon icon='AutoFixHigh' className='me-1' /> Format JSON
 									</button>
 								</div>
 								<textarea
 									className='form-control font-monospace'
-									rows={10}
+									rows={9}
 									style={{
 										backgroundColor: '#0f172a',
 										color: '#fde047',
@@ -1154,6 +1184,38 @@ export const ApiDocumentationForm: FC<IApiDocumentationFormProps> = ({
 								/>
 								<small className='text-muted mt-1 d-block'>
 									Sample response payload returned upon successful execution (200/201 OK).
+								</small>
+							</div>
+
+							{/* FAILURE / ERROR RESPONSE JSON EXAMPLE */}
+							<div className='col-lg-6'>
+								<div className='d-flex align-items-center justify-content-between mb-2'>
+									<label className='form-label fw-bold text-danger mb-0'>
+										<Icon icon='ErrorOutline' className='me-1' /> Failure Response Example (JSON)
+									</label>
+									<button
+										type='button'
+										className='btn btn-outline-danger btn-sm fw-semibold'
+										onClick={formatFailResponseExample}>
+										<Icon icon='AutoFixHigh' className='me-1' /> Format JSON
+									</button>
+								</div>
+								<textarea
+									className='form-control font-monospace'
+									rows={9}
+									style={{
+										backgroundColor: '#0f172a',
+										color: '#f87171',
+										borderRadius: '0.65rem',
+										fontSize: '0.82rem',
+										lineHeight: '1.6',
+									}}
+									placeholder='{\n  "status": false,\n  "message": "Invalid request parameter or operation failed."\n}'
+									value={failResponseExampleJson}
+									onChange={(e) => setFailResponseExampleJson(e.target.value)}
+								/>
+								<small className='text-muted mt-1 d-block'>
+									Sample error payload returned when request fails (400 Bad Request / 500 Error).
 								</small>
 							</div>
 						</div>

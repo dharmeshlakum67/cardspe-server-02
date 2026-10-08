@@ -102,8 +102,8 @@ const User = () => {
 						<div
 							role='presentation'
 							className='navigation-item cursor-pointer'
-							onClick={() => {
-								authService.logout();
+							onClick={async () => {
+								await authService.logout();
 								if (setUser) {
 									setUser('');
 								}

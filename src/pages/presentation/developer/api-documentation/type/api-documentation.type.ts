@@ -50,7 +50,7 @@ export interface IApiDocumentation {
 	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string | null;
 	response_example?: any;
-	response_description?: string | null;
+	fail_response_example?: any;
 	status: TApiDocStatus;
 	display_order: number;
 	published_at?: string | null;
@@ -71,7 +71,7 @@ export interface ICreateApiDocumentationPayload {
 	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string;
 	response_example?: any;
-	response_description?: string;
+	fail_response_example?: any;
 	status?: TApiDocStatus;
 	display_order?: number;
 	published_at?: string | null;
@@ -90,7 +90,7 @@ export interface IUpdateApiDocumentationPayload {
 	request_body?: IBodyParameterItem[] | Record<string, any> | string;
 	request_example?: string;
 	response_example?: any;
-	response_description?: string;
+	fail_response_example?: any;
 	status?: TApiDocStatus;
 	display_order?: number;
 	published_at?: string | null;
@@ -146,7 +146,7 @@ export interface ApiDocDetail {
 	request_body: any;
 	request_example: string | null;
 	response_example: any;
-	response_description: string | null;
+	fail_response_example: any;
 	status: TApiDocStatus;
 	display_order: number;
 	published_at: string | null;
