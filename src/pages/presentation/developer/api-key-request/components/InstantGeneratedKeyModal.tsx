@@ -1,5 +1,5 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable jsx-a11y/label-has-associated-control */
+/* eslint-disable jsx-a11y/label-has-associated-control, react/require-default-props */
 import React, { FC, useState } from 'react';
 import Modal, {
 	ModalHeader,
@@ -13,14 +13,14 @@ import { TApiKeyType } from '../../../../../type/api-key-request.type';
 interface IInstantGeneratedKeyModalProps {
 	isOpen: boolean;
 	setIsOpen: (isOpen: boolean) => void;
-	keyType: TApiKeyType;
+	keyType?: TApiKeyType;
 	apiKey: string;
 }
 
 export const InstantGeneratedKeyModal: FC<IInstantGeneratedKeyModalProps> = ({
 	isOpen,
 	setIsOpen,
-	keyType,
+	keyType = 'live',
 	apiKey,
 }) => {
 	const [isKeyCopied, setIsKeyCopied] = useState<boolean>(false);
@@ -48,22 +48,18 @@ export const InstantGeneratedKeyModal: FC<IInstantGeneratedKeyModalProps> = ({
 							style={{
 								width: '42px',
 								height: '42px',
-								background: isLive
-									? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-									: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+								background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
 								color: '#ffffff',
-								boxShadow: isLive
-									? '0 4px 12px rgba(16, 185, 129, 0.3)'
-									: '0 4px 12px rgba(245, 158, 11, 0.3)',
+								boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
 							}}>
-							<Icon icon={isLive ? 'RocketLaunch' : 'Science'} size='md' />
+							<Icon icon='RocketLaunch' size='md' />
 						</div>
 						<div>
 							<h5 className='mb-0 fw-bold text-dark' style={{ letterSpacing: '-0.01em' }}>
-								{isLive ? 'Live API Key Generated' : 'Test API Key Generated'}
+								{isLive ? 'Live Production API Key Generated' : 'API Key Generated'}
 							</h5>
 							<small className='text-muted' style={{ fontSize: '0.8rem' }}>
-								Your API key is active and ready to use
+								Your production API key is active and ready for live integration
 							</small>
 						</div>
 					</div>
@@ -74,7 +70,7 @@ export const InstantGeneratedKeyModal: FC<IInstantGeneratedKeyModalProps> = ({
 				{/* API KEY FIELD */}
 				<div className='mb-2'>
 					<label className='form-label fw-bold small text-uppercase text-muted mb-1' style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>
-						Generated API Key
+						Generated Production API Key
 					</label>
 					<div className='modal-credential-input-box'>
 						<code className='credential-code-text'>{apiKey}</code>
@@ -102,4 +98,9 @@ export const InstantGeneratedKeyModal: FC<IInstantGeneratedKeyModalProps> = ({
 	);
 };
 
+InstantGeneratedKeyModal.defaultProps = {
+	keyType: 'live',
+};
+
 export default InstantGeneratedKeyModal;
+

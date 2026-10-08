@@ -128,7 +128,8 @@ export const getImageUrl = (path?: any, fallback = ''): string => {
 
 	const rawBaseUrl = ENV.API_BASE_URL || 'http://localhost:5000';
 	const baseUrl = rawBaseUrl.replace(/\/api(\/v\d+)?\/?$/i, '').replace(/\/+$/, '');
-	const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+	const normalized = trimmed.replace(/\\/g, '/');
+	const cleanPath = normalized.startsWith('/') ? normalized : `/${normalized}`;
 
 	return `${baseUrl}${cleanPath}`;
 };

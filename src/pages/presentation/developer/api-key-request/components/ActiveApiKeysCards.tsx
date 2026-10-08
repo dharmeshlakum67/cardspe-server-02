@@ -29,12 +29,9 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 	onRequestKey,
 	hasCreatePermission = true,
 }) => {
-	const [copiedKeyType, setCopiedKeyType] = useState<TApiKeyType | null>(null);
-	const [isGeneratingType, setIsGeneratingType] = useState<TApiKeyType | null>(null);
-	const [maskedStates, setMaskedStates] = useState<{ test: boolean; live: boolean }>({
-		test: true,
-		live: true,
-	});
+	const [isCopied, setIsCopied] = useState<boolean>(false);
+	const [isGenerating, setIsGenerating] = useState<boolean>(false);
+	const [isMasked, setIsMasked] = useState<boolean>(true);
 
 	const [generatedModalData, setGeneratedModalData] = useState<{
 		isOpen: boolean;
@@ -42,44 +39,44 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 		apiKey: string;
 	}>({
 		isOpen: false,
-		keyType: 'test',
+		keyType: 'live',
 		apiKey: '',
 	});
 
 	// TOGGLE KEY MASKING
-	const toggleMask = (type: TApiKeyType) => {
-		setMaskedStates((prev) => ({ ...prev, [type]: !prev[type] }));
+	const toggleMask = () => {
+		setIsMasked((prev) => !prev);
 	};
 
 	// MASK HELPER
-	const getDisplayKey = (key: string, isMasked: boolean) => {
+	const getDisplayKey = (key: string, masked: boolean) => {
 		if (!key) return '';
-		if (!isMasked || key.length < 16) return key;
+		if (!masked || key.length < 16) return key;
 		const prefix = key.slice(0, 14);
 		const suffix = key.slice(-5);
 		return `${prefix}${'•'.repeat(16)}${suffix}`;
 	};
 
 	// COPY HANDLER
-	const handleCopy = (apiKey: string, type: TApiKeyType) => {
+	const handleCopy = (apiKey: string) => {
 		if (!apiKey) return;
 		navigator.clipboard.writeText(apiKey);
-		setCopiedKeyType(type);
-		showNotification('Copied', `${type.toUpperCase()} API Key copied to clipboard!`, 'info');
-		setTimeout(() => setCopiedKeyType(null), 2000);
+		setIsCopied(true);
+		showNotification('Copied', 'Production API Key copied to clipboard!', 'info');
+		setTimeout(() => setIsCopied(false), 2000);
 	};
 
-	// INSTANT GENERATION HANDLER (CALLS POST /api/developer/api-key/generate)
-	const handleInstantGenerate = async (type: TApiKeyType) => {
+	// INSTANT GENERATION HANDLER (CALLS POST /api/developer/api-key/generate FOR LIVE KEY)
+	const handleInstantGenerate = async () => {
 		if (!hasCreatePermission) {
 			showNotification('Permission Denied', 'You do not have permission to generate API keys.', 'warning');
 			return;
 		}
 
-		setIsGeneratingType(type);
+		setIsGenerating(true);
 		try {
 			const res: any = await apiKeyRequestService.generateApiKey({
-				key_type: type,
+				key_type: 'live',
 			});
 
 			// If backend returned key details
@@ -88,18 +85,17 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 				createdKeyData?.api_key ||
 				res?.data?.api_key ||
 				(typeof res?.data === 'string' ? res?.data : '');
-			const apiSecretVal = createdKeyData?.api_secret || res?.data?.api_secret;
 
 			if (apiKeyVal) {
 				setGeneratedModalData({
 					isOpen: true,
-					keyType: type,
+					keyType: 'live',
 					apiKey: apiKeyVal,
 				});
 			} else {
 				showNotification(
 					'Key Generated',
-					res?.message || `Your ${type.toUpperCase()} API Key has been generated successfully!`,
+					res?.message || 'Your Production API Key has been generated successfully!',
 					'success',
 				);
 			}
@@ -108,24 +104,19 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 		} catch (error: any) {
 			showNotification(
 				'Generation Failed',
-				error?.data?.message || error?.message || 'Could not generate API key.',
+				error?.data?.message || error?.message || 'Could not generate Production API key.',
 				'danger',
 			);
 		} finally {
-			setIsGeneratingType(null);
+			setIsGenerating(false);
 		}
 	};
 
-	// RENDER SINGLE ENVIRONMENT CARD
-	const renderEnvCard = (type: TApiKeyType, envStatus: IEnvKeyStatus | undefined) => {
-		const isLive = type === 'live';
-		const envTitle = isLive ? 'Live Production' : 'Test Sandbox';
-		const envSub = isLive ? 'Production API Integration' : 'Developer Sandbox & Testing';
-		const envIcon = isLive ? 'RocketLaunch' : 'Science';
-
+	// RENDER PRODUCTION ENVIRONMENT CARD
+	const renderProductionCard = (envStatus: IEnvKeyStatus | undefined) => {
 		if (isLoading || !envStatus) {
 			return (
-				<div className={`premium-key-card ${isLive ? 'theme-live' : 'theme-test'} loading-shimmer`}>
+				<div className='premium-key-card theme-live loading-shimmer'>
 					<div className='card-header-bar'>
 						<div className='d-flex align-items-center gap-2'>
 							<div className='shimmer-box shimmer-icon' />
@@ -142,12 +133,9 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 		}
 
 		const { key, has_active_key, has_pending_request, can_generate } = envStatus;
-		const isCopied = copiedKeyType === type;
-		const isGenerating = isGeneratingType === type;
-		const isMasked = maskedStates[type];
 
 		return (
-			<div className={`premium-key-card ${isLive ? 'theme-live' : 'theme-test'}`}>
+			<div className='premium-key-card theme-live'>
 				{/* TOP AMBIENT GLOW BAR */}
 				<div className='card-glow-bar' />
 
@@ -155,16 +143,14 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 				<div className='card-header-bar'>
 					<div className='d-flex align-items-center gap-3'>
 						<div className='env-icon-badge'>
-							<Icon icon={envIcon} size='sm' />
+							<Icon icon='RocketLaunch' size='sm' />
 						</div>
 						<div>
 							<div className='d-flex align-items-center gap-2'>
-								<h6 className='env-name-heading mb-0'>{envTitle}</h6>
-								<span className={`env-pill-tag ${isLive ? 'tag-live' : 'tag-test'}`}>
-									{isLive ? 'PROD' : 'TEST'}
-								</span>
+								<h6 className='env-name-heading mb-0'>Live Production</h6>
+								<span className='env-pill-tag tag-live'>PROD</span>
 							</div>
-							<p className='env-sub-caption mb-0'>{envSub}</p>
+							<p className='env-sub-caption mb-0'>Production API Integration & Live Transactions</p>
 						</div>
 					</div>
 
@@ -212,7 +198,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 										type='button'
 										className='btn-terminal-action'
 										title={isMasked ? 'Reveal Key' : 'Hide Key'}
-										onClick={() => toggleMask(type)}>
+										onClick={toggleMask}>
 										<Icon icon={isMasked ? 'Visibility' : 'VisibilityOff'} size='sm' />
 									</button>
 
@@ -221,7 +207,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 										type='button'
 										className={`btn-terminal-copy ${isCopied ? 'btn-copied' : ''}`}
 										title='Copy API Key'
-										onClick={() => handleCopy(key.api_key, type)}>
+										onClick={() => handleCopy(key.api_key)}>
 										<Icon icon={isCopied ? 'Check' : 'ContentCopy'} size='sm' />
 										<span>{isCopied ? 'Copied' : 'Copy'}</span>
 									</button>
@@ -236,7 +222,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 										{key.created_at ? (
 											<>Issued: <strong className='text-dark'>{formatDateTime(key.created_at).date}</strong></>
 										) : (
-											<>Active Key</>
+											<>Active Production Key</>
 										)}
 									</span>
 								</div>
@@ -251,7 +237,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 										<button
 											type='button'
 											className='btn-roll-pill'
-											onClick={() => onRequestKey(type)}>
+											onClick={() => onRequestKey('live')}>
 											<Icon icon='Refresh' size='sm' />
 											<span>Roll Key</span>
 										</button>
@@ -263,14 +249,14 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 						<div className='instant-ready-view'>
 							<div className='instant-info-text'>
 								<Icon icon='Bolt' className='text-warning flex-shrink-0' size='sm' />
-								<span>No API key active. Generate your {isLive ? 'production' : 'sandbox'} credentials instantly.</span>
+								<span>No Production API key active. Generate your production credentials instantly.</span>
 							</div>
 
 							<button
 								type='button'
-								className={`btn-instant-trigger ${isLive ? 'trigger-live' : 'trigger-test'}`}
+								className='btn-instant-trigger trigger-live'
 								disabled={isGenerating || !hasCreatePermission}
-								onClick={() => handleInstantGenerate(type)}>
+								onClick={handleInstantGenerate}>
 								{isGenerating ? (
 									<>
 										<Spinner isSmall isGrow={false} className='me-2' />
@@ -279,7 +265,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 								) : (
 									<>
 										<Icon icon='FlashOn' size='sm' />
-										<span>Generate {isLive ? 'Live' : 'Test'} Key</span>
+										<span>Generate Production Key</span>
 									</>
 								)}
 							</button>
@@ -300,16 +286,16 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 						<div className='inactive-empty-view'>
 							<div className='d-flex align-items-center gap-2 text-muted' style={{ fontSize: '0.78rem' }}>
 								<Icon icon='KeyOff' size='sm' />
-								<span>No active credentials in this environment</span>
+								<span>No active Production API credentials</span>
 							</div>
 
 							{hasCreatePermission && (
 								<button
 									type='button'
 									className='btn-request-pill'
-									onClick={() => onRequestKey(type)}>
+									onClick={() => onRequestKey('live')}>
 									<Icon icon='Add' size='sm' />
-									<span>Request Key</span>
+									<span>Request Production Key</span>
 								</button>
 							)}
 						</div>
@@ -323,14 +309,9 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 		<>
 			<div className='premium-keys-grid mb-3'>
 				<div className='row g-3'>
-					{/* TEST ENVIRONMENT CARD */}
-					<div className='col-12 col-xl-6'>
-						{renderEnvCard('test', myKeysData?.test)}
-					</div>
-
-					{/* LIVE ENVIRONMENT CARD */}
-					<div className='col-12 col-xl-6'>
-						{renderEnvCard('live', myKeysData?.live)}
+					{/* LIVE PRODUCTION ENVIRONMENT CARD */}
+					<div className='col-12 col-md-10 col-lg-8 col-xl-6'>
+						{renderProductionCard(myKeysData?.live)}
 					</div>
 				</div>
 			</div>
@@ -341,7 +322,7 @@ export const ActiveApiKeysCards: FC<IActiveApiKeysCardsProps> = ({
 				setIsOpen={(open) =>
 					setGeneratedModalData((prev) => ({ ...prev, isOpen: open }))
 				}
-				keyType={generatedModalData.keyType}
+				keyType='live'
 				apiKey={generatedModalData.apiKey}
 			/>
 		</>
@@ -354,3 +335,4 @@ ActiveApiKeysCards.defaultProps = {
 };
 
 export default ActiveApiKeysCards;
+

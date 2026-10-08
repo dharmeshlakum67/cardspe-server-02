@@ -15,6 +15,8 @@ import { getImageUrl } from '../../../../../helpers/helpers';
 import {
 	IPaymentGateway,
 	TPaymentGatewayStatus,
+	IPaymentGatewayChargeConstantOption,
+	parseGatewayCharges,
 } from '../type/payment-gateway-type';
 import paymentGatewayService from '../service/paymentGatewayService';
 import '../css/payment-gateway.scss';
@@ -24,6 +26,13 @@ interface IPaymentGatewayModalProps {
 	setIsOpen: (isOpen: boolean) => void;
 	gatewayData?: IPaymentGateway | null;
 	onSuccess: () => void;
+}
+
+interface IChargeFormItem {
+	id: string;
+	name: string;
+	type: string;
+	value: string | number;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -52,20 +61,60 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 	const [status, setStatus] = useState<TPaymentGatewayStatus>('active');
 	const [description, setDescription] = useState<string>('');
 
+	// CHARGES STATE & CONSTANT DROPDOWN OPTIONS
+	const [chargesList, setChargesList] = useState<IChargeFormItem[]>([]);
+	const [chargeNamesOptions, setChargeNamesOptions] = useState<IPaymentGatewayChargeConstantOption[]>([
+		{ label: 'UPI', value: 'UPI' },
+		{ label: 'Credit Card', value: 'Credit Card' },
+		{ label: 'Debit Card', value: 'Debit Card' },
+		{ label: 'Net Banking', value: 'Net Banking' },
+		{ label: 'Wallet', value: 'Wallet' },
+	]);
+	const [chargeTypesOptions, setChargeTypesOptions] = useState<IPaymentGatewayChargeConstantOption[]>([
+		{ label: 'Percentage (%)', value: 'PERCENTAGE' },
+		{ label: 'Flat (₹)', value: 'FLAT' },
+	]);
+
 	// IMAGE STATE
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string>('');
+	const [imageLoadFailed, setImageLoadFailed] = useState<boolean>(false);
 	const [isDeleteIcon, setIsDeleteIcon] = useState<boolean>(false);
 
 	// FORM & SUBMIT STATES
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+	// FETCH CONSTANTS ONCE
+	useEffect(() => {
+		let isMounted = true;
+		const fetchChargesConstants = async () => {
+			try {
+				const constants = await paymentGatewayService.getChargesConstants();
+				if (isMounted) {
+					if (constants.charge_names && constants.charge_names.length > 0) {
+						setChargeNamesOptions(constants.charge_names);
+					}
+					if (constants.charge_types && constants.charge_types.length > 0) {
+						setChargeTypesOptions(constants.charge_types);
+					}
+				}
+			} catch (err) {
+				console.error('Failed to fetch charges constants:', err);
+			}
+		};
+		fetchChargesConstants();
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
 	// POPULATE OR RESET FORM ON MODAL OPEN
 	useEffect(() => {
 		if (isOpen) {
 			setErrors({});
 			setIsSubmitting(false);
+			setImageLoadFailed(false);
 			if (gatewayData) {
 				setName(gatewayData.name || '');
 				setStatus(gatewayData.status || 'active');
@@ -74,6 +123,17 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 				setImagePreview(existingIcon);
 				setSelectedFile(null);
 				setIsDeleteIcon(false);
+
+				// Populate existing charges
+				const parsedCharges = parseGatewayCharges(gatewayData.charges);
+				setChargesList(
+					parsedCharges.map((c, idx) => ({
+						id: `charge_${idx}_${Date.now()}`,
+						name: c.name || (chargeNamesOptions[0]?.value ?? 'UPI'),
+						type: c.type || (chargeTypesOptions[0]?.value ?? 'PERCENTAGE'),
+						value: c.value !== undefined ? c.value : '',
+					})),
+				);
 			} else {
 				setName('');
 				setStatus('active');
@@ -81,14 +141,52 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 				setImagePreview('');
 				setSelectedFile(null);
 				setIsDeleteIcon(false);
+				setChargesList([]);
 			}
 		}
-	}, [isOpen, gatewayData]);
+	}, [isOpen, gatewayData, chargeNamesOptions, chargeTypesOptions]);
 
 	// HANDLE CLOSE
 	const handleClose = () => {
 		if (isSubmitting) return;
 		setIsOpen(false);
+	};
+
+	// CHARGES MANAGEMENT HANDLERS (WITH DUPLICATE PREVENTION)
+	const handleAddCharge = () => {
+		const usedNames = new Set(chargesList.map((c) => c.name));
+		const nextAvailableOption = chargeNamesOptions.find((opt) => !usedNames.has(opt.value));
+		const defaultName = nextAvailableOption ? nextAvailableOption.value : chargeNamesOptions[0]?.value || 'UPI';
+		const defaultType = chargeTypesOptions[0]?.value || 'PERCENTAGE';
+
+		setChargesList((prev) => [
+			...prev,
+			{
+				id: `charge_${Date.now()}_${Math.random()}`,
+				name: defaultName,
+				type: defaultType,
+				value: '',
+			},
+		]);
+		if (errors.charges) {
+			setErrors((prev) => ({ ...prev, charges: '' }));
+		}
+	};
+
+	const handleRemoveCharge = (id: string) => {
+		setChargesList((prev) => prev.filter((item) => item.id !== id));
+		if (errors.charges) {
+			setErrors((prev) => ({ ...prev, charges: '' }));
+		}
+	};
+
+	const handleUpdateCharge = (id: string, field: 'name' | 'type' | 'value', val: any) => {
+		setChargesList((prev) =>
+			prev.map((item) => (item.id === id ? { ...item, [field]: val } : item)),
+		);
+		if (errors.charges) {
+			setErrors((prev) => ({ ...prev, charges: '' }));
+		}
 	};
 
 	// HANDLE FILE SELECTION
@@ -106,6 +204,7 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 
 			setSelectedFile(file);
 			setIsDeleteIcon(false);
+			setImageLoadFailed(false);
 			const previewUrl = URL.createObjectURL(file);
 			setImagePreview(previewUrl);
 		}
@@ -115,6 +214,7 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 	const handleClearImage = () => {
 		setSelectedFile(null);
 		setImagePreview('');
+		setImageLoadFailed(false);
 		setIsDeleteIcon(true);
 		if (fileInputRef.current) {
 			fileInputRef.current.value = '';
@@ -129,6 +229,39 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 			newErrors.name = 'Gateway name is required';
 		} else if (name.trim().length < 2) {
 			newErrors.name = 'Gateway name must be at least 2 characters';
+		}
+
+		// Validate charges and duplicate charge names
+		const selectedNames = new Set<string>();
+		for (let i = 0; i < chargesList.length; i += 1) {
+			const item = chargesList[i];
+			if (!item.name) {
+				newErrors.charges = `Please select a charge name for row #${i + 1}`;
+				break;
+			}
+			if (selectedNames.has(item.name)) {
+				newErrors.charges = `Duplicate charge: "${item.name}" has been added more than once. Please remove or select a different payment mode.`;
+				break;
+			}
+			selectedNames.add(item.name);
+
+			if (!item.type) {
+				newErrors.charges = `Please select a charge type for row #${i + 1}`;
+				break;
+			}
+			if (
+				item.value === '' ||
+				item.value === null ||
+				item.value === undefined ||
+				isNaN(Number(item.value))
+			) {
+				newErrors.charges = `Please enter a valid numeric charge value for "${item.name}"`;
+				break;
+			}
+			if (Number(item.value) < 0) {
+				newErrors.charges = `Charge value for "${item.name}" cannot be negative`;
+				break;
+			}
 		}
 
 		setErrors(newErrors);
@@ -148,6 +281,14 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 			if (description.trim()) {
 				formData.append('description', description.trim());
 			}
+
+			// Format charges payload
+			const formattedCharges = chargesList.map((c) => ({
+				name: c.name,
+				type: c.type,
+				value: Number(c.value),
+			}));
+			formData.append('charges', JSON.stringify(formattedCharges));
 
 			if (selectedFile) {
 				formData.append('icon', selectedFile);
@@ -176,6 +317,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 		}
 	};
 
+	const isMaxChargesReached = chargesList.length >= chargeNamesOptions.length && chargeNamesOptions.length > 0;
+
 	return (
 		<Modal isOpen={isOpen} setIsOpen={handleClose} size='lg' isCentered isStaticBackdrop={isSubmitting}>
 			<ModalHeader setIsOpen={handleClose} className='border-bottom-0 pb-0 pt-4 px-4'>
@@ -198,8 +341,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 							</h5>
 							<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
 								{isEditMode
-									? 'Modify payment gateway details, status, or branding icon.'
-									: 'Configure a new payment gateway for payment processing.'}
+									? 'Modify payment gateway details, charges, status, or branding icon.'
+									: 'Configure a new payment gateway with custom charge rates.'}
 							</span>
 						</div>
 					</div>
@@ -256,13 +399,183 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 							<textarea
 								id='gatewayDescInput'
 								className='form-control'
-								rows={3}
+								rows={2}
 								placeholder='Brief description of supported payment modes, routing, or limits...'
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								style={textareaStyle}
 								disabled={isSubmitting}
 							/>
+						</div>
+
+						{/* GATEWAY CHARGES SECTION */}
+						<div className='col-12'>
+							<div className='d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2'>
+								<div>
+									<div className='d-flex align-items-center gap-2'>
+										<label className='form-label fw-bold text-dark mb-0' style={{ fontSize: '0.875rem' }}>
+											Gateway Charges
+										</label>
+										<span className='badge bg-light text-muted border' style={{ fontSize: '0.72rem' }}>
+											{chargesList.length} / {chargeNamesOptions.length} Configured
+										</span>
+									</div>
+									<div className='text-muted' style={{ fontSize: '0.75rem' }}>
+										Configure surcharge or processing fee per payment mode (each mode can be added once)
+									</div>
+								</div>
+								<button
+									type='button'
+									className='btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3 py-1 rounded-2 fw-semibold'
+									onClick={handleAddCharge}
+									disabled={isSubmitting || isMaxChargesReached}>
+									<Icon icon='Add' size='sm' />
+									<span>{isMaxChargesReached ? 'All Modes Added' : 'Add Charge'}</span>
+								</button>
+							</div>
+
+							{chargesList.length === 0 ? (
+								<div
+									className='p-3 border rounded-3 bg-light text-center text-muted'
+									style={{ borderStyle: 'dashed' }}>
+									<Icon icon='PriceChange' size='lg' className='text-muted mb-1' />
+									<p className='mb-0 small'>No custom gateway charges configured.</p>
+									<button
+										type='button'
+										className='btn btn-link btn-sm text-primary p-0 mt-1 fw-semibold text-decoration-none'
+										onClick={handleAddCharge}
+										disabled={isSubmitting}>
+										+ Click here to add charge rate
+									</button>
+								</div>
+							) : (
+								<div className='charges-table-wrapper border rounded-3 overflow-hidden'>
+									<div
+										className='charges-table-header bg-light border-bottom px-3 py-2 d-none d-md-flex align-items-center fw-semibold text-muted'
+										style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+										<div className='col-md-4 ps-1'>Payment Mode (Name)</div>
+										<div className='col-md-4 ps-1'>Charge Type</div>
+										<div className='col-md-3 ps-1'>Rate / Value</div>
+										<div className='col-md-1 text-center pe-1'>Action</div>
+									</div>
+									<div className='charges-list-body p-2 d-flex flex-column gap-2 bg-white'>
+										{chargesList.map((charge, idx) => {
+											const isFlat = charge.type === 'FLAT';
+											return (
+												<div
+													key={charge.id}
+													className='charge-row-item p-2 rounded-2 border bg-light bg-opacity-25'>
+													<div className='row g-2 align-items-center'>
+														{/* Charge Name */}
+														<div className='col-12 col-md-4'>
+															<label className='d-md-none form-label small fw-semibold text-muted mb-1'>
+																Payment Mode #{idx + 1}
+															</label>
+															<select
+																className='form-select form-select-sm'
+																value={charge.name}
+																onChange={(e) =>
+																	handleUpdateCharge(charge.id, 'name', e.target.value)
+																}
+																disabled={isSubmitting}
+																style={{ height: '38px', fontSize: '0.85rem' }}>
+																{chargeNamesOptions.map((opt) => {
+																	const isAlreadySelected = chargesList.some(
+																		(c) => c.id !== charge.id && c.name === opt.value,
+																	);
+																	return (
+																		<option
+																			key={opt.value}
+																			value={opt.value}
+																			disabled={isAlreadySelected}>
+																			{opt.label} {isAlreadySelected ? '(Added)' : ''}
+																		</option>
+																	);
+																})}
+															</select>
+														</div>
+
+														{/* Charge Type */}
+														<div className='col-12 col-md-4'>
+															<label className='d-md-none form-label small fw-semibold text-muted mb-1'>
+																Charge Type
+															</label>
+															<select
+																className='form-select form-select-sm'
+																value={charge.type}
+																onChange={(e) =>
+																	handleUpdateCharge(charge.id, 'type', e.target.value)
+																}
+																disabled={isSubmitting}
+																style={{ height: '38px', fontSize: '0.85rem' }}>
+																{chargeTypesOptions.map((opt) => (
+																	<option key={opt.value} value={opt.value}>
+																		{opt.label}
+																	</option>
+																))}
+															</select>
+														</div>
+
+														{/* Charge Value */}
+														<div className='col-9 col-md-3'>
+															<label className='d-md-none form-label small fw-semibold text-muted mb-1'>
+																Rate / Value
+															</label>
+															<div className='input-group input-group-sm' style={{ height: '38px' }}>
+																{isFlat && (
+																	<span className='input-group-text bg-white text-muted fw-bold'>
+																		₹
+																	</span>
+																)}
+																<input
+																	type='number'
+																	min='0'
+																	step='0.01'
+																	className='form-control form-control-sm'
+																	placeholder='0.00'
+																	value={charge.value}
+																	onChange={(e) =>
+																		handleUpdateCharge(charge.id, 'value', e.target.value)
+																	}
+																	disabled={isSubmitting}
+																	style={{ fontSize: '0.85rem' }}
+																/>
+																{!isFlat && (
+																	<span className='input-group-text bg-white text-muted fw-bold'>
+																		%
+																	</span>
+																)}
+															</div>
+														</div>
+
+														{/* Remove Button */}
+														<div className='col-3 col-md-1 d-flex justify-content-end justify-content-md-center'>
+															<button
+																type='button'
+																className='btn btn-outline-danger btn-sm p-1 rounded-2'
+																title='Remove Charge'
+																onClick={() => handleRemoveCharge(charge.id)}
+																disabled={isSubmitting}
+																style={{
+																	width: '36px',
+																	height: '36px',
+																	display: 'inline-flex',
+																	alignItems: 'center',
+																	justifyContent: 'center',
+																}}>
+																<Icon icon='DeleteOutline' size='sm' />
+															</button>
+														</div>
+													</div>
+												</div>
+											);
+										})}
+									</div>
+								</div>
+							)}
+							{errors.charges && (
+								<div className='invalid-feedback d-block mt-1'>{errors.charges}</div>
+							)}
 						</div>
 
 						{/* ICON / LOGO UPLOAD */}
@@ -283,7 +596,15 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 								<div className='gateway-image-preview-box'>
 									<div className='preview-left'>
 										<div className='preview-img-frame'>
-											<img src={imagePreview} alt='Gateway Icon' />
+											{!imageLoadFailed ? (
+												<img
+													src={imagePreview}
+													alt={name ? `${name} Icon` : 'Gateway Icon'}
+													onError={() => setImageLoadFailed(true)}
+												/>
+											) : (
+												<Icon icon='AccountBalanceWallet' size='lg' className='text-primary' />
+											)}
 										</div>
 										<div className='preview-file-info'>
 											<span className='file-name'>
@@ -353,7 +674,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 					<Button
 						type='button'
 						color='light'
-						className='px-4 fw-semibold rounded-2'
+						className='px-4 fw-semibold border'
+						style={{ borderRadius: '10px' }}
 						onClick={handleClose}
 						isDisable={isSubmitting}>
 						Cancel
@@ -361,7 +683,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 					<Button
 						type='submit'
 						color='primary'
-						className='px-4 fw-semibold rounded-2'
+						className='px-4 fw-semibold'
+						style={{ borderRadius: '10px' }}
 						isDisable={isSubmitting}>
 						{isSubmitting ? (
 							<>
@@ -386,3 +709,5 @@ PaymentGatewayModal.defaultProps = {
 };
 
 export default PaymentGatewayModal;
+
+

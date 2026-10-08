@@ -396,7 +396,7 @@ export const AddMoneyModal: FC<IAddMoneyModalProps> = ({
 															</div>
 														</div>
 
-														<div className='d-flex align-items-center gap-3'>
+														<div className='method-right'>
 															<span
 																className={`tag-pill ${
 																	isCustom ? 'tag-manual' : 'tag-instant'

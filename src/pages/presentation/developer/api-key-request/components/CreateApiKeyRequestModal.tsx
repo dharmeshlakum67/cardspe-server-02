@@ -26,7 +26,7 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 	isOpen,
 	setIsOpen,
 	onSuccess,
-	defaultKeyType = 'test',
+	defaultKeyType = 'live',
 }) => {
 	const [keyType, setKeyType] = useState<TApiKeyType>(defaultKeyType);
 	const [requestReason, setRequestReason] = useState<string>('');
@@ -34,7 +34,7 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 
 	React.useEffect(() => {
 		if (isOpen) {
-			setKeyType(defaultKeyType);
+			setKeyType('live');
 		}
 	}, [isOpen, defaultKeyType]);
 
@@ -50,14 +50,14 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 
 		try {
 			const payload: ICreateApiKeyRequestPayload = {
-				key_type: keyType,
+				key_type: 'live',
 				request_reason: requestReason.trim() || undefined,
 			};
 
 			await apiKeyRequestService.createApiKeyRequest(payload);
 			showNotification(
 				'Request Submitted',
-				`Your ${keyType.toUpperCase()} API key request has been submitted for admin approval.`,
+				'Your Production API key request has been submitted for admin approval.',
 				'success',
 			);
 			onSuccess();
@@ -90,9 +90,9 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 							<Icon icon='VpnKey' size='lg' />
 						</div>
 						<div>
-							<h5 className='mb-0 fw-bold text-dark'>Request API Credentials</h5>
+							<h5 className='mb-0 fw-bold text-dark'>Request Production API Key</h5>
 							<small className='text-muted'>
-								Submit a request to generate new API credentials for programmatic access
+								Submit a request to generate live API credentials for programmatic payment processing
 							</small>
 						</div>
 					</div>
@@ -101,64 +101,25 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 
 			<form onSubmit={handleSubmit}>
 				<ModalBody className='px-4 pt-3 pb-2'>
-					{/* ENVIRONMENT SELECTOR */}
+					{/* ENVIRONMENT DISPLAY */}
 					<div className='mb-4'>
 						<label className='form-label fw-bold small text-uppercase text-muted mb-2'>
-							Select Environment <span className='text-danger'>*</span>
+							Environment
 						</label>
-						<div className='row g-3'>
-							{/* TEST KEY (SANDBOX) */}
-							<div className='col-12 col-md-6'>
-								<div
-									role='button'
-									tabIndex={0}
-									className={`env-card test-card h-100 ${keyType === 'test' ? 'active' : ''}`}
-									onClick={() => setKeyType('test')}
-									onKeyDown={(e) => e.key === 'Enter' && setKeyType('test')}>
-									<div>
-										<div className='env-card-header'>
-											<div className='d-flex align-items-center gap-2'>
-												<div className='env-icon-wrapper'>
-													<Icon icon='Science' />
-												</div>
-												<h6 className='env-card-title'>Test Sandbox</h6>
-											</div>
-											<div className='custom-radio-dot'>
-												<div className='dot-inner' />
-											</div>
+						<div className='env-card live-card active'>
+							<div>
+								<div className='env-card-header'>
+									<div className='d-flex align-items-center gap-2'>
+										<div className='env-icon-wrapper'>
+											<Icon icon='RocketLaunch' />
 										</div>
-										<p className='env-card-desc'>
-											For staging, simulated webhooks, and testing integrations without processing real transactions.
-										</p>
+										<h6 className='env-card-title'>Live Production</h6>
 									</div>
+									<span className='env-pill-tag tag-live'>PROD</span>
 								</div>
-							</div>
-
-							{/* LIVE KEY (PRODUCTION) */}
-							<div className='col-12 col-md-6'>
-								<div
-									role='button'
-									tabIndex={0}
-									className={`env-card live-card h-100 ${keyType === 'live' ? 'active' : ''}`}
-									onClick={() => setKeyType('live')}
-									onKeyDown={(e) => e.key === 'Enter' && setKeyType('live')}>
-									<div>
-										<div className='env-card-header'>
-											<div className='d-flex align-items-center gap-2'>
-												<div className='env-icon-wrapper'>
-													<Icon icon='RocketLaunch' />
-												</div>
-												<h6 className='env-card-title'>Live Production</h6>
-											</div>
-											<div className='custom-radio-dot'>
-												<div className='dot-inner' />
-											</div>
-										</div>
-										<p className='env-card-desc'>
-											For real-time live payments, production API workflows, and automated merchant settlements.
-										</p>
-									</div>
-								</div>
+								<p className='env-card-desc'>
+									For real-time live payments, production API workflows, and automated merchant settlements.
+								</p>
 							</div>
 						</div>
 					</div>
@@ -188,7 +149,7 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 							<Icon icon='Shield' />
 						</div>
 						<div className='notice-content'>
-							<strong>Security Policy:</strong> Once approved by an administrator, your new key pair will be issued, and any previous active API key in this environment will automatically be rotated.
+							<strong>Security Policy:</strong> Once approved by an administrator, your new production key pair will be issued, and any previous active API key will automatically be rotated.
 						</div>
 					</div>
 				</ModalBody>
@@ -224,3 +185,4 @@ export const CreateApiKeyRequestModal: FC<ICreateApiKeyRequestModalProps> = ({
 };
 
 export default CreateApiKeyRequestModal;
+

@@ -51,7 +51,7 @@ export const ApiKeyRequestListPage: FC = () => {
 
 	// MODAL STATES
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-	const [createDefaultType, setCreateDefaultType] = useState<TApiKeyType>('test');
+	const [createDefaultType, setCreateDefaultType] = useState<TApiKeyType>('live');
 
 	const [isReviewModalOpen, setIsReviewModalOpen] = useState<boolean>(false);
 	const [requestToReview, setRequestToReview] = useState<IApiKeyRequest | null>(null);
@@ -62,7 +62,6 @@ export const ApiKeyRequestListPage: FC = () => {
 	// FILTERS & PAGINATION
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const debouncedSearch = useDebounce(searchTerm, 400);
-	const [keyTypeFilter, setKeyTypeFilter] = useState<string>('');
 	const [statusFilter, setStatusFilter] = useState<string>('');
 	const [startDate, setStartDate] = useState<string>('');
 	const [endDate, setEndDate] = useState<string>('');
@@ -108,7 +107,6 @@ export const ApiKeyRequestListPage: FC = () => {
 	// ACTIVE FILTER COUNT
 	const activeFilterCount =
 		(searchTerm.trim() ? 1 : 0) +
-		(keyTypeFilter ? 1 : 0) +
 		(statusFilter ? 1 : 0) +
 		(startDate && endDate ? 1 : 0);
 
@@ -128,7 +126,7 @@ export const ApiKeyRequestListPage: FC = () => {
 			}
 
 			const isDateRangeValid = Boolean(startDate && endDate);
-			const currentFetchKey = `${debouncedSearch.trim()}_${keyTypeFilter}_${statusFilter}_${
+			const currentFetchKey = `${debouncedSearch.trim()}_${statusFilter}_${
 				isDateRangeValid ? `${startDate}_${endDate}` : ''
 			}_${currentPage}_${perPage}`;
 
@@ -145,7 +143,6 @@ export const ApiKeyRequestListPage: FC = () => {
 					page: currentPage,
 					limit: perPage,
 					search: debouncedSearch.trim() || undefined,
-					key_type: (keyTypeFilter as TApiKeyType) || undefined,
 					status: (statusFilter as TApiKeyRequestStatus) || undefined,
 					start_date: isDateRangeValid ? startDate : undefined,
 					end_date: isDateRangeValid ? endDate : undefined,
@@ -236,7 +233,6 @@ export const ApiKeyRequestListPage: FC = () => {
 			debouncedSearch,
 			endDate,
 			isLoadingPermissions,
-			keyTypeFilter,
 			perPage,
 			startDate,
 			statusFilter,
@@ -333,7 +329,6 @@ export const ApiKeyRequestListPage: FC = () => {
 	// RESET FILTERS HANDLER
 	const handleResetFilters = () => {
 		setSearchTerm('');
-		setKeyTypeFilter('');
 		setStatusFilter('');
 		setStartDate('');
 		setEndDate('');
@@ -341,7 +336,7 @@ export const ApiKeyRequestListPage: FC = () => {
 	};
 
 	// OPEN CREATE MODAL
-	const handleOpenCreate = (type: TApiKeyType = 'test') => {
+	const handleOpenCreate = (type: TApiKeyType = 'live') => {
 		setCreateDefaultType(type);
 		setIsCreateModalOpen(true);
 	};
@@ -567,7 +562,7 @@ export const ApiKeyRequestListPage: FC = () => {
 						{ text: 'API Key Requests' },
 					]}
 					permissionKey={hasReadPermission ? PERMISSION_KEYS.API_REQUEST : undefined}
-					onAddNew={hasCreatePermission ? () => handleOpenCreate('test') : undefined}
+					onAddNew={hasCreatePermission ? () => handleOpenCreate('live') : undefined}
 					addNewText='Request API Key'
 					addNewIcon='VpnKey'
 					showFilterButton
@@ -598,25 +593,6 @@ export const ApiKeyRequestListPage: FC = () => {
 										</button>
 									)}
 								</div>
-							</div>
-
-							{/* KEY TYPE FILTER */}
-							<div style={{ width: '160px' }}>
-								<label htmlFor='apiKeyRequestTypeFilter' className='filter-field-label d-block'>
-									Environment
-								</label>
-								<select
-									id='apiKeyRequestTypeFilter'
-									className='form-select'
-									value={keyTypeFilter}
-									onChange={(e) => {
-										setKeyTypeFilter(e.target.value);
-										setCurrentPage(1);
-									}}>
-									<option value=''>All Types</option>
-									<option value='test'>Test (Sandbox)</option>
-									<option value='live'>Live (Production)</option>
-								</select>
 							</div>
 
 							{/* STATUS FILTER */}

@@ -251,3 +251,126 @@
 		}
 	}
 }
+
+// CHARGES FORM SECTION STYLING
+.charges-table-wrapper {
+	border-color: #e2e8f0;
+	background: #fdfdfd;
+
+	.charges-table-header {
+		background: #f8fafc;
+		border-bottom: 1px solid #e2e8f0;
+	}
+
+	.charge-row-item {
+		background: #ffffff;
+		border-color: #e2e8f0;
+		transition: all 0.2s ease;
+
+		&:hover {
+			border-color: #cbd5e1;
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+		}
+	}
+}
+
+// CHARGES VIEW MODAL GRID
+.charges-view-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 0.75rem;
+
+	.charge-view-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 0.875rem;
+		background: #ffffff;
+		border: 1px solid #e2e8f0;
+		border-radius: 10px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+		transition: all 0.2s ease;
+
+		&:hover {
+			border-color: #cbd5e1;
+			box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+			transform: translateY(-1px);
+		}
+
+		.charge-view-left {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+
+			.charge-view-icon-badge {
+				width: 38px;
+				height: 38px;
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+
+				&.is-flat {
+					background: #ecfdf5;
+					color: #059669;
+				}
+
+				&.is-pct {
+					background: #eff6ff;
+					color: #2563eb;
+				}
+			}
+
+			.charge-view-meta {
+				display: flex;
+				flex-direction: column;
+
+				.charge-name {
+					font-weight: 600;
+					font-size: 0.875rem;
+					color: #1e293b;
+					line-height: 1.2;
+				}
+
+				.charge-type-tag {
+					font-size: 0.7rem;
+					font-weight: 500;
+					margin-top: 2px;
+
+					&.type-flat {
+						color: #059669;
+					}
+
+					&.type-pct {
+						color: #2563eb;
+					}
+				}
+			}
+		}
+
+		.charge-view-right {
+			.charge-amount {
+				display: inline-block;
+				font-size: 0.95rem;
+				font-weight: 700;
+				color: #0f172a;
+				background: #f8fafc;
+				padding: 3px 8px;
+				border-radius: 6px;
+				border: 1px solid #e2e8f0;
+			}
+		}
+	}
+}
+
+// TABLE GATEWAY CHARGES CELL
+.gateway-charges-pill-group {
+	transition: opacity 0.15s ease;
+
+	&:hover {
+		opacity: 0.85;
+	}
+}
+
+

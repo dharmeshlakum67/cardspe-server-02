@@ -8,6 +8,7 @@ import { StatusToggle } from '../../../../components/common/StatusToggle';
 import { ImagePreviewModal } from '../../../../components/common/ImagePreviewModal';
 import { DateRangePicker } from '../../../../components/common/DateRangePicker';
 import Icon from '../../../../components/icon/Icon';
+import Tooltips from '../../../../components/bootstrap/Tooltips';
 import showNotification from '../../../../components/extras/showNotification';
 import usePermission from '../../../../hooks/usePermission';
 import useDebounce from '../../../../hooks/useDebounce';
@@ -17,6 +18,7 @@ import { getImageUrl } from '../../../../helpers/helpers';
 import {
 	IPaymentGateway,
 	TPaymentGatewayStatus,
+	parseGatewayCharges,
 } from './type/payment-gateway-type';
 import paymentGatewayService from './service/paymentGatewayService';
 import PaymentGatewayModal from './components/PaymentGatewayModal';
@@ -223,7 +225,7 @@ export const PaymentGatewayListPage: FC = () => {
 			{
 				key: 'gateway',
 				header: 'Payment Gateway',
-				minWidth: '220px',
+				minWidth: '200px',
 				render: (item) => {
 					const iconUrl = item.icon ? getImageUrl(item.icon) : '';
 					return (
@@ -238,7 +240,26 @@ export const PaymentGatewayListPage: FC = () => {
 									}
 								}}>
 								{iconUrl ? (
-									<img src={iconUrl} alt={item.name} />
+									<img
+										src={iconUrl}
+										alt={item.name}
+										onError={(e) => {
+											(e.target as HTMLElement).style.display = 'none';
+											const parent = (e.target as HTMLElement).parentElement;
+											if (
+												parent &&
+												!parent.querySelector('.gateway-fallback-text') &&
+												!parent.querySelector('.gateway-placeholder-icon')
+											) {
+												const fallback = document.createElement('span');
+												fallback.className = 'gateway-fallback-text font-bold text-primary';
+												fallback.style.fontSize = '0.85rem';
+												fallback.style.fontWeight = '700';
+												fallback.innerText = (item.name || 'PG').substring(0, 2).toUpperCase();
+												parent.appendChild(fallback);
+											}
+										}}
+									/>
 								) : (
 									<Icon icon='AccountBalanceWallet' size='md' className='gateway-placeholder-icon' />
 								)}
@@ -252,17 +273,112 @@ export const PaymentGatewayListPage: FC = () => {
 				},
 			},
 			{
+				key: 'charges',
+				header: 'Gateway Charges',
+				minWidth: '220px',
+				render: (item) => {
+					const chargesList = parseGatewayCharges(item.charges);
+					if (!chargesList || chargesList.length === 0) {
+						return <span className='text-muted small fst-italic'>None configured</span>;
+					}
+
+					const chargesTooltipContent = (
+						<div className='p-2 text-start' style={{ minWidth: '190px' }}>
+							<div className='d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-50 pb-1 mb-2'>
+								<span className='fw-bold text-white' style={{ fontSize: '0.8rem' }}>
+									Gateway Charges
+								</span>
+								<span
+									className='badge bg-light text-dark'
+									style={{ fontSize: '0.675rem', fontWeight: 600 }}>
+									{chargesList.length} rules
+								</span>
+							</div>
+							<div className='d-flex flex-column gap-1'>
+								{chargesList.map((charge) => {
+									const isFlat = charge.type === 'FLAT';
+									const formattedVal = isFlat
+										? `₹${Number(charge.value).toFixed(2)}`
+										: `${Number(charge.value).toFixed(2)}%`;
+									return (
+										<div
+											key={`tooltip_charge_${charge.name}_${charge.type}`}
+											className='d-flex justify-content-between align-items-center py-0.5'
+											style={{ fontSize: '0.775rem' }}>
+											<span className='text-white-50 fw-semibold'>{charge.name}</span>
+											<span className='fw-bold text-white font-monospace'>
+												{formattedVal}
+												<span
+													className='text-white-50 ms-1'
+													style={{ fontSize: '0.675rem' }}>
+													({isFlat ? 'Flat' : 'Pct'})
+												</span>
+											</span>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					);
+
+					return (
+						<Tooltips title={chargesTooltipContent} placement='top'>
+							<div
+								className='gateway-charges-pill-group d-inline-flex align-items-center gap-2'
+								style={{ cursor: 'pointer' }}>
+								{chargesList.slice(0, 2).map((charge) => {
+									const isFlat = charge.type === 'FLAT';
+									const formattedVal = isFlat ? `₹${charge.value}` : `${charge.value}%`;
+									return (
+										<span
+											key={`pill_charge_${charge.name}_${charge.type}`}
+											className='badge bg-light text-dark border d-inline-flex align-items-center gap-1.5 shadow-sm'
+											style={{
+												fontSize: '0.75rem',
+												fontWeight: 500,
+												padding: '4px 10px',
+												borderRadius: '6px',
+											}}>
+											<span className='fw-bold text-primary'>{charge.name}:</span>
+											<span>{formattedVal}</span>
+										</span>
+									);
+								})}
+								{chargesList.length > 2 && (
+									<span
+										className='badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 d-inline-flex align-items-center'
+										style={{
+											fontSize: '0.75rem',
+											fontWeight: 600,
+											padding: '4px 10px',
+											borderRadius: '6px',
+										}}>
+										+{chargesList.length - 2} more
+									</span>
+								)}
+							</div>
+						</Tooltips>
+					);
+				},
+			},
+			{
 				key: 'description',
 				header: 'Description',
-				minWidth: '250px',
-				render: (item) => (
-					<span
-						className='text-muted small text-truncate d-inline-block'
-						style={{ maxWidth: '300px' }}
-						title={item.description || '-'}>
-						{item.description || '-'}
-					</span>
-				),
+				minWidth: '220px',
+				render: (item) => {
+					if (!item.description) {
+						return <span className='text-muted small'>-</span>;
+					}
+					return (
+						<Tooltips title={item.description} placement='top'>
+							<span
+								className='text-muted small text-truncate d-inline-block'
+								style={{ maxWidth: '260px', cursor: 'pointer' }}>
+								{item.description}
+							</span>
+						</Tooltips>
+					);
+				},
 			},
 			{
 				key: 'status',
