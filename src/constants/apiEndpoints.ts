@@ -474,6 +474,16 @@ export const SETTING_ENDPOINTS = {
 		method: HTTP_METHODS.POST,
 		requiresAuth: true,
 	},
+	GET_THIRD_PARTY_SERVICE: {
+		url: '/api/setting/get-third-party-service',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	ACTIVE_THIRD_PARTY_SERVICE: {
+		url: '/api/setting/active-third-party-service',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 } as const;
 
 // PAYMENT GATEWAY ENDPOINTS

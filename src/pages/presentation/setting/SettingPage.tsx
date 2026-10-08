@@ -1,6 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../layout/Page/Page';
@@ -13,6 +13,7 @@ import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import ServiceConfigurationModal from './components/ServiceConfigurationModal';
 import GeneralSettingModal from './components/GeneralSettingModal';
+import BbpsServiceModal from './components/BbpsServiceModal';
 import './css/SettingPage.scss';
 
 export interface ISettingItem {
@@ -25,50 +26,61 @@ export interface ISettingItem {
 	badge?: string;
 }
 
-const SETTING_MODULES: ISettingItem[] = [
-	{
-		id: 'general',
-		title: 'General',
-		description: 'Basic system settings like company details, timezone, date format and more.',
-		icon: 'Settings',
-		iconBg: '#eff6ff',
-		iconColor: '#2563eb',
-	},
-	{
-		id: 'service-configuration',
-		title: 'Service Configuration',
-		description: 'Configure service availability, charges, limits, and service-specific settings.',
-		icon: 'SlidersHorizontal',
-		iconBg: '#f0fdf4',
-		iconColor: '#16a34a',
-	},
-	{
-		id: 'payment-gateway',
-		title: 'Payment Gateway',
-		description: 'Manage and configure payment gateways, credentials, statuses, and icons.',
-		icon: 'AccountBalanceWallet',
-		iconBg: '#fdf2f8',
-		iconColor: '#db2777',
-	},
-];
-
 export const SettingPage: FC = () => {
 	const navigate = useNavigate();
-	const { canRead, isLoadingPermissions } = usePermission();
+	const { canRead, hasPermission, permissionsMap, isLoadingPermissions } = usePermission();
 
-	// SUB-PERMISSION CHECKS
+	// HELPER TO GET DYNAMIC TITLE FROM PERMISSIONS
+	const getModuleTitle = useCallback(
+		(permKey: string, defaultTitle: string): string => {
+			if (!permissionsMap) return defaultTitle;
+			const normKey = permKey.toLowerCase().trim();
+			const perm =
+				permissionsMap[normKey] ||
+				permissionsMap[normKey.replace(/-/g, '_')] ||
+				permissionsMap[normKey.replace(/_/g, '-')];
+			return perm?.name || defaultTitle;
+		},
+		[permissionsMap],
+	);
+
+	// SUB-PERMISSION CHECKS (VIEW / READ)
 	const hasBasicSettingAccess =
-		canRead(PERMISSION_KEYS.BASIC_SETTING) || canRead('basic_setting');
+		canRead(PERMISSION_KEYS.BASIC_SETTING) ||
+		canRead('basic_setting') ||
+		hasPermission('basic_setting', 'view') ||
+		hasPermission('basic_setting', 'read');
+
 	const hasServiceConfigAccess =
-		canRead(PERMISSION_KEYS.SERVICE_CONFIGURATION) || canRead('service_configuration');
+		canRead(PERMISSION_KEYS.SERVICE_CONFIGURATION) ||
+		canRead('service_configuration') ||
+		hasPermission('service_configuration', 'view') ||
+		hasPermission('service_configuration', 'read');
+
 	const hasPaymentGatewayAccess =
-		canRead(PERMISSION_KEYS.PAYMENT_GATEWAY) || canRead('payment_gateway');
+		canRead(PERMISSION_KEYS.PAYMENT_GATEWAY) ||
+		canRead('payment_gateway') ||
+		hasPermission('payment_gateway', 'view') ||
+		hasPermission('payment_gateway', 'read');
+
+	const hasBbpsServiceAccess =
+		canRead(PERMISSION_KEYS.MANAGE_BBPS_SERVICE) ||
+		canRead('manage_bbps_service') ||
+		hasPermission(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'view') ||
+		hasPermission('manage_bbps_service', 'view') ||
+		hasPermission(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'read') ||
+		hasPermission('manage_bbps_service', 'read') ||
+		hasPermission(PERMISSION_KEYS.BASIC_SETTING, 'manage_bbps_service') ||
+		hasPermission('basic_setting', 'manage_bbps_service') ||
+		hasPermission(PERMISSION_KEYS.SETTING, 'manage_bbps_service') ||
+		hasPermission('setting', 'manage_bbps_service');
 
 	// OVERALL SETTINGS ACCESS (IF USER HAS ACCESS TO ANY SUB-MODULE OR PARENT SETTING)
 	const hasAnySettingAccess =
 		hasBasicSettingAccess ||
 		hasServiceConfigAccess ||
 		hasPaymentGatewayAccess ||
+		hasBbpsServiceAccess ||
 		canRead(PERMISSION_KEYS.SETTING) ||
 		canRead('setting');
 
@@ -76,16 +88,59 @@ export const SettingPage: FC = () => {
 	const [activeSettingId, setActiveSettingId] = useState<string | null>(null);
 	const [isServiceConfigModalOpen, setIsServiceConfigModalOpen] = useState<boolean>(false);
 	const [isGeneralSettingModalOpen, setIsGeneralSettingModalOpen] = useState<boolean>(false);
+	const [isBbpsServiceModalOpen, setIsBbpsServiceModalOpen] = useState<boolean>(false);
 
-	// FILTER SETTING MODULES BASED ON PERMISSION
+	// BUILD DYNAMIC MODULES BASED ON PERMISSION NAMES & ACCESS
 	const availableModules = useMemo(() => {
-		return SETTING_MODULES.filter((item) => {
+		const modules: ISettingItem[] = [
+			{
+				id: 'general',
+				title: getModuleTitle(PERMISSION_KEYS.BASIC_SETTING, 'General'),
+				description: 'Basic system settings like company details, timezone, date format and more.',
+				icon: 'Settings',
+				iconBg: '#eff6ff',
+				iconColor: '#2563eb',
+			},
+			{
+				id: 'service-configuration',
+				title: getModuleTitle(PERMISSION_KEYS.SERVICE_CONFIGURATION, 'Service Configuration'),
+				description: 'Configure service availability, charges, limits, and service-specific settings.',
+				icon: 'SlidersHorizontal',
+				iconBg: '#f0fdf4',
+				iconColor: '#16a34a',
+			},
+			{
+				id: 'payment-gateway',
+				title: getModuleTitle(PERMISSION_KEYS.PAYMENT_GATEWAY, 'Payment Gateway'),
+				description: 'Manage and configure payment gateways, credentials, statuses, and icons.',
+				icon: 'AccountBalanceWallet',
+				iconBg: '#fdf2f8',
+				iconColor: '#db2777',
+			},
+			{
+				id: 'bbps-service',
+				title: getModuleTitle(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'BBPS Service Management'),
+				description: 'Manage which BBPS services are available through third-party providers.',
+				icon: 'CloudDone',
+				iconBg: '#fef3c7',
+				iconColor: '#d97706',
+			},
+		];
+
+		return modules.filter((item) => {
 			if (item.id === 'general') return hasBasicSettingAccess;
 			if (item.id === 'service-configuration') return hasServiceConfigAccess;
 			if (item.id === 'payment-gateway') return hasPaymentGatewayAccess;
+			if (item.id === 'bbps-service') return hasBbpsServiceAccess;
 			return false;
 		});
-	}, [hasBasicSettingAccess, hasServiceConfigAccess, hasPaymentGatewayAccess]);
+	}, [
+		getModuleTitle,
+		hasBasicSettingAccess,
+		hasServiceConfigAccess,
+		hasPaymentGatewayAccess,
+		hasBbpsServiceAccess,
+	]);
 
 	// FILTER SETTINGS BASED ON SEARCH QUERY
 	const filteredSettings = useMemo(() => {
@@ -106,6 +161,8 @@ export const SettingPage: FC = () => {
 			setIsGeneralSettingModalOpen(true);
 		} else if (item.id === 'payment-gateway') {
 			navigate(`/${PAGE_ROUTES.SETTING_PAYMENT_GATEWAY}`);
+		} else if (item.id === 'bbps-service') {
+			setIsBbpsServiceModalOpen(true);
 		}
 	};
 
@@ -253,6 +310,12 @@ export const SettingPage: FC = () => {
 				<ServiceConfigurationModal
 					isOpen={isServiceConfigModalOpen}
 					setIsOpen={setIsServiceConfigModalOpen}
+				/>
+
+				{/* BBPS SERVICE MANAGEMENT MODAL */}
+				<BbpsServiceModal
+					isOpen={isBbpsServiceModalOpen}
+					setIsOpen={setIsBbpsServiceModalOpen}
 				/>
 			</Page>
 		</PageWrapper>

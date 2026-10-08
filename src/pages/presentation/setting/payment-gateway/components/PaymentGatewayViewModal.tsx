@@ -115,6 +115,28 @@ export const PaymentGatewayViewModal: FC<IPaymentGatewayViewModalProps> = ({
 						</div>
 
 						<div className='detail-item'>
+							<span className='detail-label'>Min Amount</span>
+							<span className='detail-value font-monospace'>
+								{gateway.min_amount !== null &&
+								gateway.min_amount !== undefined &&
+								gateway.min_amount !== ('' as any)
+									? `₹${Number(gateway.min_amount).toLocaleString('en-IN')}`
+									: 'No minimum limit'}
+							</span>
+						</div>
+
+						<div className='detail-item'>
+							<span className='detail-label'>Max Amount</span>
+							<span className='detail-value font-monospace'>
+								{gateway.max_amount !== null &&
+								gateway.max_amount !== undefined &&
+								gateway.max_amount !== ('' as any)
+									? `₹${Number(gateway.max_amount).toLocaleString('en-IN')}`
+									: 'No maximum limit'}
+							</span>
+						</div>
+
+						<div className='detail-item'>
 							<span className='detail-label'>Description</span>
 							<span className='detail-value text-muted font-normal'>
 								{gateway.description || 'No description provided.'}

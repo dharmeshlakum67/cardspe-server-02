@@ -6,6 +6,7 @@ import {
 	IUpdateServiceConfigApiResponse,
 	ICompanySettingApiResponse,
 	IUpdateCompanySettingPayload,
+	IThirdPartyServiceApiResponse,
 } from '../type/setting-type';
 
 export const settingService = {
@@ -40,6 +41,23 @@ export const settingService = {
 			{
 				method: 'POST',
 				body: payload,
+			},
+		);
+	},
+
+	// GET ACTIVE THIRD PARTY / BBPS SERVICES
+	getThirdPartyService: async (): Promise<IThirdPartyServiceApiResponse> => {
+		return apiClient<IThirdPartyServiceApiResponse>(SETTING_ENDPOINTS.GET_THIRD_PARTY_SERVICE);
+	},
+
+	// UPDATE ACTIVE THIRD PARTY / BBPS SERVICE
+	updateThirdPartyService: async (
+		thirdPartyService: string,
+	): Promise<ICompanySettingApiResponse> => {
+		return apiClient<ICompanySettingApiResponse>(
+			SETTING_ENDPOINTS.UPDATE_COMPANY_SETTING,
+			{
+				body: { third_party_service: thirdPartyService },
 			},
 		);
 	},

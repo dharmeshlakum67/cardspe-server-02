@@ -43,6 +43,7 @@ export interface ICompanySettingData {
 	support_email_address?: string;
 	address?: string;
 	about_company?: string;
+	third_party_service?: string;
 	created_at?: string;
 	updated_at?: string;
 }
@@ -62,5 +63,25 @@ export interface IUpdateCompanySettingPayload {
 	support_email_address?: string;
 	address?: string;
 	about_company?: string;
+	third_party_service?: string;
 }
 
+// BBPS / THIRD PARTY SERVICE TYPES
+export interface IThirdPartyServiceOption {
+	label: string;
+	value: string;
+	description?: string;
+	is_active?: boolean;
+}
+
+export interface IThirdPartyServiceData {
+	active_third_party_service: string;
+	services: IThirdPartyServiceOption[];
+}
+
+export interface IThirdPartyServiceApiResponse {
+	status?: string | boolean;
+	success?: boolean;
+	message?: string;
+	data: IThirdPartyServiceData;
+}

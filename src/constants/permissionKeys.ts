@@ -25,6 +25,7 @@ export const PERMISSION_KEYS = {
 	BASIC_SETTING: 'basic_setting',
 	SERVICE_CONFIGURATION: 'service_configuration',
 	PAYMENT_GATEWAY: 'payment_gateway',
+	MANAGE_BBPS_SERVICE: 'manage_bbps_service',
 	MANAGE_SERVICE: 'manage_service',
 	DEVELOPER: 'developer',
 	API_REQUEST: 'api_request',

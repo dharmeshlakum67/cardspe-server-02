@@ -27,6 +27,8 @@ export interface IPaymentGateway {
 	status: TPaymentGatewayStatus;
 	description?: string | null;
 	charges?: IPaymentGatewayCharge[] | string | null;
+	min_amount?: number | null;
+	max_amount?: number | null;
 	created_at: string;
 	updated_at: string;
 	deleted_at?: string | null;
@@ -50,6 +52,8 @@ export interface IPaymentGatewayPayload {
 	status: TPaymentGatewayStatus;
 	description?: string;
 	charges?: IPaymentGatewayCharge[];
+	min_amount?: number | null;
+	max_amount?: number | null;
 	icon?: File | null;
 	is_delete_icon?: boolean;
 }

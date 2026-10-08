@@ -362,6 +362,49 @@ export const PaymentGatewayListPage: FC = () => {
 				},
 			},
 			{
+				key: 'limits',
+				header: 'Transaction Limits',
+				minWidth: '180px',
+				render: (item) => {
+					const hasMin =
+						item.min_amount !== null &&
+						item.min_amount !== undefined &&
+						item.min_amount !== ('' as any);
+					const hasMax =
+						item.max_amount !== null &&
+						item.max_amount !== undefined &&
+						item.max_amount !== ('' as any);
+
+					if (!hasMin && !hasMax) {
+						return <span className='text-muted small fst-italic'>No limit</span>;
+					}
+
+					const formattedMin = hasMin
+						? `₹${Number(item.min_amount).toLocaleString('en-IN')}`
+						: '₹0';
+					const formattedMax = hasMax
+						? `₹${Number(item.max_amount).toLocaleString('en-IN')}`
+						: 'No Max';
+
+					let limitsText = '';
+					if (hasMin && hasMax) {
+						limitsText = `${formattedMin} - ${formattedMax}`;
+					} else if (hasMin) {
+						limitsText = `Min: ${formattedMin}`;
+					} else {
+						limitsText = `Max: ${formattedMax}`;
+					}
+
+					return (
+						<div className='d-flex flex-column text-center'>
+							<span className='fw-medium text-dark small font-monospace'>
+								{limitsText}
+							</span>
+						</div>
+					);
+				},
+			},
+			{
 				key: 'description',
 				header: 'Description',
 				minWidth: '220px',

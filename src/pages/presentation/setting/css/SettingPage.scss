@@ -204,3 +204,106 @@
 		text-align: center;
 	}
 }
+
+// BBPS PROVIDER SQUARE SELECTION CARDS
+.bbps-provider-card {
+	position: relative;
+	background: #ffffff;
+	border: 2px solid #e2e8f0;
+	border-radius: 16px;
+	padding: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	height: 100%;
+	min-height: 185px;
+	transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+	user-select: none;
+
+	&.is-interactive {
+		cursor: pointer;
+
+		&:hover {
+			border-color: #cbd5e1;
+			transform: translateY(-3px);
+			box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.09);
+		}
+	}
+
+	&.is-selected {
+		border-color: #5c56b6;
+		background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+		box-shadow: 0 8px 24px -4px rgba(92, 86, 182, 0.16);
+
+		.bbps-provider-title {
+			color: #5c56b6;
+		}
+	}
+
+	.bbps-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.15rem;
+	}
+
+	.bbps-provider-icon {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.bbps-radio-indicator {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		border: 2px solid #cbd5e1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s ease;
+		background-color: #ffffff;
+
+		&.is-active {
+			border-color: #5c56b6;
+			background-color: #5c56b6;
+
+			.bbps-radio-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background-color: #ffffff;
+			}
+		}
+	}
+
+	.bbps-provider-title {
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: #1e293b;
+		margin-bottom: 0.35rem;
+		transition: color 0.2s ease;
+	}
+
+	.bbps-provider-desc {
+		font-size: 0.825rem;
+		color: #64748b;
+		line-height: 1.45;
+		margin-bottom: 0.85rem;
+	}
+
+	.bbps-card-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-top: auto;
+		padding-top: 0.75rem;
+		border-top: 1px dashed #f1f5f9;
+	}
+}

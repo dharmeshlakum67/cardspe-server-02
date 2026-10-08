@@ -60,6 +60,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 	const [name, setName] = useState<string>('');
 	const [status, setStatus] = useState<TPaymentGatewayStatus>('active');
 	const [description, setDescription] = useState<string>('');
+	const [minAmount, setMinAmount] = useState<string | number>('');
+	const [maxAmount, setMaxAmount] = useState<string | number>('');
 
 	// CHARGES STATE & CONSTANT DROPDOWN OPTIONS
 	const [chargesList, setChargesList] = useState<IChargeFormItem[]>([]);
@@ -119,6 +121,16 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 				setName(gatewayData.name || '');
 				setStatus(gatewayData.status || 'active');
 				setDescription(gatewayData.description || '');
+				setMinAmount(
+					gatewayData.min_amount !== null && gatewayData.min_amount !== undefined
+						? gatewayData.min_amount
+						: '',
+				);
+				setMaxAmount(
+					gatewayData.max_amount !== null && gatewayData.max_amount !== undefined
+						? gatewayData.max_amount
+						: '',
+				);
 				const existingIcon = gatewayData.icon ? getImageUrl(gatewayData.icon) : '';
 				setImagePreview(existingIcon);
 				setSelectedFile(null);
@@ -138,6 +150,8 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 				setName('');
 				setStatus('active');
 				setDescription('');
+				setMinAmount('');
+				setMaxAmount('');
 				setImagePreview('');
 				setSelectedFile(null);
 				setIsDeleteIcon(false);
@@ -231,6 +245,36 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 			newErrors.name = 'Gateway name must be at least 2 characters';
 		}
 
+		// Validate transaction limits (min_amount & max_amount)
+		if (minAmount !== '' && minAmount !== null && minAmount !== undefined) {
+			const numMin = Number(minAmount);
+			if (isNaN(numMin) || numMin < 0) {
+				newErrors.min_amount = 'Minimum amount must be a valid non-negative number';
+			}
+		}
+
+		if (maxAmount !== '' && maxAmount !== null && maxAmount !== undefined) {
+			const numMax = Number(maxAmount);
+			if (isNaN(numMax) || numMax < 0) {
+				newErrors.max_amount = 'Maximum amount must be a valid non-negative number';
+			}
+		}
+
+		if (
+			minAmount !== '' &&
+			minAmount !== null &&
+			minAmount !== undefined &&
+			maxAmount !== '' &&
+			maxAmount !== null &&
+			maxAmount !== undefined &&
+			!isNaN(Number(minAmount)) &&
+			!isNaN(Number(maxAmount)) &&
+			Number(maxAmount) > 0 &&
+			Number(minAmount) > Number(maxAmount)
+		) {
+			newErrors.max_amount = 'Maximum amount cannot be less than Minimum amount';
+		}
+
 		// Validate charges and duplicate charge names
 		const selectedNames = new Set<string>();
 		for (let i = 0; i < chargesList.length; i += 1) {
@@ -280,6 +324,19 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 			formData.append('status', status);
 			if (description.trim()) {
 				formData.append('description', description.trim());
+			}
+
+			// Min and Max transaction limits
+			if (minAmount !== '' && minAmount !== null && minAmount !== undefined) {
+				formData.append('min_amount', String(minAmount));
+			} else if (isEditMode) {
+				formData.append('min_amount', '');
+			}
+
+			if (maxAmount !== '' && maxAmount !== null && maxAmount !== undefined) {
+				formData.append('max_amount', String(maxAmount));
+			} else if (isEditMode) {
+				formData.append('max_amount', '');
 			}
 
 			// Format charges payload
@@ -389,6 +446,59 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 								<option value='active'>Active</option>
 								<option value='inactive'>Inactive</option>
 							</select>
+						</div>
+
+						{/* TRANSACTION LIMITS (MIN & MAX AMOUNT) */}
+						<div className='col-12 col-md-6'>
+							<label htmlFor='gatewayMinAmountInput' className='form-label fw-semibold small mb-1'>
+								Min Transaction Amount (₹) <span className='text-muted font-normal'>(Optional)</span>
+							</label>
+							<input
+								id='gatewayMinAmountInput'
+								type='number'
+								min='0'
+								step='any'
+								className={`form-control ${errors.min_amount ? 'is-invalid' : ''}`}
+								placeholder='e.g. 100'
+								value={minAmount}
+								onChange={(e) => {
+									setMinAmount(e.target.value);
+									if (errors.min_amount || errors.max_amount) {
+										setErrors((prev) => ({ ...prev, min_amount: '', max_amount: '' }));
+									}
+								}}
+								style={inputStyle}
+								disabled={isSubmitting}
+							/>
+							{errors.min_amount && (
+								<div className='invalid-feedback d-block mt-1'>{errors.min_amount}</div>
+							)}
+						</div>
+
+						<div className='col-12 col-md-6'>
+							<label htmlFor='gatewayMaxAmountInput' className='form-label fw-semibold small mb-1'>
+								Max Transaction Amount (₹) <span className='text-muted font-normal'>(Optional)</span>
+							</label>
+							<input
+								id='gatewayMaxAmountInput'
+								type='number'
+								min='0'
+								step='any'
+								className={`form-control ${errors.max_amount ? 'is-invalid' : ''}`}
+								placeholder='e.g. 50000'
+								value={maxAmount}
+								onChange={(e) => {
+									setMaxAmount(e.target.value);
+									if (errors.max_amount) {
+										setErrors((prev) => ({ ...prev, max_amount: '' }));
+									}
+								}}
+								style={inputStyle}
+								disabled={isSubmitting}
+							/>
+							{errors.max_amount && (
+								<div className='invalid-feedback d-block mt-1'>{errors.max_amount}</div>
+							)}
 						</div>
 
 						{/* DESCRIPTION */}

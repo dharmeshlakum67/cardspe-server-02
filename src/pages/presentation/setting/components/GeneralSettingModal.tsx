@@ -26,11 +26,21 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 	isOpen,
 	setIsOpen,
 }) => {
-	const { canUpdate } = usePermission();
+	const { canUpdate, hasPermission, permissionsMap } = usePermission();
 	const isUpdateAllowed =
 		canUpdate(PERMISSION_KEYS.BASIC_SETTING) ||
 		canUpdate('basic_setting') ||
-		canUpdate(PERMISSION_KEYS.SETTING);
+		hasPermission(PERMISSION_KEYS.BASIC_SETTING, 'edit') ||
+		hasPermission('basic_setting', 'edit') ||
+		hasPermission(PERMISSION_KEYS.BASIC_SETTING, 'update') ||
+		hasPermission('basic_setting', 'update') ||
+		canUpdate(PERMISSION_KEYS.SETTING) ||
+		canUpdate('setting');
+
+	const modalTitle =
+		permissionsMap?.basic_setting?.name ||
+		permissionsMap?.[PERMISSION_KEYS.BASIC_SETTING]?.name ||
+		'General Company Settings';
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -148,7 +158,7 @@ export const GeneralSettingModal: FC<IGeneralSettingModalProps> = ({
 				<ModalTitle id="general-setting-modal-title">
 					<div className="d-flex align-items-center gap-2">
 						<Icon icon="Settings" color="primary" />
-						<span className="fw-bold">General Company Settings</span>
+						<span className="fw-bold">{modalTitle}</span>
 					</div>
 				</ModalTitle>
 			</ModalHeader>

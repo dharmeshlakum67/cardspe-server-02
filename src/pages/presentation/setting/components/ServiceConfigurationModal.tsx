@@ -43,11 +43,21 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 	isOpen,
 	setIsOpen,
 }) => {
-	const { canUpdate } = usePermission();
+	const { canUpdate, hasPermission, permissionsMap } = usePermission();
 	const isUpdateAllowed =
 		canUpdate(PERMISSION_KEYS.SERVICE_CONFIGURATION) ||
 		canUpdate('service_configuration') ||
-		canUpdate(PERMISSION_KEYS.SETTING);
+		hasPermission(PERMISSION_KEYS.SERVICE_CONFIGURATION, 'edit') ||
+		hasPermission('service_configuration', 'edit') ||
+		hasPermission(PERMISSION_KEYS.SERVICE_CONFIGURATION, 'update') ||
+		hasPermission('service_configuration', 'update') ||
+		canUpdate(PERMISSION_KEYS.SETTING) ||
+		canUpdate('setting');
+
+	const modalTitle =
+		permissionsMap?.service_configuration?.name ||
+		permissionsMap?.[PERMISSION_KEYS.SERVICE_CONFIGURATION]?.name ||
+		'Service Configuration';
 
 	const [configs, setConfigs] = useState<IServiceConfigurationItem[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -185,7 +195,7 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 					</div>
 					<div>
 						<ModalTitle id='service-config-modal-title' className='h5 fw-bold mb-0 text-dark'>
-							Service Configuration
+							{modalTitle}
 						</ModalTitle>
 						<small className='text-muted'>
 							Manage service availability, pricing, and charge rules

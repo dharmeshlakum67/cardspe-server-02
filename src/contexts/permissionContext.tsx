@@ -246,6 +246,16 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				);
 			}
 
+			if (actNorm === 'view' || actNorm === 'read') {
+				return Boolean(perm.read || perm.view || perm[action] || perm[actNorm]);
+			}
+
+			if (actNorm === 'edit' || actNorm === 'update' || actNorm === 'write') {
+				return Boolean(
+					perm.update || perm.edit || perm.write || perm[action] || perm[actNorm],
+				);
+			}
+
 			return Boolean(perm[action] || perm[actNorm]);
 		},
 		[permissionsMap],

@@ -16,6 +16,7 @@ import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import { encryptId } from '../../../../helpers/routeEncryption';
 import { formatDateTime } from '../../../../helpers/dateUtils';
+import { getImageUrl } from '../../../../helpers/helpers';
 import userService from './service/userService';
 import roleService from '../../role/service/roleService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
@@ -326,7 +327,7 @@ export const UserListPage: FC = () => {
 					{item.profile_picture ? (
 						<div className="user-avatar-wrapper">
 							<img
-								src={item.profile_picture}
+								src={getImageUrl(item.profile_picture)}
 								alt={item.name}
 								onError={(e) => {
 									(e.target as HTMLElement).style.display = 'none';

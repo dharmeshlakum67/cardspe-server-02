@@ -708,7 +708,7 @@ export const UserViewPage: FC = () => {
 							<div className="hero-avatar-wrapper">
 								{user.profile_picture ? (
 									<img
-										src={user.profile_picture}
+										src={getImageUrl(user.profile_picture)}
 										alt={user.name}
 										onError={(e) => {
 											(e.target as HTMLElement).style.display = 'none';

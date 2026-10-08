@@ -13,6 +13,7 @@ import usePermission from '../../../../hooks/usePermission';
 import useDebounce from '../../../../hooks/useDebounce';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { formatDateTime } from '../../../../helpers/dateUtils';
+import { getImageUrl } from '../../../../helpers/helpers';
 import blockHistoryService from './service/blockHistoryService';
 import roleService from '../../role/service/roleService';
 import { IBlockHistoryItem } from './type/block-history-type';
@@ -213,7 +214,13 @@ export const BlockHistoryListPage: FC = () => {
 					<div className="block-user-cell">
 						<div className="user-avatar">
 							{target.profile_picture ? (
-								<img src={target.profile_picture} alt={target.name} />
+								<img
+									src={getImageUrl(target.profile_picture)}
+									alt={target.name}
+									onError={(e) => {
+										(e.target as HTMLElement).style.display = 'none';
+									}}
+								/>
 							) : (
 								<span>{getInitials(target.name)}</span>
 							)}
@@ -292,7 +299,13 @@ export const BlockHistoryListPage: FC = () => {
 					<div className="block-user-cell">
 						<div className="user-avatar" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
 							{performer.profile_picture ? (
-								<img src={performer.profile_picture} alt={performer.name} />
+								<img
+									src={getImageUrl(performer.profile_picture)}
+									alt={performer.name}
+									onError={(e) => {
+										(e.target as HTMLElement).style.display = 'none';
+									}}
+								/>
 							) : (
 								<span>{getInitials(performer.name)}</span>
 							)}
