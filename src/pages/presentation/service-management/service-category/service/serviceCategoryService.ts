@@ -1,5 +1,5 @@
 import apiClient from '../../../../../services/apiClient';
-import { SERVICE_CATEGORY_ENDPOINTS } from '../../../../../constants/apiEndpoints';
+import { SERVICE_CATEGORY_ENDPOINTS, CONSTANT_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import {
 	IServiceCategoryListResponse,
 	IServiceCategorySingleResponse,
@@ -9,9 +9,69 @@ import {
 	UpdateServiceCategoryPayload,
 	IServiceCategory,
 	ServiceCategoryStatusType,
+	IServiceTransactionModeOption,
 } from '../type/service-category-type';
 
+const DEFAULT_TRANSACTION_MODES: IServiceTransactionModeOption[] = [
+	{
+		label: 'Custom',
+		value: 'CUSTOM',
+		description: 'Transactions require admin approval before processing.',
+	},
+	{
+		label: 'BBPS',
+		value: 'BBPS',
+		description: 'Transactions are processed directly through BBPS.',
+	},
+	{
+		label: 'Custom BBPS',
+		value: 'CUSTOM_BBPS',
+		description: 'Transactions require admin approval and are processed through BBPS.',
+	},
+];
+
+let transactionModeCache: Promise<IServiceTransactionModeOption[]> | null = null;
+
 export const serviceCategoryService = {
+	// GET TRANSACTION MODE CONSTANTS (CACHED)
+	getTransactionModeConstants: async (): Promise<IServiceTransactionModeOption[]> => {
+		if (transactionModeCache) {
+			return transactionModeCache;
+		}
+
+		transactionModeCache = (async (): Promise<IServiceTransactionModeOption[]> => {
+			try {
+				const res = await apiClient<{
+					status?: string;
+					success?: boolean;
+					data?: {
+						service_transaction_modes?: IServiceTransactionModeOption[];
+					} | IServiceTransactionModeOption[];
+				}>(CONSTANT_ENDPOINTS.GET_BY_TYPE('service_transaction_mode'));
+
+				if (res?.data) {
+					if (Array.isArray(res.data)) {
+						return res.data;
+					}
+					if (
+						typeof res.data === 'object' &&
+						Array.isArray(res.data.service_transaction_modes) &&
+						res.data.service_transaction_modes.length > 0
+					) {
+						return res.data.service_transaction_modes;
+					}
+				}
+				return DEFAULT_TRANSACTION_MODES;
+			} catch (err) {
+				console.error('Failed to fetch service transaction mode constants:', err);
+				transactionModeCache = null;
+				return DEFAULT_TRANSACTION_MODES;
+			}
+		})();
+
+		return transactionModeCache;
+	},
+
 	// GET ALL SERVICE CATEGORIES (PAGINATED WITH SEARCH & FILTERS)
 	getServiceCategories: async (
 		params?: ServiceCategoryQueryParams,
@@ -22,6 +82,7 @@ export const serviceCategoryService = {
 			if (params.limit !== undefined) apiParams.limit = params.limit;
 			if (params.search !== undefined && params.search !== '') apiParams.search = params.search;
 			if (params.status) apiParams.status = params.status;
+			if (params.transaction_mode) apiParams.transaction_mode = params.transaction_mode;
 			if (params.startDate || params.start_date)
 				apiParams.start_date = params.startDate || params.start_date;
 			if (params.endDate || params.end_date)

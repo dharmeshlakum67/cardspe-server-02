@@ -12,7 +12,12 @@ import Button from '../../../../components/bootstrap/Button';
 import Spinner from '../../../../components/bootstrap/Spinner';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
-import { IServiceCategory, ServiceCategoryStatusType } from './type/service-category-type';
+import {
+	IServiceCategory,
+	ServiceCategoryStatusType,
+	ServiceTransactionModeType,
+	IServiceTransactionModeOption,
+} from './type/service-category-type';
 import serviceCategoryService from './service/serviceCategoryService';
 import constantService, { IConstantOption } from '../../../../services/constantService';
 import { getImageUrl } from '../../../../helpers/helpers';
@@ -36,9 +41,11 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 }) => {
 	const isEdit = Boolean(categoryData);
 	const [name, setName] = useState<string>('');
+	const [transactionMode, setTransactionMode] = useState<ServiceTransactionModeType>('CUSTOM');
 	const [displayOrder, setDisplayOrder] = useState<string>('');
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string>('');
+	const [imageLoadFailed, setImageLoadFailed] = useState<boolean>(false);
 	const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 	const [status, setStatus] = useState<ServiceCategoryStatusType>('active');
 	const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
@@ -52,13 +59,40 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 		{ label: 'Inactive', value: 'inactive' },
 	]);
 
+	// DYNAMIC CONSTANTS (TRANSACTION MODE)
+	const [transactionModeOptions, setTransactionModeOptions] = useState<IServiceTransactionModeOption[]>([
+		{
+			label: 'Custom',
+			value: 'CUSTOM',
+			description: 'Transactions require admin approval before processing.',
+		},
+		{
+			label: 'BBPS',
+			value: 'BBPS',
+			description: 'Transactions are processed directly through BBPS.',
+		},
+		{
+			label: 'Custom BBPS',
+			value: 'CUSTOM_BBPS',
+			description: 'Transactions require admin approval and are processed through BBPS.',
+		},
+	]);
+
 	useEffect(() => {
 		let isMounted = true;
 		const loadConstants = async () => {
 			try {
-				const sOpts = await constantService.getStatusConstants();
-				if (isMounted && sOpts && sOpts.length > 0) {
-					setStatusOptions(sOpts);
+				const [sOpts, tmOpts] = await Promise.all([
+					constantService.getStatusConstants().catch(() => []),
+					serviceCategoryService.getTransactionModeConstants().catch(() => []),
+				]);
+				if (isMounted) {
+					if (sOpts && sOpts.length > 0) {
+						setStatusOptions(sOpts);
+					}
+					if (tmOpts && tmOpts.length > 0) {
+						setTransactionModeOptions(tmOpts);
+					}
 				}
 			} catch (err) {
 				// Keep default options
@@ -76,6 +110,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 		if (categoryData && isOpen) {
 			// Populate immediately from list row
 			setName(categoryData.name || '');
+			setTransactionMode(categoryData.transaction_mode || 'CUSTOM');
 			setDisplayOrder(
 				categoryData.display_order !== null && categoryData.display_order !== undefined
 					? String(categoryData.display_order)
@@ -83,6 +118,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 			);
 			setSelectedFile(null);
 			setIsDeleteIcon(false);
+			setImageLoadFailed(false);
 			const rawIcon = categoryData.icon || '';
 			setImagePreview(rawIcon ? getImageUrl(rawIcon) : '');
 			setStatus(categoryData.status || 'active');
@@ -97,6 +133,9 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 						const fresh = res?.data;
 						if (fresh) {
 							setName(fresh.name || '');
+							if (fresh.transaction_mode) {
+								setTransactionMode(fresh.transaction_mode);
+							}
 							setDisplayOrder(
 								fresh.display_order !== null && fresh.display_order !== undefined
 									? String(fresh.display_order)
@@ -118,10 +157,12 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 			}
 		} else if (isOpen) {
 			setName('');
+			setTransactionMode('CUSTOM');
 			setDisplayOrder('');
 			setSelectedFile(null);
 			setIsDeleteIcon(false);
 			setImagePreview('');
+			setImageLoadFailed(false);
 			setStatus('active');
 			setIsLoadingDetail(false);
 		}
@@ -149,6 +190,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 
 			setSelectedFile(file);
 			setIsDeleteIcon(false);
+			setImageLoadFailed(false);
 			const previewUrl = URL.createObjectURL(file);
 			setImagePreview(previewUrl);
 		}
@@ -158,6 +200,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 	const handleClearImage = () => {
 		setSelectedFile(null);
 		setImagePreview('');
+		setImageLoadFailed(false);
 		if (isEdit && categoryData?.icon) {
 			setIsDeleteIcon(true);
 		}
@@ -177,6 +220,7 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 
 		const formData = new FormData();
 		formData.append('name', name.trim());
+		formData.append('transaction_mode', transactionMode);
 		formData.append('status', status);
 
 		if (displayOrder.trim() !== '') {
@@ -192,287 +236,329 @@ export const ServiceCategoryModal: FC<IServiceCategoryModalProps> = ({
 		await onSubmit(formData);
 	};
 
+	const selectedModeObj = transactionModeOptions.find((opt) => opt.value === transactionMode);
+
 	return (
 		<>
 			<Modal isOpen={isOpen} setIsOpen={setIsOpen} isCentered size='lg'>
-			<ModalHeader setIsOpen={setIsOpen} className='border-bottom-0 pb-0 pt-4 px-4'>
-				<ModalTitle id='service-category-modal-title'>
-					<div className='d-flex align-items-center gap-3'>
-						<div
-							className='d-flex align-items-center justify-content-center rounded-3'
-							style={{
-								width: '44px',
-								height: '44px',
-								backgroundColor: '#e0f2fe',
-								color: '#0284c7',
-								flexShrink: 0,
-							}}>
-							<Icon icon={isEdit ? 'Edit' : 'Category'} size='lg' />
-						</div>
-						<div>
-							<div className='d-flex align-items-center gap-2'>
-								<h5 className='fw-bold mb-0 text-dark'>
-									{isEdit ? 'Edit Service Category' : 'Create Service Category'}
-								</h5>
-								{isLoadingDetail && <Spinner isSmall className='text-primary' />}
-							</div>
-							<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
-								{isEdit
-									? 'Update service category details and activation status.'
-									: 'Add a new service category to keep your services organized.'}
-							</span>
-						</div>
-					</div>
-				</ModalTitle>
-			</ModalHeader>
-			<form onSubmit={handleSubmit}>
-				<ModalBody className='px-4 py-3'>
-					<div className='row g-3'>
-						{/* ROW 1: CATEGORY NAME (FULL WIDTH) */}
-						<div className='col-12'>
-							<label htmlFor='categoryNameInput' className='form-label fw-semibold small mb-1'>
-								Category Name <span className='text-danger'>*</span>
-							</label>
-							<input
-								id='categoryNameInput'
-								type='text'
-								maxLength={100}
-								className='form-control role-name-input'
-								placeholder='e.g. Credit Card, Verification, Utility'
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								style={{
-									height: '42px',
-									borderRadius: '0.5rem',
-									border: '1px solid #cbd5e1',
-									fontSize: '0.9rem',
-								}}
-								required
-							/>
-							<div className='text-end text-muted mt-1' style={{ fontSize: '0.75rem' }}>
-								{name.length}/100
-							</div>
-						</div>
-
-						{/* ROW 2: LEFT = CATEGORY IMAGE UPLOADER, RIGHT = STATUS */}
-						{/* LEFT COLUMN: UPLOAD BOX */}
-						<div className='col-12 col-md-6'>
-							<label className='form-label fw-semibold small mb-1 d-block'>
-								Category Image <span className='text-muted fw-normal'>(Optional)</span>
-							</label>
+				<ModalHeader setIsOpen={setIsOpen} className='border-bottom-0 pb-0 pt-4 px-4'>
+					<ModalTitle id='service-category-modal-title'>
+						<div className='d-flex align-items-center gap-3'>
 							<div
-								role='button'
-								tabIndex={0}
-								onClick={() => fileInputRef.current?.click()}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										fileInputRef.current?.click();
-									}
-								}}
-								className='d-flex flex-column align-items-center justify-content-center p-3 rounded-3 position-relative cursor-pointer'
+								className='d-flex align-items-center justify-content-center rounded-3'
 								style={{
-									minHeight: '124px',
-									background: '#f8fafc',
-									border: '1.5px dashed #cbd5e1',
-									borderRadius: '0.75rem',
-									transition: 'all 0.2s ease',
+									width: '44px',
+									height: '44px',
+									backgroundColor: '#e0f2fe',
+									color: '#0284c7',
+									flexShrink: 0,
 								}}>
-								{imagePreview ? (
-									<div
-										className='modal-image-preview-wrapper position-relative d-flex align-items-center justify-content-center w-100 h-100'
-										style={{ minHeight: '94px' }}>
-										<img
-											src={imagePreview}
-											alt='Category Preview'
-											className='rounded-2 object-fit-contain'
-											style={{ maxHeight: '84px', maxWidth: '100%' }}
-										/>
-
-										{/* HOVER OVERLAY WITH ACTIONS */}
-										<div className='modal-image-hover-actions position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center gap-2 rounded-2'>
-											{/* EYE BUTTON TO VIEW FULL SIZE OVERLAY */}
-											<button
-												type='button'
-												className='btn btn-light btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm text-primary'
-												style={{ width: '32px', height: '32px' }}
-												onClick={(e: React.MouseEvent) => {
-													e.stopPropagation();
-													setIsPreviewOpen(true);
-												}}
-												title='View full size image'>
-												<Icon icon='Visibility' size='sm' />
-											</button>
-
-											{/* CHANGE BUTTON */}
-											<button
-												type='button'
-												className='btn btn-light btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm text-dark'
-												style={{ width: '32px', height: '32px' }}
-												onClick={(e: React.MouseEvent) => {
-													e.stopPropagation();
-													fileInputRef.current?.click();
-												}}
-												title='Change image'>
-												<Icon icon='Edit' size='sm' />
-											</button>
-
-											{/* REMOVE BUTTON */}
-											<button
-												type='button'
-												className='btn btn-danger btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm'
-												style={{ width: '32px', height: '32px' }}
-												onClick={(e: React.MouseEvent) => {
-													e.stopPropagation();
-													handleClearImage();
-												}}
-												title='Remove image'>
-												<Icon icon='DeleteOutline' size='sm' />
-											</button>
-										</div>
-									</div>
-								) : (
-									<div className='d-flex flex-column align-items-center justify-content-center text-center'>
-										<div
-											className='rounded-circle d-flex align-items-center justify-content-center mb-2 shadow-sm'
-											style={{
-												width: '44px',
-												height: '44px',
-												backgroundColor: '#e0f2fe',
-												color: '#0284c7',
-											}}>
-											<Icon icon='AddPhotoAlternate' size='lg' />
-										</div>
-										<span className='fw-semibold text-dark' style={{ fontSize: '0.8125rem' }}>
-											Click to upload image
-										</span>
-										<span className='text-muted' style={{ fontSize: '0.72rem' }}>
-											Supports JPG, PNG, SVG (Max 5MB)
-										</span>
-									</div>
-								)}
-
-								<input
-									ref={fileInputRef}
-									type='file'
-									accept='image/*,.svg'
-									className='d-none'
-									onChange={handleFileSelect}
-								/>
+								<Icon icon={isEdit ? 'Edit' : 'Category'} size='lg' />
+							</div>
+							<div>
+								<div className='d-flex align-items-center gap-2'>
+									<h5 className='fw-bold mb-0 text-dark'>
+										{isEdit ? 'Edit Service Category' : 'Create Service Category'}
+									</h5>
+									{isLoadingDetail && <Spinner isSmall className='text-primary' />}
+								</div>
+								<span className='text-muted small' style={{ fontSize: '0.8125rem' }}>
+									{isEdit
+										? 'Update service category details, transaction mode, and activation status.'
+										: 'Add a new service category to keep your services organized.'}
+								</span>
 							</div>
 						</div>
-
-						{/* RIGHT COLUMN: DISPLAY ORDER & STATUS (& SLUG IN EDIT MODE) */}
-						<div className='col-12 col-md-6 d-flex flex-column justify-content-start'>
-							<div className='mb-2'>
-								<label htmlFor='categoryDisplayOrderInput' className='form-label fw-semibold small mb-1'>
-									Display Order <span className='text-muted fw-normal'>(Optional)</span>
+					</ModalTitle>
+				</ModalHeader>
+				<form onSubmit={handleSubmit}>
+					<ModalBody className='px-4 py-3'>
+						<div className='row g-3'>
+							{/* ROW 1: CATEGORY NAME & TRANSACTION MODE */}
+							<div className='col-12 col-md-6'>
+								<label htmlFor='categoryNameInput' className='form-label fw-semibold small mb-1'>
+									Category Name <span className='text-danger'>*</span>
 								</label>
 								<input
-									id='categoryDisplayOrderInput'
-									type='number'
-									min='0'
+									id='categoryNameInput'
+									type='text'
+									maxLength={100}
 									className='form-control role-name-input'
-									placeholder='e.g. 1, 2, 10'
-									value={displayOrder}
-									onChange={(e) => setDisplayOrder(e.target.value)}
+									placeholder='e.g. Credit Card, Verification, Utility'
+									value={name}
+									onChange={(e) => setName(e.target.value)}
 									style={{
 										height: '42px',
 										borderRadius: '0.5rem',
 										border: '1px solid #cbd5e1',
 										fontSize: '0.9rem',
 									}}
+									required
 								/>
+								<div className='text-end text-muted mt-1' style={{ fontSize: '0.75rem' }}>
+									{name.length}/100
+								</div>
 							</div>
 
-							<div>
-								<label htmlFor='categoryStatusSelect' className='form-label fw-semibold small mb-1'>
-									Status <span className='text-danger'>*</span>
+							<div className='col-12 col-md-6'>
+								<label htmlFor='categoryTransactionModeSelect' className='form-label fw-semibold small mb-1'>
+									Transaction Mode <span className='text-danger'>*</span>
 								</label>
 								<select
-									id='categoryStatusSelect'
+									id='categoryTransactionModeSelect'
 									className='form-select role-name-input'
-									value={status}
-									onChange={(e) => setStatus(e.target.value as ServiceCategoryStatusType)}
+									value={transactionMode}
+									onChange={(e) => setTransactionMode(e.target.value as ServiceTransactionModeType)}
 									style={{
 										height: '42px',
 										borderRadius: '0.5rem',
 										border: '1px solid #cbd5e1',
 										fontSize: '0.9rem',
 									}}>
-									{statusOptions.map((opt) => (
+									{transactionModeOptions.map((opt) => (
 										<option key={opt.value} value={opt.value}>
 											{opt.label}
 										</option>
 									))}
 								</select>
+								{selectedModeObj?.description && (
+									<div className='d-flex align-items-center gap-1 text-muted mt-1' style={{ fontSize: '0.75rem' }}>
+										<Icon icon='Info' size='sm' className='text-primary flex-shrink-0' />
+										<span>{selectedModeObj.description}</span>
+									</div>
+								)}
 							</div>
 
-							{/* SLUG FIELD (EDIT MODE ONLY - IMMUTABLE / READ-ONLY) */}
-							{isEdit && categoryData?.slug && (
-								<div className='mt-2'>
-									<label htmlFor='categorySlugInput' className='form-label fw-semibold small mb-1'>
-										Category Slug <span className='text-muted fw-normal'>(Read-only)</span>
+							{/* ROW 2: LEFT = CATEGORY IMAGE UPLOADER, RIGHT = DISPLAY ORDER, STATUS, SLUG */}
+							{/* LEFT COLUMN: UPLOAD BOX */}
+							<div className='col-12 col-md-6'>
+								<label className='form-label fw-semibold small mb-1 d-block'>
+									Category Image <span className='text-muted fw-normal'>(Optional)</span>
+								</label>
+								<div
+									role='button'
+									tabIndex={0}
+									onClick={() => fileInputRef.current?.click()}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											fileInputRef.current?.click();
+										}
+									}}
+									className='d-flex flex-column align-items-center justify-content-center p-3 rounded-3 position-relative cursor-pointer'
+									style={{
+										minHeight: '124px',
+										background: '#f8fafc',
+										border: '1.5px dashed #cbd5e1',
+										borderRadius: '0.75rem',
+										transition: 'all 0.2s ease',
+									}}>
+									{imagePreview ? (
+										<div
+											className='modal-image-preview-wrapper position-relative d-flex align-items-center justify-content-center w-100 h-100'
+											style={{ minHeight: '94px' }}>
+											{!imageLoadFailed ? (
+												<img
+													src={imagePreview}
+													alt='Category Preview'
+													className='rounded-2 object-fit-contain'
+													style={{ maxHeight: '84px', maxWidth: '100%' }}
+													onError={() => setImageLoadFailed(true)}
+												/>
+											) : (
+												<div
+													className='rounded-3 d-flex align-items-center justify-content-center bg-light text-primary'
+													style={{ width: '48px', height: '48px' }}>
+													<Icon icon='Category' size='lg' />
+												</div>
+											)}
+
+											{/* HOVER OVERLAY WITH ACTIONS */}
+											<div className='modal-image-hover-actions position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center gap-2 rounded-2'>
+												{/* EYE BUTTON TO VIEW FULL SIZE OVERLAY */}
+												<button
+													type='button'
+													className='btn btn-light btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm text-primary'
+													style={{ width: '32px', height: '32px' }}
+													onClick={(e: React.MouseEvent) => {
+														e.stopPropagation();
+														setIsPreviewOpen(true);
+													}}
+													title='View full size image'>
+													<Icon icon='Visibility' size='sm' />
+												</button>
+
+												{/* CHANGE BUTTON */}
+												<button
+													type='button'
+													className='btn btn-light btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm text-dark'
+													style={{ width: '32px', height: '32px' }}
+													onClick={(e: React.MouseEvent) => {
+														e.stopPropagation();
+														fileInputRef.current?.click();
+													}}
+													title='Change image'>
+													<Icon icon='Edit' size='sm' />
+												</button>
+
+												{/* REMOVE BUTTON */}
+												<button
+													type='button'
+													className='btn btn-danger btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center shadow-sm'
+													style={{ width: '32px', height: '32px' }}
+													onClick={(e: React.MouseEvent) => {
+														e.stopPropagation();
+														handleClearImage();
+													}}
+													title='Remove image'>
+													<Icon icon='DeleteOutline' size='sm' />
+												</button>
+											</div>
+										</div>
+									) : (
+										<div className='d-flex flex-column align-items-center justify-content-center text-center'>
+											<div
+												className='rounded-circle d-flex align-items-center justify-content-center mb-2 shadow-sm'
+												style={{
+													width: '44px',
+													height: '44px',
+													backgroundColor: '#e0f2fe',
+													color: '#0284c7',
+												}}>
+												<Icon icon='AddPhotoAlternate' size='lg' />
+											</div>
+											<span className='fw-semibold text-dark' style={{ fontSize: '0.8125rem' }}>
+												Click to upload image
+											</span>
+											<span className='text-muted' style={{ fontSize: '0.72rem' }}>
+												Supports JPG, PNG, SVG (Max 5MB)
+											</span>
+										</div>
+									)}
+
+									<input
+										ref={fileInputRef}
+										type='file'
+										accept='image/*,.svg'
+										className='d-none'
+										onChange={handleFileSelect}
+									/>
+								</div>
+							</div>
+
+							{/* RIGHT COLUMN: DISPLAY ORDER & STATUS (& SLUG IN EDIT MODE) */}
+							<div className='col-12 col-md-6 d-flex flex-column justify-content-start'>
+								<div className='mb-2'>
+									<label htmlFor='categoryDisplayOrderInput' className='form-label fw-semibold small mb-1'>
+										Display Order <span className='text-muted fw-normal'>(Optional)</span>
 									</label>
 									<input
-										id='categorySlugInput'
-										type='text'
-										className='form-control font-monospace'
-										value={categoryData.slug}
-										disabled
-										readOnly
+										id='categoryDisplayOrderInput'
+										type='number'
+										min='0'
+										className='form-control role-name-input'
+										placeholder='e.g. 1, 2, 10'
+										value={displayOrder}
+										onChange={(e) => setDisplayOrder(e.target.value)}
 										style={{
-											height: '38px',
+											height: '42px',
 											borderRadius: '0.5rem',
-											border: '1px solid #e2e8f0',
-											background: '#f8fafc',
-											color: '#64748b',
-											fontSize: '0.85rem',
-											cursor: 'not-allowed',
+											border: '1px solid #cbd5e1',
+											fontSize: '0.9rem',
 										}}
 									/>
 								</div>
-							)}
-						</div>
-					</div>
-				</ModalBody>
-				<ModalFooter className='px-4 py-3 border-top-0'>
-					<Button
-						type='button'
-						color='light'
-						className='px-4 py-2'
-						onClick={() => setIsOpen(false)}
-						isDisable={isSubmitting}>
-						Cancel
-					</Button>
-					<Button
-						type='submit'
-						color='primary'
-						className='px-4 py-2 d-inline-flex align-items-center gap-2'
-						isDisable={isSubmitting}>
-						{isSubmitting ? (
-							<>
-								<Spinner isSmall inButton isGrow className='me-1' />
-								{isEdit ? 'Saving Changes...' : 'Creating Category...'}
-							</>
-						) : (
-							<>
-								<Icon icon='Save' />
-								{isEdit ? 'Save Changes' : 'Create Category'}
-							</>
-						)}
-					</Button>
-				</ModalFooter>
-			</form>
-		</Modal>
 
-		{/* IMAGE PREVIEW LIGHTBOX OVERLAY */}
-		<ImagePreviewModal
-			isOpen={isPreviewOpen}
-			setIsOpen={setIsPreviewOpen}
-			imageUrl={imagePreview}
-			title={name ? `${name} Image` : 'Category Image'}
-		/>
-	</>
+								<div>
+									<label htmlFor='categoryStatusSelect' className='form-label fw-semibold small mb-1'>
+										Status <span className='text-danger'>*</span>
+									</label>
+									<select
+										id='categoryStatusSelect'
+										className='form-select role-name-input'
+										value={status}
+										onChange={(e) => setStatus(e.target.value as ServiceCategoryStatusType)}
+										style={{
+											height: '42px',
+											borderRadius: '0.5rem',
+											border: '1px solid #cbd5e1',
+											fontSize: '0.9rem',
+										}}>
+										{statusOptions.map((opt) => (
+											<option key={opt.value} value={opt.value}>
+												{opt.label}
+											</option>
+										))}
+									</select>
+								</div>
+
+								{/* SLUG FIELD (EDIT MODE ONLY - IMMUTABLE / READ-ONLY) */}
+								{isEdit && categoryData?.slug && (
+									<div className='mt-2'>
+										<label htmlFor='categorySlugInput' className='form-label fw-semibold small mb-1'>
+											Category Slug <span className='text-muted fw-normal'>(Read-only)</span>
+										</label>
+										<input
+											id='categorySlugInput'
+											type='text'
+											className='form-control font-monospace'
+											value={categoryData.slug}
+											disabled
+											readOnly
+											style={{
+												height: '38px',
+												borderRadius: '0.5rem',
+												border: '1px solid #e2e8f0',
+												background: '#f8fafc',
+												color: '#64748b',
+												fontSize: '0.85rem',
+												cursor: 'not-allowed',
+											}}
+										/>
+									</div>
+								)}
+							</div>
+						</div>
+					</ModalBody>
+					<ModalFooter className='px-4 py-3 border-top-0'>
+						<Button
+							type='button'
+							color='light'
+							className='px-4 py-2 border'
+							style={{ borderRadius: '10px' }}
+							onClick={() => setIsOpen(false)}
+							isDisable={isSubmitting}>
+							Cancel
+						</Button>
+						<Button
+							type='submit'
+							color='primary'
+							className='px-4 py-2 d-inline-flex align-items-center gap-2'
+							style={{ borderRadius: '10px' }}
+							isDisable={isSubmitting}>
+							{isSubmitting ? (
+								<>
+									<Spinner isSmall inButton isGrow className='me-1' />
+									{isEdit ? 'Saving Changes...' : 'Creating Category...'}
+								</>
+							) : (
+								<>
+									<Icon icon='Save' />
+									{isEdit ? 'Save Changes' : 'Create Category'}
+								</>
+							)}
+						</Button>
+					</ModalFooter>
+				</form>
+			</Modal>
+
+			{/* IMAGE PREVIEW LIGHTBOX OVERLAY */}
+			<ImagePreviewModal
+				isOpen={isPreviewOpen}
+				setIsOpen={setIsPreviewOpen}
+				imageUrl={imagePreview}
+				title={name ? `${name} Image` : 'Category Image'}
+			/>
+		</>
 	);
 };
 

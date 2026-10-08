@@ -141,6 +141,7 @@ export interface IActiveServiceCategoryOption {
 	name: string;
 	slug?: string;
 	icon?: string;
+	transaction_mode?: 'CUSTOM' | 'BBPS' | 'CUSTOM_BBPS';
 }
 
 export interface IActivePaymentModeOption {

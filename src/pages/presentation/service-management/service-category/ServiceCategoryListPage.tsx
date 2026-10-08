@@ -4,10 +4,13 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import { ListingPage, IListingColumn } from '../../../../components/common/ListingPage';
+import Tooltips from '../../../../components/bootstrap/Tooltips';
 import serviceCategoryService from './service/serviceCategoryService';
 import {
 	IServiceCategory,
 	ServiceCategoryStatusType,
+	ServiceTransactionModeType,
+	IServiceTransactionModeOption,
 } from './type/service-category-type';
 import ServiceCategoryModal from './ServiceCategoryModal';
 import showNotification from '../../../../components/extras/showNotification';
@@ -48,19 +51,45 @@ export const ServiceCategoryListPage: FC = () => {
 	// STATUS TOGGLE IN-PROGRESS STATE
 	const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
 
-	// DYNAMIC CONSTANTS (STATUS)
+	// DYNAMIC CONSTANTS (STATUS & TRANSACTION MODE)
 	const [statusOptions, setStatusOptions] = useState<IConstantOption[]>([
 		{ label: 'Active', value: 'active' },
 		{ label: 'Inactive', value: 'inactive' },
+	]);
+
+	const [transactionModeOptions, setTransactionModeOptions] = useState<IServiceTransactionModeOption[]>([
+		{
+			label: 'Custom',
+			value: 'CUSTOM',
+			description: 'Transactions require admin approval before processing.',
+		},
+		{
+			label: 'BBPS',
+			value: 'BBPS',
+			description: 'Transactions are processed directly through BBPS.',
+		},
+		{
+			label: 'Custom BBPS',
+			value: 'CUSTOM_BBPS',
+			description: 'Transactions require admin approval and are processed through BBPS.',
+		},
 	]);
 
 	useEffect(() => {
 		let isMounted = true;
 		const loadConstants = async () => {
 			try {
-				const sOpts = await constantService.getStatusConstants();
-				if (isMounted && sOpts && sOpts.length > 0) {
-					setStatusOptions(sOpts);
+				const [sOpts, tmOpts] = await Promise.all([
+					constantService.getStatusConstants().catch(() => []),
+					serviceCategoryService.getTransactionModeConstants().catch(() => []),
+				]);
+				if (isMounted) {
+					if (sOpts && sOpts.length > 0) {
+						setStatusOptions(sOpts);
+					}
+					if (tmOpts && tmOpts.length > 0) {
+						setTransactionModeOptions(tmOpts);
+					}
 				}
 			} catch (err) {
 				// Keep default status options
@@ -76,6 +105,7 @@ export const ServiceCategoryListPage: FC = () => {
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	const debouncedSearchTerm = useDebounce(searchTerm, 800);
 	const [statusFilter, setStatusFilter] = useState<string>('');
+	const [transactionModeFilter, setTransactionModeFilter] = useState<string>('');
 	const [startDate, setStartDate] = useState<string>('');
 	const [endDate, setEndDate] = useState<string>('');
 
@@ -93,6 +123,7 @@ export const ServiceCategoryListPage: FC = () => {
 	const activeFilterCount =
 		(searchTerm.trim() ? 1 : 0) +
 		(statusFilter ? 1 : 0) +
+		(transactionModeFilter ? 1 : 0) +
 		(startDate && endDate ? 1 : 0);
 
 	// FETCH CATEGORIES FROM API
@@ -108,8 +139,9 @@ export const ServiceCategoryListPage: FC = () => {
 			}
 
 			const isDateRangeValid = Boolean(startDate && endDate);
-			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''
-				}_${currentPage}_${perPage}`;
+			const currentFetchKey = `${debouncedSearchTerm}_${statusFilter}_${transactionModeFilter}_${
+				isDateRangeValid ? `${startDate}_${endDate}` : ''
+			}_${currentPage}_${perPage}`;
 
 			if (!force && (isFetchingRef.current || lastFetchKeyRef.current === currentFetchKey)) {
 				return;
@@ -124,6 +156,7 @@ export const ServiceCategoryListPage: FC = () => {
 					limit: perPage,
 					search: debouncedSearchTerm.trim() || undefined,
 					status: (statusFilter as ServiceCategoryStatusType) || undefined,
+					transaction_mode: (transactionModeFilter as ServiceTransactionModeType) || undefined,
 					startDate: isDateRangeValid ? startDate : undefined,
 					endDate: isDateRangeValid ? endDate : undefined,
 				});
@@ -161,6 +194,7 @@ export const ServiceCategoryListPage: FC = () => {
 			perPage,
 			startDate,
 			statusFilter,
+			transactionModeFilter,
 		],
 	);
 
@@ -284,6 +318,7 @@ export const ServiceCategoryListPage: FC = () => {
 	const handleResetFilters = () => {
 		setSearchTerm('');
 		setStatusFilter('');
+		setTransactionModeFilter('');
 		setStartDate('');
 		setEndDate('');
 		setCurrentPage(1);
@@ -367,6 +402,45 @@ export const ServiceCategoryListPage: FC = () => {
 					</span>
 				</div>
 			),
+		},
+		{
+			key: 'transaction_mode',
+			header: 'Transaction Mode',
+			align: 'center',
+			headerAlign: 'center',
+			minWidth: '170px',
+			render: (item) => {
+				const mode = item.transaction_mode || 'CUSTOM';
+				const modeObj = transactionModeOptions.find((opt) => opt.value === mode);
+				const label = modeObj?.label || mode;
+				const desc = modeObj?.description;
+
+				let badgeBgClass = 'bg-info bg-opacity-10 text-info border border-info border-opacity-25';
+
+				if (mode === 'BBPS') {
+					badgeBgClass = 'bg-success bg-opacity-10 text-success border border-success border-opacity-25';
+				} else if (mode === 'CUSTOM_BBPS') {
+					badgeBgClass = 'bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25';
+				}
+
+				const badgeElem = (
+					<span
+						className={`badge ${badgeBgClass} px-2.5 py-1.5 rounded-pill fw-semibold`}
+						style={{ fontSize: '0.78rem', cursor: desc ? 'help' : 'default' }}>
+						{label}
+					</span>
+				);
+
+				if (desc) {
+					return (
+						<Tooltips title={desc} placement='top'>
+							<div className='d-inline-flex'>{badgeElem}</div>
+						</Tooltips>
+					);
+				}
+
+				return badgeElem;
+			},
 		},
 		{
 			key: 'slug',
@@ -457,7 +531,7 @@ export const ServiceCategoryListPage: FC = () => {
 			<Page container='fluid'>
 				<ListingPage<IServiceCategory>
 					title='Service Categories'
-					subTitle='Manage service categories, visual icons, and activation status'
+					subTitle='Manage service categories, transaction processing modes, visual icons, and activation status'
 					breadcrumbs={[
 						{ text: 'Service Management' },
 						{ text: 'Service Category' },
@@ -484,6 +558,28 @@ export const ServiceCategoryListPage: FC = () => {
 										setCurrentPage(1);
 									}}
 								/>
+							</div>
+
+							{/* TRANSACTION MODE FILTER */}
+							<div style={{ width: '160px' }}>
+								<label htmlFor='categoryTransactionModeFilter' className='filter-field-label'>
+									Transaction Mode
+								</label>
+								<select
+									id='categoryTransactionModeFilter'
+									className='form-select'
+									value={transactionModeFilter}
+									onChange={(e) => {
+										setTransactionModeFilter(e.target.value);
+										setCurrentPage(1);
+									}}>
+									<option value=''>All Modes</option>
+									{transactionModeOptions.map((opt) => (
+										<option key={opt.value} value={opt.value}>
+											{opt.label}
+										</option>
+									))}
+								</select>
 							</div>
 
 							{/* STATUS FILTER */}
