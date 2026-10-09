@@ -489,15 +489,33 @@ const OperatorViewPage: FC = () => {
 													pm.Operator_Payment_Mode_Model?.max_amount ??
 													pm.operator_payment_mode?.max_amount ??
 													pm.pivot?.max_amount;
+												const isDefault = Boolean(
+													pm.is_default ??
+													pm.OperatorPaymentMode?.is_default ??
+													pm.Operator_Payment_Mode_Model?.is_default ??
+													pm.operator_payment_mode?.is_default ??
+													pm.pivot?.is_default ??
+													false,
+												);
 												const modeName = pm.name || pm.payment_mode?.name || 'Payment Mode';
 												return (
 													<div key={pm.id} className="col-12 col-sm-6 col-md-4 col-lg-3">
 														<div
 															className="p-3 bg-light border rounded-3 h-100"
 															style={{ borderRadius: '10px' }}>
-															<div className="d-flex align-items-center gap-2 mb-1">
-																<Icon icon="CheckCircle" size="sm" className="text-success" />
-																<span className="fw-bold text-dark small">{modeName}</span>
+															<div className="d-flex align-items-center justify-content-between gap-2 mb-1">
+																<div className="d-flex align-items-center gap-2">
+																	<Icon icon="CheckCircle" size="sm" className="text-success" />
+																	<span className="fw-bold text-dark small">{modeName}</span>
+																</div>
+																{isDefault && (
+																	<span
+																		className="badge bg-warning text-dark px-2 py-1 d-inline-flex align-items-center gap-1"
+																		style={{ fontSize: '0.7rem' }}>
+																		<Icon icon="Star" size="sm" />
+																		Default
+																	</span>
+																)}
 															</div>
 															{min != null || max != null ? (
 																<div className="text-muted small mt-1" style={{ fontSize: '0.78rem' }}>

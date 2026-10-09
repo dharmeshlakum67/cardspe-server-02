@@ -87,7 +87,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 	// FORM STATE: PAYMENT MODES
 	const [selectedPaymentModeIds, setSelectedPaymentModeIds] = useState<number[]>([]);
 	const [paymentModeConfigs, setPaymentModeConfigs] = useState<
-		Record<number, { min_amount: string; max_amount: string; status?: string }>
+		Record<number, { min_amount: string; max_amount: string; is_default?: boolean; status?: string }>
 	>({});
 
 	// FORM STATE: DYNAMIC INPUT PARAMETERS
@@ -103,21 +103,53 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 
 	// HELPER: PARSE PAYMENT MODES AND LIMITS
 	const parsePaymentModesData = (data: any) => {
-		const configs: Record<number, { min_amount: string; max_amount: string; status?: string }> = {};
+		const configs: Record<
+			number,
+			{ min_amount: string; max_amount: string; is_default?: boolean; status?: string }
+		> = {};
 		const ids: number[] = [];
 
-		const rawPms = data.payment_modes || data.paymentModes || [];
+		const rawPms =
+			data.payment_modes ||
+			data.paymentModes ||
+			data.operator_payment_modes ||
+			data.operatorPaymentModes ||
+			[];
 		if (Array.isArray(rawPms) && rawPms.length > 0) {
 			rawPms.forEach((pm: any) => {
 				const pmId = Number(pm.payment_mode_id || pm.id);
 				if (pmId) {
 					ids.push(pmId);
-					const min = pm.min_amount ?? pm.OperatorPaymentMode?.min_amount ?? pm.pivot?.min_amount;
-					const max = pm.max_amount ?? pm.OperatorPaymentMode?.max_amount ?? pm.pivot?.max_amount;
-					const st = pm.status ?? pm.OperatorPaymentMode?.status ?? 'active';
+					const min =
+						pm.min_amount ??
+						pm.OperatorPaymentMode?.min_amount ??
+						pm.Operator_Payment_Mode_Model?.min_amount ??
+						pm.operator_payment_mode?.min_amount ??
+						pm.pivot?.min_amount;
+					const max =
+						pm.max_amount ??
+						pm.OperatorPaymentMode?.max_amount ??
+						pm.Operator_Payment_Mode_Model?.max_amount ??
+						pm.operator_payment_mode?.max_amount ??
+						pm.pivot?.max_amount;
+					const isDef = Boolean(
+						pm.is_default ??
+						pm.OperatorPaymentMode?.is_default ??
+						pm.Operator_Payment_Mode_Model?.is_default ??
+						pm.operator_payment_mode?.is_default ??
+						pm.pivot?.is_default ??
+						false,
+					);
+					const st =
+						pm.status ??
+						pm.OperatorPaymentMode?.status ??
+						pm.Operator_Payment_Mode_Model?.status ??
+						pm.operator_payment_mode?.status ??
+						'active';
 					configs[pmId] = {
 						min_amount: min != null ? String(min) : '',
 						max_amount: max != null ? String(max) : '',
+						is_default: isDef,
 						status: st,
 					};
 				}
@@ -127,7 +159,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 				const numId = Number(id);
 				if (numId) {
 					ids.push(numId);
-					configs[numId] = { min_amount: '', max_amount: '', status: 'active' };
+					configs[numId] = { min_amount: '', max_amount: '', is_default: false, status: 'active' };
 				}
 			});
 		}
@@ -343,11 +375,42 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 			return [...prev, pmId];
 		});
 		setPaymentModeConfigs((prev) => {
-			if (prev[pmId]) return prev;
+			if (prev[pmId]) {
+				if (prev[pmId].is_default) {
+					return {
+						...prev,
+						[pmId]: {
+							...prev[pmId],
+							is_default: false,
+						},
+					};
+				}
+				return prev;
+			}
 			return {
 				...prev,
-				[pmId]: { min_amount: '', max_amount: '', status: 'active' },
+				[pmId]: { min_amount: '', max_amount: '', is_default: false, status: 'active' },
 			};
+		});
+	};
+
+	const handleSetDefaultPaymentMode = (pmId: number) => {
+		setPaymentModeConfigs((prev) => {
+			const updated: Record<
+				number,
+				{ min_amount: string; max_amount: string; is_default?: boolean; status?: string }
+			> = {};
+			Object.keys(prev).forEach((key) => {
+				const id = Number(key);
+				updated[id] = {
+					...prev[id],
+					is_default: id === pmId,
+				};
+			});
+			if (!updated[pmId]) {
+				updated[pmId] = { min_amount: '', max_amount: '', is_default: true, status: 'active' };
+			}
+			return updated;
 		});
 	};
 
@@ -373,7 +436,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 			const updated = { ...prev };
 			paymentModes.forEach((pm) => {
 				if (!updated[pm.id]) {
-					updated[pm.id] = { min_amount: '', max_amount: '', status: 'active' };
+					updated[pm.id] = { min_amount: '', max_amount: '', is_default: false, status: 'active' };
 				}
 			});
 			return updated;
@@ -382,6 +445,20 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 
 	const handleClearPaymentModes = () => {
 		setSelectedPaymentModeIds([]);
+		setPaymentModeConfigs((prev) => {
+			const updated: Record<
+				number,
+				{ min_amount: string; max_amount: string; is_default?: boolean; status?: string }
+			> = {};
+			Object.keys(prev).forEach((key) => {
+				const id = Number(key);
+				updated[id] = {
+					...prev[id],
+					is_default: false,
+				};
+			});
+			return updated;
+		});
 	};
 
 	// FORM SUBMIT
@@ -464,6 +541,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 			const config = paymentModeConfigs[id] || {
 				min_amount: '',
 				max_amount: '',
+				is_default: false,
 				status: 'active',
 			};
 			return {
@@ -480,6 +558,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 						!Number.isNaN(Number(config.max_amount))
 						? Number(config.max_amount)
 						: null,
+				is_default: Boolean(config.is_default),
 				status: config.status || 'active',
 			};
 		});
@@ -951,13 +1030,15 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 									const config = paymentModeConfigs[pm.id] || {
 										min_amount: '',
 										max_amount: '',
+										is_default: false,
 									};
 									return (
 										<div key={pm.id} className="col-12 col-md-6 col-lg-4">
 											<div
 												style={{ borderRadius: '10px' }}
-												className={`card shadow-none border p-3 transition-all ${isSelected ? 'border-primary bg-primary-subtle' : 'bg-white'
-													}`}>
+												className={`card shadow-none border p-3 transition-all ${
+													isSelected ? 'border-primary bg-primary-subtle' : 'bg-white'
+												}`}>
 												<div
 													role="button"
 													tabIndex={0}
@@ -988,56 +1069,80 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 												</div>
 
 												{isSelected && (
-													<div className="row g-2 mt-2 pt-2 border-top">
-														<div className="col-6">
-															<label
-																className="form-label fw-bold text-muted small mb-1"
-																style={{ fontSize: '0.78rem' }}>
-																Min Amount (₹)
-															</label>
-															<input
-																type="number"
-																min="0"
-																step="any"
-																className="form-control form-control-sm"
-																placeholder="e.g. 10"
-																value={config.min_amount}
-																onChange={(e) =>
-																	handlePaymentModeAmountChange(
-																		pm.id,
-																		'min_amount',
-																		e.target.value,
-																	)
-																}
-																onClick={(e) => e.stopPropagation()}
-																style={{ borderRadius: '8px', fontSize: '0.85rem' }}
-															/>
+													<>
+														<div className="row g-2 mt-2 pt-2 border-top">
+															<div className="col-6">
+																<label
+																	className="form-label fw-bold text-muted small mb-1"
+																	style={{ fontSize: '0.78rem' }}>
+																	Min Amount (₹)
+																</label>
+																<input
+																	type="number"
+																	min="0"
+																	step="any"
+																	className="form-control form-control-sm"
+																	placeholder="e.g. 10"
+																	value={config.min_amount}
+																	onChange={(e) =>
+																		handlePaymentModeAmountChange(
+																			pm.id,
+																			'min_amount',
+																			e.target.value,
+																		)
+																	}
+																	onClick={(e) => e.stopPropagation()}
+																	style={{ borderRadius: '8px', fontSize: '0.85rem' }}
+																/>
+															</div>
+															<div className="col-6">
+																<label
+																	className="form-label fw-bold text-muted small mb-1"
+																	style={{ fontSize: '0.78rem' }}>
+																	Max Amount (₹)
+																</label>
+																<input
+																	type="number"
+																	min="0"
+																	step="any"
+																	className="form-control form-control-sm"
+																	placeholder="e.g. 100000"
+																	value={config.max_amount}
+																	onChange={(e) =>
+																		handlePaymentModeAmountChange(
+																			pm.id,
+																			'max_amount',
+																			e.target.value,
+																		)
+																	}
+																	onClick={(e) => e.stopPropagation()}
+																	style={{ borderRadius: '8px', fontSize: '0.85rem' }}
+																/>
+															</div>
 														</div>
-														<div className="col-6">
-															<label
-																className="form-label fw-bold text-muted small mb-1"
-																style={{ fontSize: '0.78rem' }}>
-																Max Amount (₹)
+
+														<div className="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+															<label className="form-check-label small fw-semibold text-dark d-flex align-items-center gap-2 cursor-pointer mb-0">
+																<input
+																	type="radio"
+																	name="default_payment_mode_form"
+																	className="form-check-input mt-0 cursor-pointer"
+																	checked={Boolean(config.is_default)}
+																	onChange={() => handleSetDefaultPaymentMode(pm.id)}
+																	onClick={(e) => e.stopPropagation()}
+																/>
+																<span>Set as Default</span>
 															</label>
-															<input
-																type="number"
-																min="0"
-																step="any"
-																className="form-control form-control-sm"
-																placeholder="e.g. 100000"
-																value={config.max_amount}
-																onChange={(e) =>
-																	handlePaymentModeAmountChange(
-																		pm.id,
-																		'max_amount',
-																		e.target.value,
-																	)
-																}
-																onClick={(e) => e.stopPropagation()}
-																style={{ borderRadius: '8px', fontSize: '0.85rem' }}
-															/>
+															{config.is_default && (
+																<span
+																	className="badge bg-warning text-dark px-2 py-1 d-inline-flex align-items-center gap-1"
+																	style={{ fontSize: '0.72rem' }}>
+																	<Icon icon="Star" size="sm" />
+																	Default
+																</span>
+															)}
 														</div>
-													</div>
+													</>
 												)}
 											</div>
 										</div>

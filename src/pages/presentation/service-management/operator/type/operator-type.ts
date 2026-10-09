@@ -34,6 +34,7 @@ export interface IOperatorPaymentModeConfig {
 	code?: string;
 	min_amount?: number | string | null;
 	max_amount?: number | string | null;
+	is_default?: boolean;
 	status?: string;
 }
 
@@ -45,14 +46,29 @@ export interface IOperatorPaymentMode {
 	status?: string;
 	min_amount?: number | null;
 	max_amount?: number | null;
+	is_default?: boolean;
 	OperatorPaymentMode?: {
 		min_amount?: number | null;
 		max_amount?: number | null;
+		is_default?: boolean;
+		status?: string;
+	};
+	Operator_Payment_Mode_Model?: {
+		min_amount?: number | null;
+		max_amount?: number | null;
+		is_default?: boolean;
+		status?: string;
+	};
+	operator_payment_mode?: {
+		min_amount?: number | null;
+		max_amount?: number | null;
+		is_default?: boolean;
 		status?: string;
 	};
 	pivot?: {
 		min_amount?: number | null;
 		max_amount?: number | null;
+		is_default?: boolean;
 		status?: string;
 	};
 }
