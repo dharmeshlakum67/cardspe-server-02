@@ -67,20 +67,36 @@ export const roleService = {
 		});
 	},
 
-	// FETCH ACTIVE ROLES FOR DROPDOWNS / ASSIGNMENTS (DEDUPLICATED & CACHED)
-	getActiveRoles: async (force = false): Promise<{ success: boolean; data: IRoleItem[] }> => {
-		if (!force && activeRolesCache) {
-			return activeRolesCache;
+	// FETCH ACTIVE ROLES FOR DROPDOWNS / ASSIGNMENTS
+	getActiveRoles: async (
+		paramsOrForce?:
+			| boolean
+			| { page?: number; limit?: number; search?: string; hide_super_admin?: boolean | string | number },
+		forceParam = false,
+	): Promise<{ success: boolean; data: IRoleItem[]; total_document?: number }> => {
+		const isForce = typeof paramsOrForce === 'boolean' ? paramsOrForce : forceParam;
+		const params =
+			typeof paramsOrForce === 'object' && paramsOrForce !== null ? paramsOrForce : undefined;
+
+		if (!params && !isForce && activeRolesCache) {
+			return activeRolesCache as any;
 		}
 
-		activeRolesCache = apiClient<{ success: boolean; data: IRoleItem[] }>(
+		const promise = apiClient<{ success: boolean; data: IRoleItem[]; total_document?: number }>(
 			ROLE_ENDPOINTS.GET_ACTIVE,
-		).catch((err) => {
-			activeRolesCache = null;
-			throw err;
-		});
+			{
+				params: params as Record<string, string | number | boolean | undefined>,
+			},
+		);
 
-		return activeRolesCache;
+		if (!params) {
+			activeRolesCache = promise as any;
+			promise.catch(() => {
+				activeRolesCache = null;
+			});
+		}
+
+		return promise;
 	},
 
 	// DELETE ROLE

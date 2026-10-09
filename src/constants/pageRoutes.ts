@@ -19,6 +19,7 @@ export const PAGE_ROUTES = {
 	PROFILE_WALLET: 'profile/wallet',
 	MY_WALLET: 'profile/wallet',
 	MY_WALLET_TRANSACTIONS: 'profile/wallet',
+	MY_COMMISSION: 'profile/commission',
 
 	// USER MANAGEMENT / ROLES, USERS, KYC REQUESTS & BLOCK HISTORY
 	USERS: 'users',
@@ -32,6 +33,7 @@ export const PAGE_ROUTES = {
 	KYC_REQUESTS: 'kyc-requests',
 	KYC_REQUESTS_VIEW: 'kyc-requests/view/:id',
 	BLOCK_HISTORY: 'users/block-history',
+	MANAGE_COMMISSION: 'users/manage-commission',
 
 	// MASTER / DOCUMENT TYPE & STATE
 	DOCUMENT_TYPE: 'master/document-type',

@@ -55,6 +55,9 @@ const KycPage = lazy(() => import('../pages/presentation/profile/kyc/KycPage'));
 const ProfileWalletPage = lazy(
 	() => import('../pages/presentation/profile/wallet/ProfileWalletPage'),
 );
+const MyCommissionPage = lazy(
+	() => import('../pages/presentation/profile/commission/MyCommissionPage'),
+);
 const SettingPage = lazy(() => import('../pages/presentation/setting/SettingPage'));
 const LoginHistoryListPage = lazy(
 	() => import('../pages/presentation/login-history/LoginHistoryListPage'),
@@ -79,6 +82,9 @@ const UserEditPage = lazy(
 );
 const BlockHistoryListPage = lazy(
 	() => import('../pages/presentation/user-management/block-history/BlockHistoryListPage'),
+);
+const ManageCommissionPage = lazy(
+	() => import('../pages/presentation/user-management/manage-commission/ManageCommissionPage'),
 );
 const BankDetailListPage = lazy(
 	() => import('../pages/presentation/payments/bank-detail/BankDetailListPage'),
@@ -145,6 +151,10 @@ const contents: RouteProps[] = [
 		element: <ProfileWalletPage />,
 	},
 	{
+		path: PAGE_ROUTES.MY_COMMISSION,
+		element: <MyCommissionPage />,
+	},
+	{
 		path: PAGE_ROUTES.KYC,
 		element: <KycPage />,
 	},
@@ -191,6 +201,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.BLOCK_HISTORY,
 		element: <BlockHistoryListPage />,
+	},
+	{
+		path: PAGE_ROUTES.MANAGE_COMMISSION,
+		element: <ManageCommissionPage />,
 	},
 	{
 		path: PAGE_ROUTES.DOCUMENT_TYPE,

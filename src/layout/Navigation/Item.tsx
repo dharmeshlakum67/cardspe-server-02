@@ -70,10 +70,26 @@ const Item: FC<IItemProps> = ({
 	const ANCHOR_LINK_PATTERN = /^#/i;
 	const location = useLocation();
 
+	const cleanPath = location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+	const cleanTo = (typeof to === 'string' ? to : '').replace(/^\/+|\/+$/g, '').toLowerCase();
+
 	// For aside menu
-	const here = typeof to === 'string' && to !== '/' && location.pathname.includes(to);
+	let here = false;
+	if (cleanTo && cleanTo !== '/') {
+		if (cleanPath === cleanTo) {
+			here = true;
+		} else if (cleanPath.startsWith(`${cleanTo}/`)) {
+			const subSegment = cleanPath.slice(cleanTo.length + 1);
+			if (cleanTo === 'users') {
+				here = /^(add|view|edit)(\/.*)?$/i.test(subSegment);
+			} else {
+				here = /^(add|create|view|edit|portal|details)(\/.*)?$/i.test(subSegment) || !subSegment.includes('/');
+			}
+		}
+	}
+
 	// For top menu
-	const match = to !== '/' && location.pathname === to;
+	const match = cleanTo !== '' && cleanPath === cleanTo;
 
 	const { t } = useTranslation('menu');
 

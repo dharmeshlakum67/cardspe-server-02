@@ -63,6 +63,14 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		subMenu: null,
 	},
 
+	// MANAGE COMMISSION MODULE (CHILD OF USER MANAGEMENT)
+	manage_commission: {
+		path: PAGE_ROUTES.MANAGE_COMMISSION,
+		icon: 'AttachMoney',
+		text: 'Manage Commission',
+		subMenu: null,
+	},
+
 	// MASTER PARENT
 	master: {
 		path: null,

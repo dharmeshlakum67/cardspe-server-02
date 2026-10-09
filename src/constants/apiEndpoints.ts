@@ -815,6 +815,35 @@ export const DASHBOARD_ENDPOINTS = {
 	},
 } as const;
 
+// OPERATOR COMMISSION ENDPOINTS
+export const OPERATOR_COMMISSION_ENDPOINTS = {
+	GET_ALL: {
+		url: '/api/operator-commission/get-all',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	GET_MY: {
+		url: '/api/operator-commission/get-my',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	SAVE: {
+		url: '/api/operator-commission/save',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	BULK_SAVE: {
+		url: '/api/operator-commission/bulk-save',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+	BULK_CATEGORY_UPDATE: {
+		url: '/api/operator-commission/bulk-category-update',
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	},
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	DASHBOARD: DASHBOARD_ENDPOINTS,
@@ -830,6 +859,7 @@ export const API_ENDPOINTS = {
 	MOBILE_PLAN_TYPE: MOBILE_PLAN_TYPE_ENDPOINTS,
 	PAYMENT_MODE: PAYMENT_MODE_ENDPOINTS,
 	OPERATOR: OPERATOR_ENDPOINTS,
+	OPERATOR_COMMISSION: OPERATOR_COMMISSION_ENDPOINTS,
 	BANK_DETAIL: BANK_DETAIL_ENDPOINTS,
 	WALLET_TRANSACTION: WALLET_TRANSACTION_ENDPOINTS,
 	NOTIFICATION: NOTIFICATION_ENDPOINTS,
@@ -846,5 +876,3 @@ export const API_ENDPOINTS = {
 } as const;
 
 export default API_ENDPOINTS;
-
-

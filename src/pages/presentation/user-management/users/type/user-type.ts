@@ -155,9 +155,14 @@ export interface IActiveAdminItem {
 	id: number;
 	name: string;
 	username: string;
+	email_address?: string;
 }
 
 export interface IActiveAdminQueryParams {
-	search?: string;
+	role_id?: number | string;
 	role_slug?: string;
+	search?: string;
+	page?: number;
+	limit?: number;
+	hide_super_admin?: boolean | string | number;
 }

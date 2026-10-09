@@ -401,6 +401,23 @@ const CommonHeaderRight: FC<ICommonHeaderRightProps> = ({ beforeChildren, afterC
 					</div>
 				)}
 
+				{/* User Commission Icon (Shown only if NOT a super user) */}
+				{!isSuperUser && (
+					<div className='col-auto'>
+						<Popovers trigger='hover' desc='My Commission'>
+							<Button
+								// eslint-disable-next-line react/jsx-props-no-spreading
+								{...styledBtn}
+								icon='Percent'
+								aria-label='My Commission'
+								onClick={() => {
+									navigate(`/${PAGE_ROUTES.MY_COMMISSION}`);
+								}}
+							/>
+						</Popovers>
+					</div>
+				)}
+
 				{afterChildren}
 			</div>
 
