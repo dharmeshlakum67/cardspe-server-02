@@ -31,6 +31,8 @@ import {
 } from './type/wallet-transaction.type';
 import walletTransactionService from './service/walletTransactionService';
 import AddMoneyModal from './components/AddMoneyModal';
+import ApproveServiceTransactionModal from './components/ApproveServiceTransactionModal';
+import RejectServiceTransactionModal from './components/RejectServiceTransactionModal';
 import './css/WalletTransactionPage.scss';
 import { getImageUrl } from '../../../../helpers/helpers';
 
@@ -106,6 +108,12 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 	// MODAL STATES
 	const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState<boolean>(false);
 
+	// SERVICE TRANSACTION REVIEW MODALS
+	const [selectedTransactionForReview, setSelectedTransactionForReview] =
+		useState<IWalletTransaction | null>(null);
+	const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
+	const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
+
 	// IMAGE PREVIEW MODAL
 	const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
 	const [previewImageTitle, setPreviewImageTitle] = useState<string>('Payment Proof');
@@ -123,7 +131,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [perPage, setPerPage] = useState<number>(10);
 
-	const { canRead, canCreate, isLoadingPermissions } = usePermission();
+	const { canRead, canCreate, canReview, hasPermission, isLoadingPermissions } = usePermission();
 
 	const hasReadPermission =
 		isSelf ||
@@ -351,6 +359,17 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 		});
 	};
 
+	// OPEN APPROVE / REJECT MODALS
+	const handleOpenApproveModal = (item: IWalletTransaction) => {
+		setSelectedTransactionForReview(item);
+		setIsApproveModalOpen(true);
+	};
+
+	const handleOpenRejectModal = (item: IWalletTransaction) => {
+		setSelectedTransactionForReview(item);
+		setIsRejectModalOpen(true);
+	};
+
 	// OPEN IMAGE PREVIEW
 	const handlePreviewImage = (url: string, title: string = 'Payment Proof') => {
 		setPreviewImageUrl(url);
@@ -516,7 +535,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 						<div className='d-flex flex-column text-center'>
 							<span className={`amount-display ${isCredit ? 'credit' : 'debit'}`}>
 								{isCredit ? '+' : '-'}
-								{formatINR(amountVal)}
+								{formatINR(payableVal)}
 							</span>
 							{chargeVal > 0 && (
 								<span className='charge-tag'>
@@ -524,7 +543,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 								</span>
 							)}
 							<span className='text-muted small' style={{ fontSize: '0.725rem' }}>
-								Payable: {formatINR(payableVal)}
+								Base Amount: {formatINR(amountVal)}
 							</span>
 						</div>
 					);
@@ -932,8 +951,47 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 						emptyIcon='AccountBalanceWallet'
 						actions={{
 							permissionKey: isSelf ? undefined : PERMISSION_KEYS.WALLET_TRANSACTION,
-							actionColumnWidth: '100px',
+							actionColumnWidth: !isSelf ? '145px' : '100px',
 							onView: handleOpenView,
+							customActions: (item) => {
+								const currentUserId = authUser?.id;
+								const isOwnRow = Boolean(
+									currentUserId && (
+										Number(item.admin_id) === Number(currentUserId) ||
+										Number(item.admin?.id) === Number(currentUserId) ||
+										Number((item as any).user_id) === Number(currentUserId) ||
+										Number((item as any).user?.id) === Number(currentUserId)
+									),
+								);
+								const hasOrderId = Boolean(
+									(item.order_id && String(item.order_id).trim() !== '') ||
+									((item as any).orderId && String((item as any).orderId).trim() !== '')
+								);
+								const isPendingDebit = item.transaction_type === 'debit' && item.status === 'pending';
+								const canShowReviewActions =
+									!isSelf && !isOwnRow && isPendingDebit && hasOrderId;
+
+								if (!canShowReviewActions) return null;
+
+								return (
+									<>
+										<button
+											type='button'
+											className='btn-action-circle btn-action-approve'
+											title='Approve Service Payment'
+											onClick={() => handleOpenApproveModal(item)}>
+											<Icon icon='Check' size='sm' />
+										</button>
+										<button
+											type='button'
+											className='btn-action-circle btn-action-reject'
+											title='Reject Service Payment'
+											onClick={() => handleOpenRejectModal(item)}>
+											<Icon icon='Close' size='sm' />
+										</button>
+									</>
+								);
+							},
 						}}
 						pagination={{
 							currentPage,
@@ -951,6 +1009,28 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 					<AddMoneyModal
 						isOpen={isAddMoneyModalOpen}
 						setIsOpen={setIsAddMoneyModalOpen}
+						onSuccess={() => {
+							fetchTransactions(true);
+							if (refetchMe) refetchMe();
+						}}
+					/>
+
+					{/* SERVICE TRANSACTION APPROVE MODAL */}
+					<ApproveServiceTransactionModal
+						isOpen={isApproveModalOpen}
+						setIsOpen={setIsApproveModalOpen}
+						transaction={selectedTransactionForReview}
+						onSuccess={() => {
+							fetchTransactions(true);
+							if (refetchMe) refetchMe();
+						}}
+					/>
+
+					{/* SERVICE TRANSACTION REJECT MODAL */}
+					<RejectServiceTransactionModal
+						isOpen={isRejectModalOpen}
+						setIsOpen={setIsRejectModalOpen}
+						transaction={selectedTransactionForReview}
 						onSuccess={() => {
 							fetchTransactions(true);
 							if (refetchMe) refetchMe();

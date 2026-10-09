@@ -697,6 +697,20 @@ export const WALLET_TRANSACTION_ENDPOINTS = {
 	}),
 } as const;
 
+// SERVICE TRANSACTION ENDPOINTS
+export const SERVICE_TRANSACTION_ENDPOINTS = {
+	APPROVE: (id: string | number) => ({
+		url: `/api/service-transaction/approve/${id}`,
+		method: HTTP_METHODS.PUT,
+		requiresAuth: true,
+	}),
+	REJECT: (id: string | number) => ({
+		url: `/api/service-transaction/reject/${id}`,
+		method: HTTP_METHODS.PUT,
+		requiresAuth: true,
+	}),
+} as const;
+
 // NOTIFICATION ENDPOINTS
 export const NOTIFICATION_ENDPOINTS = {
 	GET_ALL: {
@@ -862,6 +876,7 @@ export const API_ENDPOINTS = {
 	OPERATOR_COMMISSION: OPERATOR_COMMISSION_ENDPOINTS,
 	BANK_DETAIL: BANK_DETAIL_ENDPOINTS,
 	WALLET_TRANSACTION: WALLET_TRANSACTION_ENDPOINTS,
+	SERVICE_TRANSACTION: SERVICE_TRANSACTION_ENDPOINTS,
 	NOTIFICATION: NOTIFICATION_ENDPOINTS,
 	KYC: KYC_ENDPOINTS,
 	BLOCK_HISTORY: BLOCK_HISTORY_ENDPOINTS,

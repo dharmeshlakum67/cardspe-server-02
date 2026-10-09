@@ -1,6 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
@@ -24,6 +24,7 @@ import {
 	IKycRequiredError,
 } from '../../../../components/common';
 import usePermission from '../../../../hooks/usePermission';
+import AuthContext from '../../../../contexts/authContext';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../../menu';
@@ -34,8 +35,11 @@ import {
 	IWalletTransaction,
 	IWalletTransactionConstants,
 	IConstantOption,
+	IWalletTransactionCommissionItem,
 } from './type/wallet-transaction.type';
 import walletTransactionService from './service/walletTransactionService';
+import ApproveServiceTransactionModal from './components/ApproveServiceTransactionModal';
+import RejectServiceTransactionModal from './components/RejectServiceTransactionModal';
 import './css/WalletTransactionViewPage.scss';
 
 // NORMALIZE COLOR UTILITY
@@ -100,6 +104,7 @@ export const WalletTransactionViewPage: FC = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { authUser } = useContext(AuthContext);
 
 	const stateTransaction = (location.state as any)?.transaction as IWalletTransaction | undefined;
 	const [transaction, setTransaction] = useState<IWalletTransaction | null>(stateTransaction || null);
@@ -112,12 +117,16 @@ export const WalletTransactionViewPage: FC = () => {
 	const [previewImageTitle, setPreviewImageTitle] = useState<string>('Payment Proof');
 	const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
 
-	// APPROVE & REJECT MODAL STATES
+	// APPROVE & REJECT MODAL STATES (FOR TOP-UP / ADD MONEY)
 	const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
 	const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
 	const [rejectReason, setRejectReason] = useState<string>('');
 	const [rejectError, setRejectError] = useState<string>('');
 	const [isProcessingAction, setIsProcessingAction] = useState<boolean>(false);
+
+	// SERVICE TRANSACTION APPROVE & REJECT MODALS (FOR DEBIT SERVICE PAYMENTS)
+	const [isServiceApproveModalOpen, setIsServiceApproveModalOpen] = useState<boolean>(false);
+	const [isServiceRejectModalOpen, setIsServiceRejectModalOpen] = useState<boolean>(false);
 
 	const { canRead, canUpdate, isLoadingPermissions } = usePermission();
 	const numericId = id ? decryptId(id) : null;
@@ -355,12 +364,30 @@ export const WalletTransactionViewPage: FC = () => {
 	}
 
 	const isCredit = transaction.transaction_type === 'credit';
+	const isDebit = transaction.transaction_type === 'debit';
 	const isPending = transaction.status === 'pending';
 	const isAddMoney =
 		transaction.transaction_category === 'add_money' ||
 		(transaction as any).category === 'add_money';
+	const hasOrderId = Boolean(
+		(transaction.order_id && String(transaction.order_id).trim() !== '') ||
+		((transaction as any).orderId && String((transaction as any).orderId).trim() !== '')
+	);
+	const isServicePaymentDebit = isDebit && isPending && hasOrderId;
+
+	const currentUserId = authUser?.id;
+	const isOwnRow = Boolean(
+		currentUserId && (
+			Number(transaction.admin_id) === Number(currentUserId) ||
+			Number(transaction.admin?.id) === Number(currentUserId) ||
+			Number((transaction as any).user_id) === Number(currentUserId) ||
+			Number((transaction as any).user?.id) === Number(currentUserId)
+		),
+	);
+
 	const canReview = transaction.can_review ?? isPending;
-	const showReviewActions = hasUpdatePermission && isPending && canReview && isAddMoney;
+	const showReviewActions =
+		!isFromProfileWallet && isPending && !isOwnRow && (isServicePaymentDebit || isAddMoney);
 
 	const amountNum = Number(transaction.amount || 0);
 	const chargeNum = Number(transaction.charge_amount || 0);
@@ -406,6 +433,15 @@ export const WalletTransactionViewPage: FC = () => {
 	const modeMeta = getMeta(constants?.transaction_mode, transaction.transaction_mode);
 	const modeLabel =
 		modeMeta?.label || transaction.transaction_mode?.replace(/_/g, ' ') || 'Manual';
+
+	const commissionData = transaction.commission || (transaction as any).commission;
+	const commissionItems = Array.isArray(commissionData?.items) ? commissionData.items : [];
+	const hasCommission = Boolean(
+		commissionData && (
+			commissionItems.length > 0 ||
+			(commissionData.total_commission !== undefined && commissionData.total_commission !== null)
+		)
+	);
 
 	const { admin: user, reviewer } = transaction;
 	const userRole = user?.role;
@@ -463,9 +499,13 @@ export const WalletTransactionViewPage: FC = () => {
 										className='btn-reject-action'
 										disabled={isProcessingAction}
 										onClick={() => {
-											setRejectReason('');
-											setRejectError('');
-											setIsRejectModalOpen(true);
+											if (isServicePaymentDebit) {
+												setIsServiceRejectModalOpen(true);
+											} else {
+												setRejectReason('');
+												setRejectError('');
+												setIsRejectModalOpen(true);
+											}
 										}}>
 										<Icon icon='Close' size='sm' />
 										<span>Reject</span>
@@ -475,7 +515,13 @@ export const WalletTransactionViewPage: FC = () => {
 										type='button'
 										className='btn-approve-action'
 										disabled={isProcessingAction}
-										onClick={() => setIsApproveModalOpen(true)}>
+										onClick={() => {
+											if (isServicePaymentDebit) {
+												setIsServiceApproveModalOpen(true);
+											} else {
+												setIsApproveModalOpen(true);
+											}
+										}}>
 										{isProcessingAction ? (
 											<Spinner isSmall inButton isGrow={false} />
 										) : (
@@ -586,20 +632,20 @@ export const WalletTransactionViewPage: FC = () => {
 									</div>
 								)}
 
-								{/* RECEIPT / PAYMENT PROOF CARD */}
-								<div className='content-card'>
-									<div className='card-header-bar'>
-										<div className='header-left'>
-											<div className='header-icon'>
-												<Icon icon='Receipt' />
+								{/* RECEIPT / PAYMENT PROOF CARD - ONLY SHOWN IF SCREENSHOT EXISTS */}
+								{Boolean(screenshotUrl) && (
+									<div className='content-card'>
+										<div className='card-header-bar'>
+											<div className='header-left'>
+												<div className='header-icon'>
+													<Icon icon='Receipt' />
+												</div>
+												<h4 className='card-title'>Payment Proof / Receipt</h4>
 											</div>
-											<h4 className='card-title'>Payment Proof / Receipt</h4>
 										</div>
-									</div>
 
-									<div className='card-body-content'>
-										<div className='proof-section'>
-											{screenshotUrl ? (
+										<div className='card-body-content'>
+											<div className='proof-section'>
 												<div>
 													<div
 														className='proof-thumb-box'
@@ -633,15 +679,10 @@ export const WalletTransactionViewPage: FC = () => {
 														<span>View Full Size Proof</span>
 													</button>
 												</div>
-											) : (
-												<div className='empty-proof'>
-													<Icon icon='HideImage' className='icon' />
-													<span>No payment proof attached</span>
-												</div>
-											)}
+											</div>
 										</div>
 									</div>
-								</div>
+								)}
 							</div>
 						</div>
 
@@ -701,6 +742,117 @@ export const WalletTransactionViewPage: FC = () => {
 										</div>
 									</div>
 								</div>
+
+								{/* COMMISSION DISTRIBUTION BREAKDOWN (IF AVAILABLE) */}
+								{hasCommission && (
+									<div className='content-card'>
+										<div className='card-header-bar'>
+											<div className='header-left'>
+												<div className='header-icon'>
+													<Icon icon='AccountTree' />
+												</div>
+												<h4 className='card-title'>Multi-Level Commission Distribution</h4>
+											</div>
+											{commissionData?.total_commission !== undefined &&
+												commissionData?.total_commission !== null && (
+													<div className='d-flex align-items-center gap-2'>
+														<span className='text-muted small fw-semibold d-none d-sm-inline'>
+															Total Commission:
+														</span>
+														<span
+															className='badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5'
+															style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+															{formatINR(commissionData.total_commission)}
+														</span>
+													</div>
+												)}
+										</div>
+
+										<div className='card-body-content p-0'>
+											{commissionItems.length > 0 ? (
+												<div className='commission-table-wrapper'>
+													<table className='commission-table'>
+														<thead>
+															<tr>
+																<th>Level</th>
+																<th>Beneficiary Admin</th>
+																<th className='text-end'>Commission Earned</th>
+																<th className='text-center'>Status</th>
+															</tr>
+														</thead>
+														<tbody>
+															{commissionItems.map((item: IWalletTransactionCommissionItem, idx: number) => {
+																const levelNum = Number(item.level) || idx + 1;
+																const levelClass =
+																	levelNum === 1
+																		? 'level-1'
+																		: levelNum === 2
+																		? 'level-2'
+																		: levelNum === 3
+																		? 'level-3'
+																		: 'level-4';
+
+																const statusStr = String(item.status || 'credited').toLowerCase();
+																const statusClass =
+																	statusStr === 'credited'
+																		? 'status-credited'
+																		: statusStr === 'pending'
+																		? 'status-pending'
+																		: 'status-failed';
+
+																return (
+																	<tr key={item.admin_id ? `${item.admin_id}-${levelNum}` : idx}>
+																		<td style={{ width: '80px' }}>
+																			<span className={`level-badge ${levelClass}`}>
+																				L{levelNum}
+																			</span>
+																		</td>
+																		<td>
+																			<div className='admin-user-cell'>
+																				<span className='admin-name'>
+																					{item.admin_name || `Admin #${item.admin_id}`}
+																				</span>
+																				<div className='admin-sub'>
+																					{item.role_name && (
+																						<span className='admin-role'>
+																							{item.role_name}
+																						</span>
+																					)}
+																					{item.admin_id && (
+																						<span className='admin-id'>
+																							ID: #{item.admin_id}
+																						</span>
+																					)}
+																				</div>
+																			</div>
+																		</td>
+																		<td className='text-end'>
+																			<span className='commission-amount-val font-monospace'>
+																				+ {formatINR(item.admin_commission)}
+																			</span>
+																		</td>
+																		<td className='text-center' style={{ width: '130px' }}>
+																			<span className={`commission-status-pill ${statusClass}`}>
+																				{item.status || 'Credited'}
+																			</span>
+																		</td>
+																	</tr>
+																);
+															})}
+														</tbody>
+													</table>
+												</div>
+											) : (
+												<div className='p-4 text-center text-muted'>
+													<Icon icon='Info' size='lg' className='d-block mb-1 text-secondary opacity-50' />
+													<span className='small'>
+														No commission distributed for this transaction.
+													</span>
+												</div>
+											)}
+										</div>
+									</div>
+								)}
 
 								{/* TRANSACTION DETAILS & AUDIT */}
 								<div className='content-card'>
@@ -953,6 +1105,41 @@ export const WalletTransactionViewPage: FC = () => {
 							</Button>
 						</ModalFooter>
 					</Modal>
+					{/* SERVICE TRANSACTION APPROVE MODAL */}
+					<ApproveServiceTransactionModal
+						isOpen={isServiceApproveModalOpen}
+						setIsOpen={setIsServiceApproveModalOpen}
+						transaction={transaction}
+						onSuccess={async () => {
+							const targetId = numericId || transaction.id;
+							if (targetId) {
+								fetchedIdRef.current = '';
+								const refreshed = await walletTransactionService.getWalletTransactionById(targetId);
+								const updatedData = (refreshed as any)?.data || refreshed;
+								if (updatedData) {
+									setTransaction(updatedData);
+								}
+							}
+						}}
+					/>
+
+					{/* SERVICE TRANSACTION REJECT MODAL */}
+					<RejectServiceTransactionModal
+						isOpen={isServiceRejectModalOpen}
+						setIsOpen={setIsServiceRejectModalOpen}
+						transaction={transaction}
+						onSuccess={async () => {
+							const targetId = numericId || transaction.id;
+							if (targetId) {
+								fetchedIdRef.current = '';
+								const refreshed = await walletTransactionService.getWalletTransactionById(targetId);
+								const updatedData = (refreshed as any)?.data || refreshed;
+								if (updatedData) {
+									setTransaction(updatedData);
+								}
+							}
+						}}
+					/>
 				</div>
 			</Page>
 		</PageWrapper>

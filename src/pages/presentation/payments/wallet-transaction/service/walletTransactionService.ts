@@ -1,5 +1,8 @@
 import apiClient from '../../../../../services/apiClient';
-import { WALLET_TRANSACTION_ENDPOINTS } from '../../../../../constants/apiEndpoints';
+import {
+	WALLET_TRANSACTION_ENDPOINTS,
+	SERVICE_TRANSACTION_ENDPOINTS,
+} from '../../../../../constants/apiEndpoints';
 import {
 	IWalletTransaction,
 	IWalletTransactionQueryParams,
@@ -119,7 +122,7 @@ export const walletTransactionService = {
 		);
 	},
 
-	// 5. APPROVE WALLET TRANSACTION
+	// 5. APPROVE WALLET TRANSACTION (FOR ADD MONEY / TOP-UP)
 	approveWalletTransaction: async (
 		id: string | number,
 	): Promise<{
@@ -136,7 +139,7 @@ export const walletTransactionService = {
 		}>(WALLET_TRANSACTION_ENDPOINTS.APPROVE(id));
 	},
 
-	// 6. REJECT WALLET TRANSACTION
+	// 6. REJECT WALLET TRANSACTION (FOR ADD MONEY / TOP-UP)
 	rejectWalletTransaction: async (
 		id: string | number,
 		rejection_reason?: string,
@@ -153,6 +156,46 @@ export const walletTransactionService = {
 			data: any;
 		}>(WALLET_TRANSACTION_ENDPOINTS.REJECT(id), {
 			body: { rejection_reason: rejection_reason || '' },
+		});
+	},
+
+	// 7. APPROVE SERVICE TRANSACTION (FOR SERVICE PAYMENT DEBITS)
+	approveServiceTransaction: async (
+		id: string | number,
+		remark?: string,
+	): Promise<{
+		success: boolean;
+		statusCode?: number;
+		message: string;
+		data?: any;
+	}> => {
+		return apiClient<{
+			success: boolean;
+			statusCode?: number;
+			message: string;
+			data?: any;
+		}>(SERVICE_TRANSACTION_ENDPOINTS.APPROVE(id), {
+			body: remark ? { remark } : {},
+		});
+	},
+
+	// 8. REJECT SERVICE TRANSACTION (FOR SERVICE PAYMENT DEBITS)
+	rejectServiceTransaction: async (
+		id: string | number,
+		rejection_reason?: string,
+	): Promise<{
+		success: boolean;
+		statusCode?: number;
+		message: string;
+		data?: any;
+	}> => {
+		return apiClient<{
+			success: boolean;
+			statusCode?: number;
+			message: string;
+			data?: any;
+		}>(SERVICE_TRANSACTION_ENDPOINTS.REJECT(id), {
+			body: rejection_reason ? { rejection_reason } : {},
 		});
 	},
 };

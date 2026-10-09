@@ -41,6 +41,8 @@ export interface IWalletTransaction {
 	transaction_mode: TWalletTransactionMode;
 	transaction_id: string;
 	invoice_number: string | null;
+	order_id?: string | null;
+	user_id?: number;
 	reviewed_by: number | null;
 	reviewed_at: string | null;
 	rejection_reason: string | null;
@@ -49,7 +51,25 @@ export interface IWalletTransaction {
 	updated_at?: string;
 	can_review?: boolean;
 	admin?: IWalletTransactionUser;
+	user?: IWalletTransactionUser;
 	reviewer?: IWalletTransactionUser | null;
+	commission?: IWalletTransactionCommission | null;
+}
+
+export interface IWalletTransactionCommissionItem {
+	level: number;
+	admin_id: number;
+	admin_name: string;
+	role_name?: string;
+	commission_type: 'FLAT' | 'PERCENTAGE' | string;
+	commission_value: number | string;
+	admin_commission: number | string;
+	status: string;
+}
+
+export interface IWalletTransactionCommission {
+	total_commission: number | string;
+	items: IWalletTransactionCommissionItem[];
 }
 
 export interface IConstantOption {

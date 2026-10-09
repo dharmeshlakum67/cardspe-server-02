@@ -639,4 +639,181 @@
 			line-height: 1.45;
 		}
 	}
+
+	// COMMISSION DISTRIBUTION CARD
+	.commission-table-wrapper {
+		width: 100%;
+		overflow-x: auto;
+
+		.commission-table {
+			width: 100%;
+			margin-bottom: 0;
+			border-collapse: separate;
+			border-spacing: 0;
+
+			thead {
+				tr {
+					th {
+						background-color: #f8fafc;
+						color: #64748b;
+						font-size: 0.75rem;
+						font-weight: 700;
+						text-transform: uppercase;
+						letter-spacing: 0.04em;
+						padding: 0.75rem 1rem;
+						border-bottom: 1px solid #e2e8f0;
+						white-space: nowrap;
+
+						&:first-child {
+							border-top-left-radius: 8px;
+							border-bottom-left-radius: 8px;
+						}
+						&:last-child {
+							border-top-right-radius: 8px;
+							border-bottom-right-radius: 8px;
+						}
+					}
+				}
+			}
+
+			tbody {
+				tr {
+					transition: background-color 0.15s ease;
+
+					&:hover {
+						background-color: #fafbfc;
+					}
+
+					td {
+						padding: 0.85rem 1rem;
+						vertical-align: middle;
+						font-size: 0.875rem;
+						color: #0f172a;
+						border-bottom: 1px dashed #e2e8f0;
+
+						&:last-child {
+							border-right: none;
+						}
+					}
+
+					&:last-child td {
+						border-bottom: none;
+					}
+				}
+			}
+		}
+
+		.level-badge {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-width: 26px;
+			height: 26px;
+			padding: 0 0.45rem;
+			border-radius: 6px;
+			font-size: 0.75rem;
+			font-weight: 800;
+			letter-spacing: -0.01em;
+
+			&.level-1 {
+				background-color: #eff6ff;
+				color: #2563eb;
+				border: 1px solid #bfdbfe;
+			}
+			&.level-2 {
+				background-color: #faf5ff;
+				color: #9333ea;
+				border: 1px solid #e9d5ff;
+			}
+			&.level-3 {
+				background-color: #fff7ed;
+				color: #ea580c;
+				border: 1px solid #fed7aa;
+			}
+			&.level-4 {
+				background-color: #f0fdf4;
+				color: #16a34a;
+				border: 1px solid #bbf7d0;
+			}
+		}
+
+		.admin-user-cell {
+			display: flex;
+			flex-direction: column;
+			gap: 0.15rem;
+
+			.admin-name {
+				font-weight: 700;
+				color: #0f172a;
+				font-size: 0.875rem;
+			}
+
+			.admin-sub {
+				display: flex;
+				align-items: center;
+				gap: 0.35rem;
+				font-size: 0.75rem;
+
+				.admin-role {
+					background: #f1f5f9;
+					color: #475569;
+					padding: 0.05rem 0.4rem;
+					border-radius: 4px;
+					font-weight: 600;
+				}
+
+				.admin-id {
+					color: #94a3b8;
+					font-family: monospace;
+				}
+			}
+		}
+
+		.commission-type-pill {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			padding: 0.2rem 0.55rem;
+			border-radius: 6px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			background: #f8fafc;
+			border: 1px solid #e2e8f0;
+			color: #334155;
+		}
+
+		.commission-amount-val {
+			font-weight: 800;
+			font-size: 0.95rem;
+			color: #15803d;
+		}
+
+		.commission-status-pill {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.3rem;
+			padding: 0.2rem 0.6rem;
+			border-radius: 20px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			text-transform: capitalize;
+
+			&.status-credited {
+				background-color: #dcfce7;
+				color: #15803d;
+				border: 1px solid #bbf7d0;
+			}
+			&.status-pending {
+				background-color: #fef3c7;
+				color: #b45309;
+				border: 1px solid #fde68a;
+			}
+			&.status-failed,
+			&.status-rejected {
+				background-color: #fee2e2;
+				color: #dc2626;
+				border: 1px solid #fca5a5;
+			}
+		}
+	}
 }

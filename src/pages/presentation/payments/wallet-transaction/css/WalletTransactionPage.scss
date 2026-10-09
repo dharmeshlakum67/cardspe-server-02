@@ -220,6 +220,32 @@
 			color: #1d4ed8;
 		}
 	}
+
+	.btn-action-approve {
+		border-color: #86efac !important;
+		color: #16a34a !important;
+		background-color: #ffffff !important;
+
+		&:hover {
+			background-color: #f0fdf4 !important;
+			border-color: #15803d !important;
+			color: #15803d !important;
+			transform: scale(1.08);
+		}
+	}
+
+	.btn-action-reject {
+		border-color: #fca5a5 !important;
+		color: #dc2626 !important;
+		background-color: #ffffff !important;
+
+		&:hover {
+			background-color: #fef2f2 !important;
+			border-color: #b91c1c !important;
+			color: #b91c1c !important;
+			transform: scale(1.08);
+		}
+	}
 }
 
 // VIEW MODAL MODERN FINTECH STYLES
