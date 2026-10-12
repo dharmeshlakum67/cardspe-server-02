@@ -189,22 +189,12 @@ export const UserForm: FC<IUserFormProps> = ({
 			return;
 		}
 
-		// PASSWORD VALIDATION (REQUIRED FOR ADD, OPTIONAL FOR EDIT)
+		// PASSWORD VALIDATION (CREATE ONLY; PASSWORD IS NOT EDITABLE FROM THE EDIT FORM)
 		if (!isEditMode) {
 			if (!password) {
 				showNotification('Validation Error', 'Password is required', 'warning');
 				return;
 			}
-			if (password.length < 6) {
-				showNotification('Validation Error', 'Password must be at least 6 characters long', 'warning');
-				return;
-			}
-			if (confirmPassword && password !== confirmPassword) {
-				showNotification('Validation Error', 'Passwords do not match', 'warning');
-				return;
-			}
-		} else if (password) {
-			// In edit mode, if user provided a new password, validate it
 			if (password.length < 6) {
 				showNotification('Validation Error', 'Password must be at least 6 characters long', 'warning');
 				return;
@@ -431,62 +421,58 @@ export const UserForm: FC<IUserFormProps> = ({
 							</select>
 						</div>
 
-						{/* PASSWORD */}
-						<div className="col-12 col-md-6">
-							<label htmlFor="userPasswordInput" className="form-label">
-								Password {isEditMode ? <span className="text-muted">(Optional)</span> : <span className="text-danger">*</span>}
-							</label>
-							<div className="input-password-wrapper">
-								<input
-									id="userPasswordInput"
-									type={showPassword ? 'text' : 'password'}
-									className="form-control"
-									placeholder={
-										isEditMode
-											? 'Leave blank to keep existing password'
-											: 'Enter password (min 6 characters)'
-									}
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									required={!isEditMode}
-								/>
-								<button
-									type="button"
-									className="btn-toggle-password"
-									aria-label="Toggle password visibility"
-									onClick={() => setShowPassword((prev) => !prev)}>
-									<Icon icon={showPassword ? 'VisibilityOff' : 'Visibility'} size="sm" />
-								</button>
-							</div>
-						</div>
+						{!isEditMode && (
+							<>
+								{/* PASSWORD */}
+								<div className="col-12 col-md-6">
+									<label htmlFor="userPasswordInput" className="form-label">
+										Password <span className="text-danger">*</span>
+									</label>
+									<div className="input-password-wrapper">
+										<input
+											id="userPasswordInput"
+											type={showPassword ? 'text' : 'password'}
+											className="form-control"
+											placeholder="Enter password (min 6 characters)"
+											value={password}
+											onChange={(e) => setPassword(e.target.value)}
+											required
+										/>
+										<button
+											type="button"
+											className="btn-toggle-password"
+											aria-label="Toggle password visibility"
+											onClick={() => setShowPassword((prev) => !prev)}>
+											<Icon icon={showPassword ? 'VisibilityOff' : 'Visibility'} size="sm" />
+										</button>
+									</div>
+								</div>
 
-						{/* CONFIRM PASSWORD */}
-						<div className="col-12 col-md-6">
-							<label htmlFor="userConfirmPasswordInput" className="form-label">
-								Confirm Password {isEditMode && <span className="text-muted">(Optional)</span>}
-							</label>
-							<div className="input-password-wrapper">
-								<input
-									id="userConfirmPasswordInput"
-									type={showConfirmPassword ? 'text' : 'password'}
-									className="form-control"
-									placeholder={
-										isEditMode
-											? 'Leave blank to keep existing password'
-											: 'Re-enter password'
-									}
-									value={confirmPassword}
-									onChange={(e) => setConfirmPassword(e.target.value)}
-								/>
-								<button
-									type="button"
-									className="btn-toggle-password"
-									aria-label="Toggle confirm password visibility"
-									onClick={() => setShowConfirmPassword((prev) => !prev)}>
-									<Icon icon={showConfirmPassword ? 'VisibilityOff' : 'Visibility'} size="sm" />
-								</button>
-							</div>
-						</div>
+								{/* CONFIRM PASSWORD */}
+								<div className="col-12 col-md-6">
+									<label htmlFor="userConfirmPasswordInput" className="form-label">
+										Confirm Password
+									</label>
+									<div className="input-password-wrapper">
+										<input
+											id="userConfirmPasswordInput"
+											type={showConfirmPassword ? 'text' : 'password'}
+											className="form-control"
+											placeholder="Re-enter password"
+											value={confirmPassword}
+											onChange={(e) => setConfirmPassword(e.target.value)}
+										/>
+										<button
+											type="button"
+											className="btn-toggle-password"
+											aria-label="Toggle confirm password visibility"
+											onClick={() => setShowConfirmPassword((prev) => !prev)}>
+											<Icon icon={showConfirmPassword ? 'VisibilityOff' : 'Visibility'} size="sm" />
+										</button>
+									</div>
+								</div>
+							</>
+						)}
 					</div>
 				</div>
 			</div>
