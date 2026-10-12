@@ -74,6 +74,10 @@ export const PAGE_ROUTES = {
 	API_DOCUMENTATION_VIEW: 'developer/api-documentation/view/:id',
 	API_DOCUMENTATION_PORTAL: 'developer/api-documentation/portal',
 	API_DOCUMENTATION_PREVIEW: 'developer/api-documentation/preview/:slug',
+
+	// REPORTS
+	REPORTS: 'reports',
+	TRANSACTION_REPORT: 'reports/transaction-report',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

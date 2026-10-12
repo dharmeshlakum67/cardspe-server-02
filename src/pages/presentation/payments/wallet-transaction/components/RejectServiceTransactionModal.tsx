@@ -196,8 +196,4 @@ export const RejectServiceTransactionModal: FC<IRejectServiceTransactionModalPro
 	);
 };
 
-RejectServiceTransactionModal.defaultProps = {
-	transaction: null,
-};
-
 export default RejectServiceTransactionModal;

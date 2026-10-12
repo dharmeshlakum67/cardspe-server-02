@@ -199,8 +199,4 @@ export const ApproveServiceTransactionModal: FC<IApproveServiceTransactionModalP
 	);
 };
 
-ApproveServiceTransactionModal.defaultProps = {
-	transaction: null,
-};
-
 export default ApproveServiceTransactionModal;

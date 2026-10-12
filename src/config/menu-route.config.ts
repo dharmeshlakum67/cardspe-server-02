@@ -216,6 +216,34 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'API Documentation',
 		subMenu: null,
 	},
+
+	// REPORTS PARENT (PATH NULL = EXPANDABLE GROUP)
+	reports: {
+		path: null,
+		icon: 'Assessment',
+		text: 'Reports',
+		subMenu: null,
+	},
+	report: {
+		path: null,
+		icon: 'Assessment',
+		text: 'Reports',
+		subMenu: null,
+	},
+
+	// TRANSACTION REPORT CHILD MODULE
+	transaction_report: {
+		path: PAGE_ROUTES.TRANSACTION_REPORT,
+		icon: 'ReceiptLong',
+		text: 'Transaction Report',
+		subMenu: null,
+	},
+	transaction_reports: {
+		path: PAGE_ROUTES.TRANSACTION_REPORT,
+		icon: 'ReceiptLong',
+		text: 'Transaction Report',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

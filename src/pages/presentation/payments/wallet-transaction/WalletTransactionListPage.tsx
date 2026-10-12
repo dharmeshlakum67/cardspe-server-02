@@ -953,6 +953,7 @@ export const WalletTransactionListPage: FC<IWalletTransactionListPageProps> = ({
 							permissionKey: isSelf ? undefined : PERMISSION_KEYS.WALLET_TRANSACTION,
 							actionColumnWidth: !isSelf ? '145px' : '100px',
 							onView: handleOpenView,
+							// eslint-disable-next-line react/no-unstable-nested-components
 							customActions: (item) => {
 								const currentUserId = authUser?.id;
 								const isOwnRow = Boolean(

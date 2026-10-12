@@ -858,6 +858,20 @@ export const OPERATOR_COMMISSION_ENDPOINTS = {
 	},
 } as const;
 
+// REPORT ENDPOINTS
+export const REPORT_ENDPOINTS = {
+	TRANSACTION_REPORT_LIST: {
+		url: '/api/reports/transaction-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	TRANSACTION_REPORT_DOWNLOAD: {
+		url: '/api/reports/transaction-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+} as const;
+
 // COMBINED API ENDPOINTS
 export const API_ENDPOINTS = {
 	DASHBOARD: DASHBOARD_ENDPOINTS,
@@ -888,6 +902,8 @@ export const API_ENDPOINTS = {
 	API_KEY_REQUEST: API_KEY_REQUEST_ENDPOINTS,
 	API_DOCUMENTATION: API_DOCUMENTATION_ENDPOINTS,
 	DEVELOPER: API_KEY_REQUEST_ENDPOINTS,
+	REPORTS: REPORT_ENDPOINTS,
+	REPORT: REPORT_ENDPOINTS,
 } as const;
 
 export default API_ENDPOINTS;

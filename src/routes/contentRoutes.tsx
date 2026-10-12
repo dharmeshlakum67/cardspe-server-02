@@ -116,6 +116,12 @@ const ApiDocumentationPortalPage = lazy(
 const PaymentGatewayListPage = lazy(
 	() => import('../pages/presentation/setting/payment-gateway/PaymentGatewayListPage'),
 );
+const TransactionReportPage = lazy(
+	() => import('../pages/presentation/reports/transaction-report/TransactionReportPage'),
+);
+const GenericReportPage = lazy(
+	() => import('../pages/presentation/reports/GenericReportPage'),
+);
 
 const contents: RouteProps[] = [
 	{
@@ -313,6 +319,14 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.API_DOCUMENTATION_PREVIEW,
 		element: <ApiDocumentationPortalPage />,
+	},
+	{
+		path: PAGE_ROUTES.TRANSACTION_REPORT,
+		element: <TransactionReportPage />,
+	},
+	{
+		path: 'reports/:reportType',
+		element: <GenericReportPage />,
 	},
 	{
 		path: '*',
