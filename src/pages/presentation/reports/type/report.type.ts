@@ -88,10 +88,14 @@ export interface IReportFilterItem {
 	type: 'text' | 'search' | 'select' | 'dropdown' | 'date' | 'daterange' | 'date_range' | 'number' | string;
 	placeholder?: string;
 	options?: IReportFilterOption[];
+	apiRoute?: string;
+	apiUrl?: string;
+	endpoint?: string;
 	defaultValue?: any;
 	min?: number;
 	max?: number;
 	step?: number;
+	[key: string]: any;
 }
 
 export interface IReportData {
@@ -128,6 +132,9 @@ export interface IDynamicReportProps {
 	permissionKey?: string;
 	parentPermissionKey?: string;
 	defaultTitle?: string;
+	defaultSortBy?: string;
+	defaultSortOrder?: 'ASC' | 'DESC';
+	defaultLimit?: number;
 	breadcrumbs?: { label: string; to?: string; current?: boolean }[];
 	extraQueryParams?: Record<string, any>;
 	hideExport?: boolean;

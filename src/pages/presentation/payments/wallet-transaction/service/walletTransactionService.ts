@@ -12,20 +12,59 @@ import {
 	IPaymentMethodsResponse,
 } from '../type/wallet-transaction.type';
 
+// IN-MEMORY CACHE FOR WALLET TRANSACTION CONSTANTS (FETCHED ONCE PER APP SESSION)
+let cachedWalletTransactionConstants: {
+	success: boolean;
+	statusCode: number;
+	message: string;
+	data: IWalletTransactionConstants;
+} | null = null;
+
+let pendingWalletTransactionConstantsPromise: Promise<{
+	success: boolean;
+	statusCode: number;
+	message: string;
+	data: IWalletTransactionConstants;
+}> | null = null;
+
 export const walletTransactionService = {
-	// 1. GET WALLET TRANSACTION CONSTANTS
+	// 1. GET WALLET TRANSACTION CONSTANTS (CACHED)
 	getWalletTransactionConstants: async (): Promise<{
 		success: boolean;
 		statusCode: number;
 		message: string;
 		data: IWalletTransactionConstants;
 	}> => {
-		return apiClient<{
-			success: boolean;
-			statusCode: number;
-			message: string;
-			data: IWalletTransactionConstants;
-		}>(WALLET_TRANSACTION_ENDPOINTS.GET_CONSTANTS);
+		if (cachedWalletTransactionConstants) {
+			return cachedWalletTransactionConstants;
+		}
+
+		if (pendingWalletTransactionConstantsPromise) {
+			return pendingWalletTransactionConstantsPromise;
+		}
+
+		pendingWalletTransactionConstantsPromise = (async () => {
+			try {
+				const response = await apiClient<{
+					success: boolean;
+					statusCode: number;
+					message: string;
+					data: IWalletTransactionConstants;
+				}>(WALLET_TRANSACTION_ENDPOINTS.GET_CONSTANTS);
+				cachedWalletTransactionConstants = response;
+				return response;
+			} finally {
+				pendingWalletTransactionConstantsPromise = null;
+			}
+		})();
+
+		return pendingWalletTransactionConstantsPromise;
+	},
+
+	// CLEAR CACHED CONSTANTS (IF NEEDED)
+	clearWalletTransactionConstantsCache: () => {
+		cachedWalletTransactionConstants = null;
+		pendingWalletTransactionConstantsPromise = null;
 	},
 
 	// 2. GET ALL WALLET TRANSACTIONS (SCOPED)

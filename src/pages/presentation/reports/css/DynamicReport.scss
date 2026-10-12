@@ -162,6 +162,103 @@
 						color: #94a3b8;
 					}
 				}
+
+				// ASYNC SEARCHABLE DROPDOWN FILTER
+				&.async-dropdown-wrapper {
+					position: relative;
+
+					.async-select-control {
+						cursor: pointer;
+						height: 42px;
+						border-radius: 2rem;
+						border: 1px solid #d1d5db;
+						font-size: 0.875rem;
+						font-weight: 500;
+						color: #1e293b;
+						padding: 0.45rem 1.25rem;
+						background-color: #ffffff;
+						background-image: none;
+						transition: all 0.15s ease-in-out;
+
+						&:focus,
+						&.is-open {
+							border-color: #5c56b6;
+							box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.12);
+							outline: none;
+						}
+
+						&.has-value {
+							color: #0f172a;
+							font-weight: 600;
+						}
+
+						.async-arrow-icon {
+							transition: transform 0.2s ease-in-out;
+							color: #64748b;
+
+							&.rotate-180 {
+								transform: rotate(180deg);
+							}
+						}
+
+						.async-clear-btn {
+							display: inline-flex;
+							align-items: center;
+							justify-content: center;
+							width: 18px;
+							height: 18px;
+							border-radius: 50%;
+							transition: all 0.15s ease-in-out;
+
+							&:hover {
+								background-color: #f1f5f9;
+								color: #ef4444 !important;
+							}
+						}
+					}
+
+					.async-dropdown-menu {
+						position: absolute;
+						top: calc(100% + 4px);
+						left: 0;
+						width: 100%;
+						min-width: 240px;
+						background: #ffffff;
+						border: 1px solid #e2e8f0;
+						border-radius: 12px;
+						box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+						z-index: 1050;
+						overflow: hidden;
+
+						.async-options-list {
+							&::-webkit-scrollbar {
+								width: 6px;
+							}
+							&::-webkit-scrollbar-thumb {
+								background: #cbd5e1;
+								border-radius: 3px;
+							}
+						}
+
+						.async-option-item {
+							background: transparent;
+							color: #334155;
+							transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+							cursor: pointer;
+
+							&:hover {
+								background-color: #f8fafc;
+								color: #0f172a;
+							}
+
+							&.is-selected {
+								background-color: #eef2ff;
+								color: #4f46e5;
+								font-weight: 600;
+							}
+						}
+					}
+				}
 			}
 
 			.btn-reset-filters {

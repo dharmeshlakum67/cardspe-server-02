@@ -32,9 +32,9 @@ export const PERMISSION_KEYS = {
 	DEVELOPER: 'developer',
 	API_REQUEST: 'api_request',
 	API_DOCUMENTATION: 'api_documentation',
-	REPORT: 'report',
 	REPORTS: 'reports',
 	TRANSACTION_REPORT: 'transaction_report',
+	SERVICE_CATEGORY_TRANSACTION_REPORT: 'service_category_transaction_report',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

@@ -1,7 +1,9 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
+/* eslint-disable react/require-default-props, react/default-props-match-prop-types */
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import Spinner from '../../../../components/bootstrap/Spinner';
@@ -22,9 +24,9 @@ import {
 	IReportFilterItem,
 	IReportQueryParams,
 } from '../type/report.type';
-import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
-import { encryptId } from '../../../../helpers/routeEncryption';
+import { getImageUrl } from '../../../../helpers/helpers';
 import reportService from '../service/reportService';
+import AsyncDropdownFilter from './AsyncDropdownFilter';
 import '../css/DynamicReport.scss';
 
 // MAP BACKEND ICON NAMES TO MATERIAL / SVG ICONS SAFELY
@@ -60,6 +62,22 @@ const formatCurrency = (val: any) => {
 	const num = Number(val);
 	if (isNaN(num)) return String(val);
 	return `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+// GET DEFAULT DATE RANGE FOR CURRENT MONTH (YYYY-MM-01 TO YYYY-MM-LAST_DAY)
+const getCurrentMonthDateRange = () => {
+	const now = dayjs();
+	const s = now.startOf('month').format('YYYY-MM-DD');
+	const e = now.endOf('month').format('YYYY-MM-DD');
+	return {
+		date_from: s,
+		date_to: e,
+		startDate: s,
+		endDate: e,
+		start_date: s,
+		end_date: e,
+		date: `${s} to ${e}`,
+	};
 };
 
 // SERVICE CARD THEME MAPPING
@@ -108,22 +126,33 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 		summary.total_approved_amount !== undefined ||
 		summary.total_approved_count !== undefined ||
 		summary.total_pending_count !== undefined ||
-		summary.total_failed_count !== undefined;
+		summary.total_failed_count !== undefined ||
+		summary.success_amount !== undefined ||
+		summary.success_count !== undefined ||
+		summary.pending_amount !== undefined ||
+		summary.pending_count !== undefined ||
+		summary.fail_amount !== undefined ||
+		summary.fail_count !== undefined;
 
 	if (!hasOverview) {
 		return [];
 	}
 
+	const approvedCount = Number(summary.success_count ?? summary.total_approved_count ?? 0);
+	const pendingCount = Number(summary.pending_count ?? summary.total_pending_count ?? 0);
+	const failedCount = Number(summary.fail_count ?? summary.total_failed_count ?? 0);
+
 	const totalCount =
 		summary.total_count ??
-		(Number(summary.total_approved_count || 0) +
-			Number(summary.total_pending_count || 0) +
-			Number(summary.total_failed_count || 0));
+		(approvedCount + pendingCount + failedCount);
 
-	const totalAmount = Number(summary.total_amount || 0);
-	const approvedCount = Number(summary.total_approved_count || 0);
-	const pendingCount = Number(summary.total_pending_count || 0);
-	const failedCount = Number(summary.total_failed_count || 0);
+	const totalAmount = Number(summary.total_amount ?? 0);
+	const approvedAmount =
+		summary.success_amount !== undefined ? summary.success_amount : summary.total_approved_amount;
+	const pendingAmount =
+		summary.pending_amount !== undefined ? summary.pending_amount : summary.total_pending_amount;
+	const failedAmount =
+		summary.fail_amount !== undefined ? summary.fail_amount : summary.total_failed_amount;
 
 	return [
 		// Card 1: Total Transactions
@@ -147,11 +176,11 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 			key: 'successful',
 			title: 'Successful',
 			value:
-				summary.total_approved_amount !== undefined
-					? formatCurrency(summary.total_approved_amount)
+				approvedAmount !== undefined
+					? formatCurrency(approvedAmount)
 					: approvedCount,
 			countText:
-				summary.total_approved_amount !== undefined ? `(${approvedCount})` : undefined,
+				approvedAmount !== undefined ? `(${approvedCount})` : undefined,
 			icon: 'CheckCircle',
 			theme: 'blue',
 		},
@@ -160,11 +189,11 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 			key: 'pending',
 			title: 'Pending',
 			value:
-				summary.total_pending_amount !== undefined
-					? formatCurrency(summary.total_pending_amount)
+				pendingAmount !== undefined
+					? formatCurrency(pendingAmount)
 					: pendingCount,
 			countText:
-				summary.total_pending_amount !== undefined ? `(${pendingCount})` : undefined,
+				pendingAmount !== undefined ? `(${pendingCount})` : undefined,
 			icon: 'HourglassTop',
 			theme: 'amber',
 		},
@@ -173,11 +202,11 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 			key: 'failed',
 			title: 'Failed',
 			value:
-				summary.total_failed_amount !== undefined
-					? formatCurrency(summary.total_failed_amount)
+				failedAmount !== undefined
+					? formatCurrency(failedAmount)
 					: failedCount,
 			countText:
-				summary.total_failed_amount !== undefined ? `(${failedCount})` : undefined,
+				failedAmount !== undefined ? `(${failedCount})` : undefined,
 			icon: 'Cancel',
 			theme: 'rose',
 		},
@@ -189,6 +218,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	permissionKey,
 	parentPermissionKey = 'reports',
 	defaultTitle,
+	defaultSortBy,
+	defaultSortOrder,
+	defaultLimit,
 	breadcrumbs,
 	extraQueryParams,
 	hideExport = false,
@@ -247,11 +279,27 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	// FILTER & PAGINATION STATES
 	const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
 	const [page, setPage] = useState<number>(1);
-	const [limit, setLimit] = useState<number>(20);
-	const [sortBy, setSortBy] = useState<string>('created_at');
-	const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-	const [filterValues, setFilterValues] = useState<Record<string, any>>({});
-	const [debouncedFilterValues, setDebouncedFilterValues] = useState<Record<string, any>>({});
+	const [limit, setLimit] = useState<number>(defaultLimit || 10);
+	const [sortBy, setSortBy] = useState<string>(defaultSortBy || 'created_at');
+	const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>(defaultSortOrder || 'DESC');
+	const [filterValues, setFilterValues] = useState<Record<string, any>>(() =>
+		getCurrentMonthDateRange(),
+	);
+	const [debouncedFilterValues, setDebouncedFilterValues] = useState<Record<string, any>>(() =>
+		getCurrentMonthDateRange(),
+	);
+
+	// STABLE EXTRA PARAMS FOR OPERATOR DROPDOWN (CASCADING FILTER)
+	const selectedCategory = filterValues.service_category_id || filterValues.category_id;
+	const operatorExtraParams = useMemo(() => {
+		if (selectedCategory && selectedCategory !== 'all') {
+			return {
+				service_category_id: selectedCategory,
+				category_id: selectedCategory,
+			};
+		}
+		return undefined;
+	}, [selectedCategory]);
 
 	// NORMALIZE BACKEND-DRIVEN FILTERS (SUPPORTING ARRAY OR OBJECT CONTRACT)
 	const parsedFilters = useMemo<IReportFilterItem[]>(() => {
@@ -271,6 +319,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 								value: String(val),
 						  }))
 						: undefined),
+				apiRoute: def?.apiRoute || def?.apiUrl || def?.endpoint,
 				...def,
 			}));
 		}
@@ -400,19 +449,27 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					cleanFilters.date_to = e;
 					cleanFilters.startDate = s;
 					cleanFilters.endDate = e;
-					cleanFilters[filter.field] = `${s}_${e}`;
+					cleanFilters.start_date = s;
+					cleanFilters.end_date = e;
+					cleanFilters.date = `${s} to ${e}`;
+					cleanFilters[filter.field] = `${s} to ${e}`;
 				} else if (s) {
 					cleanFilters.date_from = s;
 					cleanFilters.startDate = s;
+					cleanFilters.start_date = s;
 				} else if (e) {
 					cleanFilters.date_to = e;
 					cleanFilters.endDate = e;
+					cleanFilters.end_date = e;
 				}
 				handledRangeKeys.add(filter.field);
 				handledRangeKeys.add('date_from');
 				handledRangeKeys.add('date_to');
 				handledRangeKeys.add('startDate');
 				handledRangeKeys.add('endDate');
+				handledRangeKeys.add('start_date');
+				handledRangeKeys.add('end_date');
+				handledRangeKeys.add('date');
 			} else if (isNumberRange) {
 				const min = debouncedFilterValues.amount_min ?? debouncedFilterValues[`${filter.field}_min`];
 				const max = debouncedFilterValues.amount_max ?? debouncedFilterValues[`${filter.field}_max`];
@@ -553,23 +610,36 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		}
 	};
 
-	// RESET ALL FILTERS
+	// RESET ALL FILTERS (RESTORES CURRENT MONTH DEFAULT)
 	const handleResetFilters = () => {
 		lastFetchKeyRef.current = '';
 		prevFilterValuesRef.current = '{}';
-		setFilterValues({});
-		setDebouncedFilterValues({});
-		setSortBy('created_at');
-		setSortOrder('DESC');
+		const defaultDateRange = getCurrentMonthDateRange();
+		setFilterValues(defaultDateRange);
+		setDebouncedFilterValues(defaultDateRange);
+		setSortBy(defaultSortBy || 'created_at');
+		setSortOrder(defaultSortOrder || 'DESC');
 		setPage(1);
 	};
 
-	// HANDLE FILTER INPUT CHANGE
+	// HANDLE FILTER INPUT CHANGE (WITH CASCADING RESET SUPPORT)
 	const handleFilterChange = (field: string, val: any) => {
-		setFilterValues((prev) => ({
-			...prev,
-			[field]: val,
-		}));
+		const cleanVal = val === 'all' ? '' : val;
+		setFilterValues((prev) => {
+			const next = {
+				...prev,
+				[field]: cleanVal,
+			};
+
+			// CASCADING: If service category changes or is cleared, reset the operator filter
+			if (field === 'service_category_id' || field === 'category_id') {
+				if (prev.operator_id) {
+					next.operator_id = '';
+				}
+			}
+
+			return next;
+		});
 	};
 
 	// HANDLE COLUMN HEADER SORT CLICK
@@ -601,21 +671,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			return;
 		}
 
-		// 2. Redirect to transaction details view page using row ID or raw value
-		const targetId =
-			row.id ||
-			row.transaction_id ||
-			row.txn_id ||
-			row.service_transaction_id ||
-			row.wallet_transaction_id ||
-			row._id ||
-			rawValue;
-
-		if (targetId) {
-			const safeEncryptedId = String(targetId).startsWith('sm_')
-				? String(targetId)
-				: encryptId(String(targetId));
-			navigate(`/${PAGE_ROUTES.WALLET_TRANSACTION}/view/${safeEncryptedId}`, {
+		// 2. Fallback to wallet transaction view if wallet_transaction_id is present
+		if (row.wallet_transaction_id) {
+			navigate(`/payments/wallet-transactions/view/${row.wallet_transaction_id}`, {
 				state: {
 					transaction: row,
 					from: 'transaction_report',
@@ -713,10 +771,11 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 
 			case 'image': {
 				if (!rawValue) return <span className='text-muted small'>-</span>;
+				const imageUrl = getImageUrl(rawValue);
 				return (
 					<img
-						src={rawValue}
-						alt='thumbnail'
+						src={imageUrl}
+						alt={String(row.name || 'service-icon')}
 						className='rounded-circle object-fit-cover'
 						style={{ width: '32px', height: '32px' }}
 					/>
@@ -838,8 +897,11 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 																date_to: eVal,
 																startDate: sVal,
 																endDate: eVal,
+																start_date: sVal,
+																end_date: eVal,
+																date: sVal && eVal ? `${sVal} to ${eVal}` : '',
 																[filter.field]:
-																	sVal && eVal ? `${sVal}_${eVal}` : '',
+																	sVal && eVal ? `${sVal} to ${eVal}` : '',
 															}));
 															if ((sVal && eVal) || (!sVal && !eVal)) {
 																setPage(1);
@@ -898,9 +960,36 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 											);
 										}
 
-										// 3. DROPDOWN / SELECT FILTER
+										// 3. DROPDOWN / SELECT FILTER (DYNAMIC API OR STATIC OPTIONS)
 										if (filter.type === 'select' || filter.type === 'dropdown') {
 											const currentVal = filterValues[filter.field] ?? '';
+											const hasApiRoute = Boolean(
+												filter.apiRoute ||
+												(filter as any).apiUrl ||
+												(filter as any).endpoint,
+											);
+
+											// Render dynamic searchable dropdown if apiRoute is provided
+											if (hasApiRoute) {
+												const isOperatorField = filter.field === 'operator_id';
+												const isCategoryChosen = Boolean(selectedCategory && selectedCategory !== 'all');
+												const isOperatorDisabled = isOperatorField && !isCategoryChosen;
+
+												return (
+													<AsyncDropdownFilter
+														key={filter.field}
+														filter={filter}
+														value={currentVal}
+														disabled={isOperatorDisabled}
+														disabledPlaceholder='Select Category first'
+														extraParams={isOperatorField ? operatorExtraParams : undefined}
+														onChange={(newVal) => handleFilterChange(filter.field, newVal)}
+														width={filter.field === 'service_category_id' ? '220px' : '200px'}
+													/>
+												);
+											}
+
+											// Standard static dropdown
 											return (
 												<div
 													key={filter.field}

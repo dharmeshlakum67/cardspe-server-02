@@ -119,6 +119,12 @@ const PaymentGatewayListPage = lazy(
 const TransactionReportPage = lazy(
 	() => import('../pages/presentation/reports/transaction-report/TransactionReportPage'),
 );
+const ServiceCategoryTransactionReportPage = lazy(
+	() =>
+		import(
+			'../pages/presentation/reports/service-category-transaction-report/ServiceCategoryTransactionReportPage'
+		),
+);
 const GenericReportPage = lazy(
 	() => import('../pages/presentation/reports/GenericReportPage'),
 );
@@ -323,6 +329,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.TRANSACTION_REPORT,
 		element: <TransactionReportPage />,
+	},
+	{
+		path: PAGE_ROUTES.SERVICE_CATEGORY_TRANSACTION_REPORT,
+		element: <ServiceCategoryTransactionReportPage />,
 	},
 	{
 		path: 'reports/:reportType',

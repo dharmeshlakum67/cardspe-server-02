@@ -226,7 +226,7 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 	},
 	report: {
 		path: null,
-		icon: 'Assessment',
+		icon: 'Report',
 		text: 'Reports',
 		subMenu: null,
 	},
@@ -238,10 +238,10 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Transaction Report',
 		subMenu: null,
 	},
-	transaction_reports: {
-		path: PAGE_ROUTES.TRANSACTION_REPORT,
-		icon: 'ReceiptLong',
-		text: 'Transaction Report',
+	service_category_transaction_report: {
+		path: PAGE_ROUTES.SERVICE_CATEGORY_TRANSACTION_REPORT,
+		icon: 'Category',
+		text: 'Service Category Report',
 		subMenu: null,
 	},
 };
