@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DynamicReportViewer from '../components/DynamicReportViewer';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { IReportRow } from '../type/report.type';
+import { encryptId } from '../../../../helpers/routeEncryption';
 
 const TRANSACTION_REPORT_BREADCRUMBS = [
 	{ label: 'Reports', to: undefined },
@@ -27,7 +28,11 @@ export const TransactionReportPage: FC = () => {
 						window.open(link, '_blank', 'noopener,noreferrer');
 						return;
 					}
-					const targetRoute = link.startsWith('/') ? link : `/${link}`;
+					let targetRoute = link.startsWith('/') ? link : `/${link}`;
+					const viewMatch = targetRoute.match(/^(\/.+\/(?:view|edit)\/)(\d+)$/);
+					if (viewMatch) {
+						targetRoute = `${viewMatch[1]}${encryptId(viewMatch[2])}`;
+					}
 					navigate(targetRoute, {
 						state: { transaction: row, from: 'transaction_report' },
 					});
@@ -36,9 +41,9 @@ export const TransactionReportPage: FC = () => {
 			}
 		}
 
-		// 2. If row has wallet_transaction_id, use direct unencrypted URL
+		// 2. If row has wallet_transaction_id, use encrypted URL
 		if (row.wallet_transaction_id) {
-			navigate(`/payments/wallet-transactions/view/${row.wallet_transaction_id}`, {
+			navigate(`/payments/wallet-transactions/view/${encryptId(String(row.wallet_transaction_id))}`, {
 				state: { transaction: row, from: 'transaction_report' },
 			});
 		}

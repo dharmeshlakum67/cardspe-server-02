@@ -24,6 +24,13 @@ export interface IWalletTransactionUser {
 	role?: IWalletTransactionRole | null;
 }
 
+export interface IWalletTransactionOperator {
+	id?: number;
+	name?: string;
+	operator_code?: string;
+	icon?: string | null;
+}
+
 export interface IWalletTransaction {
 	id: number;
 	admin_id: number;
@@ -54,6 +61,16 @@ export interface IWalletTransaction {
 	user?: IWalletTransactionUser;
 	reviewer?: IWalletTransactionUser | null;
 	commission?: IWalletTransactionCommission | null;
+
+	// Service & Operator Details
+	operator_name?: string | null;
+	operator?: IWalletTransactionOperator | null;
+	third_party_service?: string | null;
+	third_party_response?: any;
+	response?: any;
+	connection_number?: string | null;
+	customer_name?: string | null;
+	customer_mobile?: string | null;
 }
 
 export interface IWalletTransactionCommissionItem {

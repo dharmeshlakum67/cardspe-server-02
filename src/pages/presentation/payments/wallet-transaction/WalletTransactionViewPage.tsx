@@ -1,5 +1,6 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
+/* eslint-disable react/require-default-props, react/default-props-match-prop-types */
 import React, { FC, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
@@ -28,7 +29,7 @@ import AuthContext from '../../../../contexts/authContext';
 import { PERMISSION_KEYS } from '../../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../../constants/pageRoutes';
 import { authPagesMenu } from '../../../../menu';
-import { decryptId } from '../../../../helpers/routeEncryption';
+import { decryptId, encryptId } from '../../../../helpers/routeEncryption';
 import { formatDateTime } from '../../../../helpers/dateUtils';
 import { getImageUrl } from '../../../../helpers/helpers';
 import {
@@ -100,6 +101,33 @@ const getCustomBadgeStyle = (
 	};
 };
 
+// SAFE STRING FORMATTER (HANDLES OBJECTS LIKE { code, text }, ARRAYS, ERROR OBJECTS)
+const formatText = (val: any): string => {
+	if (val === undefined || val === null) return '';
+	if (typeof val === 'string') return val;
+	if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+	if (typeof val === 'object') {
+		if (val.text && val.code) {
+			return `${val.text} (Code: ${val.code})`;
+		}
+		if (val.text) return String(val.text);
+		if (val.message) return formatText(val.message);
+		if (val.reason) return formatText(val.reason);
+		if (val.desc || val.description) return String(val.desc || val.description);
+		if (val.error) return formatText(val.error);
+		if (val.name) return String(val.name);
+		if (val.label) return String(val.label);
+		if (val.title) return String(val.title);
+		if (val.code) return `Code: ${val.code}`;
+		try {
+			return JSON.stringify(val);
+		} catch {
+			return String(val);
+		}
+	}
+	return String(val);
+};
+
 export const WalletTransactionViewPage: FC = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
@@ -128,8 +156,25 @@ export const WalletTransactionViewPage: FC = () => {
 	const [isServiceApproveModalOpen, setIsServiceApproveModalOpen] = useState<boolean>(false);
 	const [isServiceRejectModalOpen, setIsServiceRejectModalOpen] = useState<boolean>(false);
 
+	// OPERATOR & GATEWAY RESPONSE ACCORDION / LOGO ERROR STATES
+	const [isResponsePayloadOpen, setIsResponsePayloadOpen] = useState<boolean>(false);
+	const [operatorLogoError, setOperatorLogoError] = useState<boolean>(false);
+
 	const { canRead, canUpdate, isLoadingPermissions } = usePermission();
 	const numericId = id ? decryptId(id) : null;
+
+	// AUTOMATICALLY REWRITE UNENCRYPTED NUMERIC ID IN URL TO ENCRYPTED TOKEN
+	useEffect(() => {
+		if (id && /^\d+$/.test(id)) {
+			const encrypted = encryptId(id);
+			if (encrypted && encrypted !== id) {
+				navigate(`/payments/wallet-transactions/view/${encrypted}`, {
+					replace: true,
+					state: location.state,
+				});
+			}
+		}
+	}, [id, navigate, location.state]);
 
 	const fetchedIdRef = useRef<string>('');
 	const isFetchingRef = useRef<boolean>(false);
@@ -369,11 +414,87 @@ export const WalletTransactionViewPage: FC = () => {
 	const isAddMoney =
 		transaction.transaction_category === 'add_money' ||
 		(transaction as any).category === 'add_money';
+	// SERVICE & OPERATOR DATA EXTRACTION
+	const operatorObj = transaction.operator;
+	const operatorName = formatText(
+		operatorObj?.name || transaction.operator_name || (transaction as any).operatorName,
+	);
+	const operatorCode = formatText(operatorObj?.operator_code);
+	const operatorIcon = operatorObj?.icon;
+	const operatorIconUrl = getImageUrl(operatorIcon);
+	const thirdPartyService = formatText(transaction.third_party_service);
+	const connectionNumber = formatText(transaction.connection_number);
+	const customerName = formatText(transaction.customer_name);
+	const customerMobile = formatText(transaction.customer_mobile);
+	const rawResponse = transaction.response;
+	const rawThirdPartyResponse = transaction.third_party_response;
+
+	const hasServiceDetails = Boolean(
+		operatorName ||
+		operatorCode ||
+		operatorIcon ||
+		thirdPartyService ||
+		connectionNumber ||
+		customerName ||
+		customerMobile ||
+		rawResponse ||
+		rawThirdPartyResponse,
+	);
+
+	const parsePayload = (val: any) => {
+		if (val === undefined || val === null || val === '') return null;
+		if (typeof val === 'object') return val;
+		if (typeof val === 'string') {
+			try {
+				const parsed = JSON.parse(val);
+				if (typeof parsed === 'object' && parsed !== null) return parsed;
+			} catch {
+				return val;
+			}
+			return val;
+		}
+		return val;
+	};
+
+	const parsedResponse = parsePayload(rawResponse);
+	const parsedThirdPartyResponse = parsePayload(rawThirdPartyResponse);
+	const primaryResponseObj =
+		typeof parsedThirdPartyResponse === 'object' && parsedThirdPartyResponse !== null
+			? parsedThirdPartyResponse
+			: typeof parsedResponse === 'object' && parsedResponse !== null
+			? parsedResponse
+			: null;
+
+	const rawReason =
+		primaryResponseObj?.reason ??
+		primaryResponseObj?.message ??
+		(typeof parsedResponse === 'object'
+			? parsedResponse?.reason ?? parsedResponse?.message
+			: null);
+	const responseReason = formatText(rawReason);
+
+	const rawRejectedAt =
+		primaryResponseObj?.rejected_at ??
+		(typeof parsedResponse === 'object' ? parsedResponse?.rejected_at : null);
+	const rejectedAt =
+		typeof rawRejectedAt === 'string' || typeof rawRejectedAt === 'number'
+			? String(rawRejectedAt)
+			: '';
+
+	const rawRejectedBy =
+		primaryResponseObj?.rejected_by ??
+		(typeof parsedResponse === 'object' ? parsedResponse?.rejected_by : null);
+	const rejectedBy = formatText(rawRejectedBy);
+
+	const isResponsesIdentical =
+		Boolean(rawResponse && rawThirdPartyResponse) &&
+		JSON.stringify(parsedResponse) === JSON.stringify(parsedThirdPartyResponse);
+
 	const hasOrderId = Boolean(
 		(transaction.order_id && String(transaction.order_id).trim() !== '') ||
 		((transaction as any).orderId && String((transaction as any).orderId).trim() !== '')
 	);
-	const isServicePaymentDebit = isDebit && isPending && hasOrderId;
+	const isServicePaymentDebit = isDebit && isPending && (hasOrderId || hasServiceDetails);
 
 	const currentUserId = authUser?.id;
 	const isOwnRow = Boolean(
@@ -445,6 +566,7 @@ export const WalletTransactionViewPage: FC = () => {
 
 	const { admin: user, reviewer } = transaction;
 	const userRole = user?.role;
+	const userAvatarUrl = getImageUrl(user?.profile_picture);
 	const screenshotUrl = getImageUrl(transaction.screenshot);
 	const backRoute = isFromProfileWallet
 		? `/${PAGE_ROUTES.PROFILE_WALLET}`
@@ -486,9 +608,9 @@ export const WalletTransactionViewPage: FC = () => {
 							<button
 								type='button'
 								className='btn-back-action'
-								onClick={() => navigate(backRoute)}>
+								onClick={() => navigate(-1)}>
 								<Icon icon='ArrowBack' size='sm' />
-								<span>Back to List</span>
+								<span>Back</span>
 							</button>
 
 							{/* REJECT & APPROVE BUTTONS (ACTIVE WHEN AUTHORIZED TO REVIEW) */}
@@ -554,9 +676,9 @@ export const WalletTransactionViewPage: FC = () => {
 										<div className='card-body-content'>
 											<div className='user-info-wrapper'>
 												<div className='user-header-row'>
-													{user.profile_picture ? (
+													{userAvatarUrl ? (
 														<img
-															src={user.profile_picture}
+															src={userAvatarUrl}
 															alt={user.name || user.username}
 															className='user-avatar-img'
 														/>
@@ -628,6 +750,316 @@ export const WalletTransactionViewPage: FC = () => {
 													</div>
 												</div>
 											</div>
+										</div>
+									</div>
+								)}
+
+								{/* SERVICE & OPERATOR DETAILS (WHEN SERVICE OR OPERATOR DATA EXISTS) */}
+								{hasServiceDetails && (
+									<div className='content-card service-details-card'>
+										<div className='card-header-bar'>
+											<div className='header-left'>
+												<div className='header-icon'>
+													<Icon icon='CellTower' />
+												</div>
+												<h4 className='card-title'>Service & Operator Details</h4>
+											</div>
+											{thirdPartyService && (
+												<div className='d-flex align-items-center gap-2'>
+													<span className='service-provider-pill'>
+													 {thirdPartyService}
+													</span>
+												</div>
+											)}
+										</div>
+
+										<div className='card-body-content'>
+											{/* OPERATOR HERO BANNER & CONNECTION NUMBER */}
+											<div className='operator-hero-banner'>
+												<div className='operator-profile-group'>
+													<div className='operator-avatar-box'>
+														{operatorIconUrl && !operatorLogoError ? (
+															<img
+																src={operatorIconUrl}
+																alt={operatorName || 'Operator'}
+																className='operator-logo-img'
+																onError={() => setOperatorLogoError(true)}
+															/>
+														) : (
+															<div className='operator-logo-placeholder'>
+																<Icon icon='CellTower' />
+															</div>
+														)}
+													</div>
+
+													<div className='operator-text-meta'>
+														<div className='operator-name-row'>
+															<h3 className='operator-title text-truncate'>
+																{operatorName || 'Utility Service Provider'}
+															</h3>
+														</div>
+
+														<div className='operator-chips-row'>
+															{operatorCode && (
+																<span className='meta-chip'>
+																	<Icon icon='Numbers' size='sm' />
+																	<span>Op Code - <strong>{operatorCode}</strong></span>
+																</span>
+															)}
+														</div>
+													</div>
+												</div>
+
+												{connectionNumber && (
+													<div className='connection-highlight-card'>
+														<span className='conn-label'>
+															<Icon icon='Tag' size='sm' />
+															<span>Connection / Consumer Number</span>
+														</span>
+														<div className='conn-value-row'>
+															<span className='conn-number font-monospace'>
+																{connectionNumber}
+															</span>
+															<button
+																type='button'
+																className='copy-btn'
+																title='Copy Connection Number'
+																onClick={() =>
+																	handleCopy(connectionNumber, 'Connection Number')
+																}>
+																<Icon icon='ContentCopy' size='sm' />
+															</button>
+														</div>
+													</div>
+												)}
+											</div>
+
+											{/* 4-COLUMN CUSTOMER & SERVICE METRIC TILES */}
+											<div className='customer-service-grid'>
+												<div className='meta-tile'>
+													<div className='tile-icon-box bg-primary-subtle text-primary'>
+														<Icon icon='PersonOutline' />
+													</div>
+													<div className='tile-content'>
+														<span className='tile-label'>Customer Name</span>
+														<span
+															className='tile-val text-truncate'
+															title={customerName || 'N/A'}>
+															{customerName || 'N/A'}
+														</span>
+													</div>
+												</div>
+
+												<div className='meta-tile'>
+													<div className='tile-icon-box bg-success-subtle text-success'>
+														<Icon icon='PhoneAndroid' />
+													</div>
+													<div className='tile-content'>
+														<span className='tile-label'>Customer Mobile</span>
+														<div className='d-flex align-items-center gap-1.5'>
+															<span className='tile-val font-monospace'>
+																{customerMobile || 'N/A'}
+															</span>
+															{customerMobile && (
+																<button
+																	type='button'
+																	className='tile-copy-btn'
+																	title='Copy Mobile'
+																	onClick={() =>
+																		handleCopy(customerMobile, 'Customer Mobile')
+																	}>
+																	<Icon icon='ContentCopy' size='sm' />
+																</button>
+															)}
+														</div>
+													</div>
+												</div>
+
+												<div className='meta-tile'>
+													<div className='tile-icon-box bg-warning-subtle text-warning'>
+														<Icon icon='ConfirmationNumber' />
+													</div>
+													<div className='tile-content'>
+														<span className='tile-label'>Connection Number</span>
+														<div className='d-flex align-items-center gap-1.5'>
+															<span className='tile-val font-monospace text-truncate'>
+																{connectionNumber || 'N/A'}
+															</span>
+															{connectionNumber && (
+																<button
+																	type='button'
+																	className='tile-copy-btn'
+																	title='Copy Connection Number'
+																	onClick={() =>
+																		handleCopy(connectionNumber, 'Connection Number')
+																	}>
+																	<Icon icon='ContentCopy' size='sm' />
+																</button>
+															)}
+														</div>
+													</div>
+												</div>
+
+												<div className='meta-tile'>
+													<div className='tile-icon-box bg-info-subtle text-info'>
+														<Icon icon='Hub' />
+													</div>
+													<div className='tile-content'>
+														<span className='tile-label'>Third-Party Engine</span>
+														<span className='tile-val text-capitalize'>
+															{thirdPartyService || 'Standard'}
+														</span>
+													</div>
+												</div>
+											</div>
+
+											{/* GATEWAY / SERVICE RESPONSE SECTION */}
+											{(rawResponse || rawThirdPartyResponse) && (
+												<div className='gateway-response-block'>
+													{/* REJECTION OR NOTICE BANNER */}
+													{responseReason && (
+														<div className='rejection-highlight-banner'>
+															<div className='banner-left-icon'>
+																<Icon icon='WarningAmber' size='lg' />
+															</div>
+															<div className='banner-body'>
+																<div className='banner-title-row'>
+																	<span className='banner-heading'>
+																		Gateway Response / Rejection Notice
+																	</span>
+																	{rejectedAt && (
+																		<span className='banner-timestamp'>
+																			{formatDateTime(rejectedAt).full}
+																		</span>
+																	)}
+																</div>
+																<p className='banner-reason-text'>
+																	<strong>Reason: </strong> {responseReason}
+																</p>
+																{rejectedBy && (
+																	<div className='banner-footer-meta'>
+																		<span>
+																			Rejected By User/Admin ID:{' '}
+																			<strong>#{rejectedBy}</strong>
+																		</span>
+																	</div>
+																)}
+															</div>
+														</div>
+													)}
+
+													{/* COLLAPSIBLE RAW JSON PAYLOAD INSPECTOR */}
+													<div className='payload-inspector-container'>
+														<div
+															className='payload-inspector-header'
+															role='button'
+															tabIndex={0}
+															onClick={() =>
+																setIsResponsePayloadOpen((prev) => !prev)
+															}
+															onKeyDown={(e) => {
+																if (e.key === 'Enter' || e.key === ' ') {
+																	e.preventDefault();
+																	setIsResponsePayloadOpen((prev) => !prev);
+																}
+															}}>
+															<div className='d-flex align-items-center gap-2'>
+																<Icon icon='Code' className='text-secondary' />
+																<span className='fw-semibold text-dark small'>
+																	Gateway Response Payload
+																</span>
+															</div>
+
+															<div className='d-flex align-items-center gap-2'>
+																<button
+																	type='button'
+																	className='btn-copy-json'
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		const payloadToCopy = JSON.stringify(
+																			parsedThirdPartyResponse || parsedResponse,
+																			null,
+																			2,
+																		);
+																		handleCopy(
+																			payloadToCopy,
+																			'Gateway Response Payload',
+																		);
+																	}}>
+																	<Icon icon='ContentCopy' size='sm' />
+																	<span>Copy JSON</span>
+																</button>
+
+																<Icon
+																	icon={
+																		isResponsePayloadOpen
+																			? 'ExpandLess'
+																			: 'ExpandMore'
+																	}
+																	className='text-muted'
+																/>
+															</div>
+														</div>
+
+														{isResponsePayloadOpen && (
+															<div className='payload-inspector-body'>
+																{isResponsesIdentical ? (
+																	<pre className='payload-code-block'>
+																		<code>
+																			{JSON.stringify(
+																				parsedThirdPartyResponse || parsedResponse,
+																				null,
+																				2,
+																			)}
+																		</code>
+																	</pre>
+																) : (
+																	<div className='d-flex flex-column gap-3'>
+																		{rawThirdPartyResponse && (
+																			<div>
+																				<div className='text-white-50 small fw-semibold mb-1'>
+																					Third-Party Response (
+																					{thirdPartyService || 'Provider'}):
+																				</div>
+																				<pre className='payload-code-block'>
+																					<code>
+																						{typeof parsedThirdPartyResponse ===
+																						'object'
+																							? JSON.stringify(
+																									parsedThirdPartyResponse,
+																									null,
+																									2,
+																							  )
+																							: String(rawThirdPartyResponse)}
+																					</code>
+																				</pre>
+																			</div>
+																		)}
+																		{rawResponse && !isResponsesIdentical && (
+																			<div>
+																				<div className='text-white-50 small fw-semibold mb-1'>
+																					Core Response:
+																				</div>
+																				<pre className='payload-code-block'>
+																					<code>
+																						{typeof parsedResponse === 'object'
+																							? JSON.stringify(
+																									parsedResponse,
+																									null,
+																									2,
+																							  )
+																							: String(rawResponse)}
+																					</code>
+																				</pre>
+																			</div>
+																		)}
+																	</div>
+																)}
+															</div>
+														)}
+													</div>
+												</div>
+											)}
 										</div>
 									</div>
 								)}
@@ -975,7 +1407,7 @@ export const WalletTransactionViewPage: FC = () => {
 													<Icon icon='Notes' className='text-info flex-shrink-0' size='sm' />
 													<span className='callout-title'>Transaction Remark / Note</span>
 												</div>
-												<p className='callout-body'>{transaction.remark}</p>
+												<p className='callout-body'>{formatText(transaction.remark)}</p>
 											</div>
 										)}
 
@@ -986,7 +1418,7 @@ export const WalletTransactionViewPage: FC = () => {
 													<Icon icon='Cancel' className='text-danger flex-shrink-0' size='sm' />
 													<span className='callout-title'>Rejection Reason</span>
 												</div>
-												<p className='callout-body'>{transaction.rejection_reason}</p>
+												<p className='callout-body'>{formatText(transaction.rejection_reason)}</p>
 											</div>
 										)}
 									</div>

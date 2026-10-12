@@ -84,6 +84,24 @@ export const ApproveServiceTransactionModal: FC<IApproveServiceTransactionModalP
 		return `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 	};
 
+	const formatText = (val: any): string => {
+		if (val === undefined || val === null) return '';
+		if (typeof val === 'string') return val;
+		if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+		if (typeof val === 'object') {
+			if (val.text && val.code) return `${val.text} (Code: ${val.code})`;
+			if (val.text) return String(val.text);
+			if (val.message) return formatText(val.message);
+			if (val.name) return String(val.name);
+			try {
+				return JSON.stringify(val);
+			} catch {
+				return String(val);
+			}
+		}
+		return String(val);
+	};
+
 	const merchantName =
 		transaction.admin?.name ||
 		transaction.user?.name ||
@@ -137,6 +155,30 @@ export const ApproveServiceTransactionModal: FC<IApproveServiceTransactionModalP
 									- {formatINR(transaction.payable_amount || transaction.amount)}
 								</span>
 							</div>
+							{Boolean(transaction.operator?.name || transaction.operator_name) && (
+								<div className='col-12 col-sm-6'>
+									<span className='text-muted small d-block'>Operator</span>
+									<span className='fw-semibold text-dark'>
+										{formatText(transaction.operator?.name || transaction.operator_name)}
+									</span>
+								</div>
+							)}
+							{Boolean(transaction.connection_number) && (
+								<div className='col-12 col-sm-6'>
+									<span className='text-muted small d-block'>Connection Number</span>
+									<span className='fw-semibold text-dark font-monospace'>
+										{formatText(transaction.connection_number)}
+									</span>
+								</div>
+							)}
+							{Boolean(transaction.customer_name) && (
+								<div className='col-12 col-sm-6'>
+									<span className='text-muted small d-block'>Customer Name</span>
+									<span className='fw-semibold text-dark'>
+										{formatText(transaction.customer_name)}
+									</span>
+								</div>
+							)}
 						</div>
 					</div>
 

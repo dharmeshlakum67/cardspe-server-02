@@ -25,6 +25,7 @@ import {
 	IReportQueryParams,
 } from '../type/report.type';
 import { getImageUrl } from '../../../../helpers/helpers';
+import { encryptId } from '../../../../helpers/routeEncryption';
 import reportService from '../service/reportService';
 import AsyncDropdownFilter from './AsyncDropdownFilter';
 import '../css/DynamicReport.scss';
@@ -666,14 +667,18 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 				window.open(link, '_blank', 'noopener,noreferrer');
 				return;
 			}
-			const targetRoute = link.startsWith('/') ? link : `/${link}`;
+			let targetRoute = link.startsWith('/') ? link : `/${link}`;
+			const viewMatch = targetRoute.match(/^(\/.+\/(?:view|edit)\/)(\d+)$/);
+			if (viewMatch) {
+				targetRoute = `${viewMatch[1]}${encryptId(viewMatch[2])}`;
+			}
 			navigate(targetRoute, { state: { transaction: row, from: 'transaction_report' } });
 			return;
 		}
 
 		// 2. Fallback to wallet transaction view if wallet_transaction_id is present
 		if (row.wallet_transaction_id) {
-			navigate(`/payments/wallet-transactions/view/${row.wallet_transaction_id}`, {
+			navigate(`/payments/wallet-transactions/view/${encryptId(String(row.wallet_transaction_id))}`, {
 				state: {
 					transaction: row,
 					from: 'transaction_report',
