@@ -503,68 +503,6 @@ const ProfilePage: FC = () => {
 								</div>
 							</div>
 						</div>
-
-						{/* RIGHT COLUMN: RECENT ACTIVITY CARD */}
-						<div className='col-12 col-md-6 d-flex'>
-							<div className='profile-card w-100 h-100'>
-								<div className='section-card-header'>
-									<div className='header-title-group'>
-										<div className='header-icon-circle'>
-											<Icon icon='AccessTime' />
-										</div>
-										<h5 className='header-title'>Recent Activity</h5>
-									</div>
-									<a href='#/activity' className='header-action-link'>
-										<span>View All</span>
-										<Icon icon='ChevronRight' size='sm' />
-									</a>
-								</div>
-
-								<div className='activity-list-container'>
-									{/* ITEM 1: LOGIN */}
-									<div className='activity-row-item'>
-										<div className='activity-row-left'>
-											<div className='activity-icon-sq icon-login'>
-												<Icon icon='NorthEast' />
-											</div>
-											<div className='activity-details'>
-												<div className='activity-action'>Login to account</div>
-												<div className='activity-meta'>From 192.168.1.1</div>
-											</div>
-										</div>
-										<div className='activity-time'>Today, 09:12 AM</div>
-									</div>
-
-									{/* ITEM 2: PROFILE UPDATED */}
-									<div className='activity-row-item'>
-										<div className='activity-row-left'>
-											<div className='activity-icon-sq icon-edit'>
-												<Icon icon='Edit' />
-											</div>
-											<div className='activity-details'>
-												<div className='activity-action'>Profile updated</div>
-												<div className='activity-meta'>By {name || 'User'}</div>
-											</div>
-										</div>
-										<div className='activity-time'>29 Sep 2026</div>
-									</div>
-
-									{/* ITEM 3: PASSWORD CHANGED */}
-									<div className='activity-row-item'>
-										<div className='activity-row-left'>
-											<div className='activity-icon-sq icon-security'>
-												<Icon icon='Lock' />
-											</div>
-											<div className='activity-details'>
-												<div className='activity-action'>Password changed</div>
-												<div className='activity-meta'>For security</div>
-											</div>
-										</div>
-										<div className='activity-time'>25 Sep 2026</div>
-									</div>
-								</div>
-							</div>
-						</div>
 					</div>
 				</div>
 			</Page>
