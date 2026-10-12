@@ -35,6 +35,7 @@ export const PERMISSION_KEYS = {
 	REPORTS: 'reports',
 	TRANSACTION_REPORT: 'transaction_report',
 	SERVICE_CATEGORY_TRANSACTION_REPORT: 'service_category_transaction_report',
+	OPERATOR_TRANSACTION_REPORT: 'operator_transaction_report',
 } as const;
 
 export type TPermissionKey = (typeof PERMISSION_KEYS)[keyof typeof PERMISSION_KEYS];

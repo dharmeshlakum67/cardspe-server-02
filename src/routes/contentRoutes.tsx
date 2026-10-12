@@ -125,6 +125,12 @@ const ServiceCategoryTransactionReportPage = lazy(
 			'../pages/presentation/reports/service-category-transaction-report/ServiceCategoryTransactionReportPage'
 		),
 );
+const OperatorTransactionReportPage = lazy(
+	() =>
+		import(
+			'../pages/presentation/reports/operator-transaction-report/OperatorTransactionReportPage'
+		),
+);
 const GenericReportPage = lazy(
 	() => import('../pages/presentation/reports/GenericReportPage'),
 );
@@ -333,6 +339,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.SERVICE_CATEGORY_TRANSACTION_REPORT,
 		element: <ServiceCategoryTransactionReportPage />,
+	},
+	{
+		path: PAGE_ROUTES.OPERATOR_TRANSACTION_REPORT,
+		element: <OperatorTransactionReportPage />,
 	},
 	{
 		path: 'reports/:reportType',

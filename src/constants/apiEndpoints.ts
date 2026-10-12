@@ -880,6 +880,16 @@ export const REPORT_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	OPERATOR_TRANSACTION_REPORT_LIST: {
+		url: '/api/reports/operator-transaction-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	OPERATOR_TRANSACTION_REPORT_DOWNLOAD: {
+		url: '/api/reports/operator-transaction-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 } as const;
 
 // COMBINED API ENDPOINTS

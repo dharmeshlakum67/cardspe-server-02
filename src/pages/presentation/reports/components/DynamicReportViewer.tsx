@@ -10,7 +10,7 @@ import Spinner from '../../../../components/bootstrap/Spinner';
 import Collapse from '../../../../components/bootstrap/Collapse';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
-import { AppBreadcrumbs, DateRangePicker } from '../../../../components/common';
+import { AppBreadcrumbs, DateRangePicker, ListingPagination } from '../../../../components/common';
 import usePermission from '../../../../hooks/usePermission';
 import { authPagesMenu } from '../../../../menu';
 import {
@@ -55,6 +55,78 @@ const mapReportIcon = (name?: string): string => {
 		assessment: 'Assessment',
 	};
 	return map[clean] || name;
+};
+
+// NORMALIZE COLOR FOR BADGES MATCHING WALLET PAGE
+const normalizeColor = (col?: string) => {
+	if (!col) return undefined;
+	const trimmed = col.trim();
+	if (
+		trimmed.startsWith('#') ||
+		trimmed.startsWith('rgb') ||
+		trimmed.startsWith('hsl') ||
+		trimmed.startsWith('color')
+	) {
+		return trimmed;
+	}
+	if (/^[0-9a-fA-F]{3,8}$/.test(trimmed)) {
+		return `#${trimmed}`;
+	}
+	return trimmed;
+};
+
+// HELPER TO CONVERT ANY COLOR TO A RICH, VISIBLE MATCHING BORDER
+const getBorderForColor = (color?: string, fallback = '#cbd5e1') => {
+	if (!color) return fallback;
+	const c = normalizeColor(color);
+	if (!c) return fallback;
+
+	if (c.startsWith('#')) {
+		const hex = c.slice(1);
+		if (hex.length === 3) {
+			const r = parseInt(hex[0] + hex[0], 16);
+			const g = parseInt(hex[1] + hex[1], 16);
+			const b = parseInt(hex[2] + hex[2], 16);
+			return `rgba(${r}, ${g}, ${b}, 0.55)`;
+		}
+		if (hex.length >= 6) {
+			const r = parseInt(hex.slice(0, 2), 16);
+			const g = parseInt(hex.slice(2, 4), 16);
+			const b = parseInt(hex.slice(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, 0.55)`;
+		}
+	}
+	if (c.startsWith('rgb')) {
+		return c
+			.replace(/rgb\((.*)\)/, 'rgba($1, 0.55)')
+			.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^)]+\)/, 'rgba($1,$2,$3, 0.55)');
+	}
+	return c;
+};
+
+// GET CUSTOM BADGE STYLE MATCHING WALLET PAGE WITH MATCHING COLORED BORDER
+const getCustomBadgeStyle = (meta?: any, fallbackBg = '#f1f5f9', fallbackColor = '#334155') => {
+	const rawBg = meta?.bgColor || meta?.background || fallbackBg;
+	const rawColor = meta?.textColor || meta?.color || fallbackColor;
+	const bg = normalizeColor(rawBg) || fallbackBg;
+	const color = normalizeColor(rawColor) || fallbackColor;
+
+	// Calculate a clean, clearly visible border matching the pill's own color
+	let borderColor = meta?.borderColor;
+	if (
+		!borderColor ||
+		borderColor === 'rgba(0,0,0,0.12)' ||
+		borderColor === 'rgba(0, 0, 0, 0.12)' ||
+		borderColor === 'transparent'
+	) {
+		borderColor = getBorderForColor(color);
+	}
+
+	return {
+		backgroundColor: bg,
+		color,
+		border: `1px solid ${borderColor}`,
+	};
 };
 
 // FORMAT CURRENCY HELPER
@@ -123,15 +195,20 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 
 	const hasOverview =
 		summary.total_amount !== undefined ||
+		summary.total !== undefined ||
 		summary.total_count !== undefined ||
 		summary.total_approved_amount !== undefined ||
 		summary.total_approved_count !== undefined ||
 		summary.total_pending_count !== undefined ||
 		summary.total_failed_count !== undefined ||
 		summary.success_amount !== undefined ||
+		summary.success !== undefined ||
 		summary.success_count !== undefined ||
 		summary.pending_amount !== undefined ||
+		summary.pending !== undefined ||
 		summary.pending_count !== undefined ||
+		summary.failed !== undefined ||
+		summary.failed_count !== undefined ||
 		summary.fail_amount !== undefined ||
 		summary.fail_count !== undefined;
 
@@ -141,19 +218,32 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 
 	const approvedCount = Number(summary.success_count ?? summary.total_approved_count ?? 0);
 	const pendingCount = Number(summary.pending_count ?? summary.total_pending_count ?? 0);
-	const failedCount = Number(summary.fail_count ?? summary.total_failed_count ?? 0);
+	const failedCount = Number(
+		summary.failed_count ?? summary.fail_count ?? summary.total_failed_count ?? 0,
+	);
 
 	const totalCount =
-		summary.total_count ??
-		(approvedCount + pendingCount + failedCount);
+		summary.total_count ?? (approvedCount + pendingCount + failedCount);
 
-	const totalAmount = Number(summary.total_amount ?? 0);
+	const totalAmount = Number(summary.total ?? summary.total_amount ?? 0);
 	const approvedAmount =
-		summary.success_amount !== undefined ? summary.success_amount : summary.total_approved_amount;
+		summary.success !== undefined
+			? summary.success
+			: summary.success_amount !== undefined
+			? summary.success_amount
+			: summary.total_approved_amount;
 	const pendingAmount =
-		summary.pending_amount !== undefined ? summary.pending_amount : summary.total_pending_amount;
+		summary.pending !== undefined
+			? summary.pending
+			: summary.pending_amount !== undefined
+			? summary.pending_amount
+			: summary.total_pending_amount;
 	const failedAmount =
-		summary.fail_amount !== undefined ? summary.fail_amount : summary.total_failed_amount;
+		summary.failed !== undefined
+			? summary.failed
+			: summary.fail_amount !== undefined
+			? summary.fail_amount
+			: summary.total_failed_amount;
 
 	return [
 		// Card 1: Total Transactions
@@ -212,6 +302,89 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 			theme: 'rose',
 		},
 	];
+};
+
+// AVATAR / LOGO CELL COMPONENT WITH GRACEFUL FALLBACK
+interface IReportImageCellProps {
+	src?: any;
+	name?: string;
+}
+
+const ReportImageCell: FC<IReportImageCellProps> = ({ src, name = '' }) => {
+	const [hasError, setHasError] = useState<boolean>(false);
+	const imageUrl = src ? getImageUrl(src) : '';
+	const displayName = (name || '').trim();
+
+	// Calculate clean initial / word representation (e.g. "Vedachala Seva Trust" -> "V" or "VS")
+	const initial = useMemo(() => {
+		if (!displayName) return 'O';
+		const words = displayName.split(/\s+/).filter(Boolean);
+		if (words.length > 1) {
+			return (words[0][0] + words[1][0]).toUpperCase();
+		}
+		return words[0][0].toUpperCase();
+	}, [displayName]);
+
+	// Deterministic pastel color palette so the fallback avatar matches high design standard
+	const palette = useMemo(() => {
+		const palettes = [
+			{ bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' }, // blue
+			{ bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0' }, // green
+			{ bg: '#faf5ff', text: '#7c3aed', border: '#e9d5ff' }, // purple
+			{ bg: '#fff7ed', text: '#ea580c', border: '#fed7aa' }, // orange
+			{ bg: '#fdf2f8', text: '#db2777', border: '#fbcfe8' }, // pink
+			{ bg: '#f0fdfa', text: '#0d9488', border: '#99f6e4' }, // teal
+		];
+		let hash = 0;
+		for (let i = 0; i < displayName.length; i += 1) {
+			hash = (hash * 31 + displayName.charCodeAt(i)) % 1000000;
+		}
+		const index = Math.abs(hash) % palettes.length;
+		return palettes[index];
+	}, [displayName]);
+
+	if (!imageUrl || hasError) {
+		return (
+			<div
+				className='report-avatar-fallback d-inline-flex align-items-center justify-content-center flex-shrink-0'
+				style={{
+					width: '36px',
+					height: '36px',
+					borderRadius: '50%',
+					backgroundColor: palette.bg,
+					color: palette.text,
+					border: `1.5px solid ${palette.border}`,
+					fontSize: initial.length > 1 ? '0.75rem' : '0.875rem',
+					fontWeight: 700,
+					letterSpacing: '0.02em',
+					lineHeight: 1,
+					userSelect: 'none',
+				}}
+				title={displayName || 'Operator'}>
+				{initial}
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className='report-image-wrapper d-inline-flex align-items-center justify-content-center flex-shrink-0'
+			style={{
+				width: '36px',
+				height: '36px',
+				borderRadius: '50%',
+				backgroundColor: '#ffffff',
+				border: '1px solid #e2e8f0',
+				overflow: 'hidden',
+			}}>
+			<img
+				src={imageUrl}
+				alt=''
+				className='w-100 h-100 object-fit-contain p-1'
+				onError={() => setHasError(true)}
+			/>
+		</div>
+	);
 };
 
 export const DynamicReportViewer: FC<IDynamicReportProps> = ({
@@ -291,12 +464,14 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	);
 
 	// STABLE EXTRA PARAMS FOR OPERATOR DROPDOWN (CASCADING FILTER)
-	const selectedCategory = filterValues.service_category_id || filterValues.category_id;
+	const selectedCategory =
+		filterValues.service_category_id || filterValues.category_id || filterValues.category;
 	const operatorExtraParams = useMemo(() => {
 		if (selectedCategory && selectedCategory !== 'all') {
 			return {
 				service_category_id: selectedCategory,
 				category_id: selectedCategory,
+				category: selectedCategory,
 			};
 		}
 		return undefined;
@@ -452,8 +627,8 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					cleanFilters.endDate = e;
 					cleanFilters.start_date = s;
 					cleanFilters.end_date = e;
-					cleanFilters.date = `${s} to ${e}`;
-					cleanFilters[filter.field] = `${s} to ${e}`;
+					cleanFilters.date = `${s},${e}`;
+					cleanFilters[filter.field] = `${s},${e}`;
 				} else if (s) {
 					cleanFilters.date_from = s;
 					cleanFilters.startDate = s;
@@ -506,6 +681,13 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			}
 		});
 
+		// Support category <-> service_category_id bidirectional mapping
+		if (cleanFilters.category && !cleanFilters.service_category_id) {
+			cleanFilters.service_category_id = cleanFilters.category;
+		} else if (cleanFilters.service_category_id && !cleanFilters.category) {
+			cleanFilters.category = cleanFilters.service_category_id;
+		}
+
 		const extra = extraQueryParamsSerialized ? JSON.parse(extraQueryParamsSerialized) : {};
 
 		const query: IReportQueryParams = {
@@ -545,23 +727,43 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 				const data = res?.data;
 				if (data) {
 					setReportTitle(data.title || fallbackTitle);
-					setColumns(Array.isArray(data.columns) ? data.columns : []);
+					const metaCols = data.metadata?.columns;
+					const cols = Array.isArray(data.columns)
+						? data.columns
+						: Array.isArray(metaCols)
+						? metaCols
+						: [];
+					setColumns(cols);
 					setRows(Array.isArray(data.rows) ? data.rows : []);
 					// Backend sends summary on page 1 only; preserve existing summary when page > 1
 					if (data.summary !== undefined && data.summary !== null) {
 						setSummary(data.summary);
 					}
-					if (data.filters !== undefined) {
+					const metaFilters = data.metadata?.filters;
+					const fltrs =
+						data.filters !== undefined
+							? data.filters
+							: metaFilters !== undefined
+							? metaFilters
+							: undefined;
+					if (fltrs !== undefined) {
 						setRawFilters((prev: any) => {
-							if (!prev && data.filters) return data.filters;
-							if (JSON.stringify(prev) === JSON.stringify(data.filters)) {
+							if (!prev && fltrs) return fltrs;
+							if (JSON.stringify(prev) === JSON.stringify(fltrs)) {
 								return prev;
 							}
-							return data.filters;
+							return fltrs;
 						});
 					}
-					setTotal(data.total || 0);
-					setTotalPages(data.totalPages || 1);
+					const totalRecords =
+						data.pagination?.totalRecords ??
+						data.pagination?.total ??
+						data.total ??
+						0;
+					const pages =
+						data.pagination?.totalPages ?? data.totalPages ?? 1;
+					setTotal(totalRecords);
+					setTotalPages(pages);
 				}
 			} catch (error: any) {
 				lastFetchKeyRef.current = '';
@@ -725,6 +927,12 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	const renderCellContent = (row: IReportRow, col: IReportColumn) => {
 		const rawValue = row[col.field];
 		const styleObj = row.__style?.[col.field];
+		const fieldLower = (col.field || '').toLowerCase();
+		const headerLower = (col.header || '').toLowerCase();
+		const isStatus =
+			fieldLower === 'status' ||
+			headerLower === 'status' ||
+			col.type === 'status';
 
 		// 1. LINK TYPE OR EXPLICIT HYPERLINK
 		if (col.type === 'link' || Boolean(styleObj?.hyperlink)) {
@@ -743,58 +951,129 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			);
 		}
 
-		switch (col.type) {
+		// 2. STATUS BADGE (MATCHING WALLET STATUS PILL: ROUNDED-PILL, UPPERCASE, BOLD)
+		if (isStatus) {
+			const label = (styleObj?.label || rawValue || '-').toString().toUpperCase();
+			let defaultBg = '#f1f5f9';
+			let defaultColor = '#475569';
+			let defaultBorder = '#cbd5e1';
 
-			case 'badge': {
-				const label = styleObj?.label || rawValue || '-';
-				const badgeStyle = {
-					backgroundColor: styleObj?.bgColor || '#f1f5f9',
-					color: styleObj?.textColor || '#334155',
-					border: styleObj?.borderColor
-						? `1px solid ${styleObj.borderColor}`
-						: '1px solid rgba(0,0,0,0.1)',
-				};
-				return (
-					<span className='cell-badge' style={badgeStyle}>
-						{label}
-					</span>
-				);
+			if (label.includes('SUCCESS') || label.includes('APPROVED')) {
+				defaultBg = '#f0fdf4';
+				defaultColor = '#15803d';
+				defaultBorder = '#86efac';
+			} else if (label.includes('FAIL') || label.includes('REJECT')) {
+				defaultBg = '#fff1f2';
+				defaultColor = '#be123c';
+				defaultBorder = '#fca5a5';
+			} else if (label.includes('PENDING') || label.includes('REQUEST')) {
+				defaultBg = '#fffbeb';
+				defaultColor = '#b45309';
+				defaultBorder = '#fcd34d';
 			}
 
-			case 'currency': {
-				return (
-					<span className='cell-currency font-monospace'>
-						{formatCurrency(rawValue)}
-					</span>
-				);
+			const textColor = normalizeColor(styleObj?.textColor) || defaultColor;
+			const bgColor = normalizeColor(styleObj?.bgColor) || defaultBg;
+
+			let borderColor = styleObj?.borderColor;
+			if (
+				!borderColor ||
+				borderColor === 'rgba(0,0,0,0.12)' ||
+				borderColor === 'rgba(0, 0, 0, 0.12)' ||
+				borderColor === 'transparent'
+			) {
+				borderColor = defaultBorder || getBorderForColor(textColor);
 			}
 
-			case 'date':
-			case 'datetime': {
-				return <span className='text-muted small'>{rawValue || '-'}</span>;
-			}
+			const badgeStyle = {
+				backgroundColor: bgColor,
+				color: textColor,
+				border: `1px solid ${borderColor}`,
+			};
 
-			case 'image': {
-				if (!rawValue) return <span className='text-muted small'>-</span>;
-				const imageUrl = getImageUrl(rawValue);
-				return (
-					<img
-						src={imageUrl}
-						alt={String(row.name || 'service-icon')}
-						className='rounded-circle object-fit-cover'
-						style={{ width: '32px', height: '32px' }}
-					/>
-				);
-			}
-
-			default: {
-				return (
-					<span>
-						{rawValue !== undefined && rawValue !== null ? String(rawValue) : '-'}
-					</span>
-				);
-			}
+			return (
+				<span
+					className='status-pill-badge px-2 py-1 rounded-pill fw-bold d-inline-block text-uppercase'
+					style={badgeStyle}>
+					{label}
+				</span>
+			);
 		}
+
+		// 3. CATEGORY / TYPE BADGE (MATCHING WALLET TRANSACTION CATEGORY: CRISP RECTANGLE, ZERO BORDER-RADIUS)
+		if (
+			col.type === 'badge' ||
+			Boolean(styleObj?.bgColor) ||
+			fieldLower.includes('category') ||
+			fieldLower.includes('type') ||
+			fieldLower.includes('mode') ||
+			headerLower.includes('category') ||
+			headerLower.includes('type') ||
+			headerLower.includes('mode')
+		) {
+			const label = styleObj?.label || rawValue || '-';
+			const badgeStyle = getCustomBadgeStyle(styleObj);
+			return (
+				<span
+					className='category-tag px-2 py-1 fw-semibold d-inline-block text-capitalize'
+					style={{
+						...badgeStyle,
+						fontSize: '0.75rem',
+						borderRadius: 0,
+					}}>
+					{label}
+				</span>
+			);
+		}
+
+		// 4. CURRENCY / AMOUNT (MATCHING WALLET AMOUNT DISPLAY: POPPINS BOLD)
+		if (
+			col.type === 'currency' ||
+			fieldLower.includes('amount') ||
+			fieldLower.includes('charge') ||
+			headerLower.includes('amount') ||
+			headerLower.includes('charge')
+		) {
+			return (
+				<span className='amount-display'>
+					{formatCurrency(rawValue)}
+				</span>
+			);
+		}
+
+		// 5. DATE
+		if (col.type === 'date' || col.type === 'datetime' || fieldLower.includes('date')) {
+			return <span className='text-muted small'>{rawValue || '-'}</span>;
+		}
+
+		// 6. IMAGE (WITH ELEGANT INITIALS AVATAR FALLBACK IF BROKEN OR EMPTY)
+		if (
+			col.type === 'image' ||
+			fieldLower === 'logo' ||
+			fieldLower === 'icon' ||
+			fieldLower === 'operator_icon' ||
+			fieldLower.includes('logo')
+		) {
+			const operatorName =
+				String(
+					row.name ||
+					row.operator_name ||
+					row.operator?.name ||
+					row.operator ||
+					row.title ||
+					row.service_name ||
+					'',
+				).trim();
+
+			return <ReportImageCell src={rawValue} name={operatorName} />;
+		}
+
+		// 7. DEFAULT TEXT
+		return (
+			<span>
+				{rawValue !== undefined && rawValue !== null ? String(rawValue) : '-'}
+			</span>
+		);
 	};
 
 	const defaultBreadcrumbs = [
@@ -1161,9 +1440,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					)}
 
 					{/* REPORT DATA TABLE */}
-					<div className='report-table-card'>
-						<div className='table-responsive-wrapper'>
-							<table className='report-table'>
+					<div className='listing-main-card report-table-card'>
+						<div className='listing-table-container table-responsive-wrapper'>
+							<table className='table report-table align-middle'>
 								<thead>
 									<tr>
 										{columns.map((col) => {
@@ -1277,7 +1556,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 														return (
 															<td
 																key={col.field}
-																className={`${alignmentClass} font-monospace fw-bold`}>
+																className={`${alignmentClass} amount-display fw-bold`}>
 																{col.type === 'currency'
 																	? formatCurrency(sumVal)
 																	: String(sumVal)}
@@ -1293,73 +1572,24 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 							</table>
 						</div>
 
-						{/* PAGINATION BOTTOM BAR */}
+						{/* STANDARDIZED LISTING PAGINATION (MATCHES ENTIRE CARDSPE SUITE) */}
 						{!isLoading && rows.length > 0 && (
-							<div className='table-pagination-bar'>
-								<div className='pagination-left'>
-									<span>
-										Showing {rows.length} of {total} records
-									</span>
-									<span className='mx-1'>•</span>
-									<label
-										htmlFor='dynamicReportLimitSelect'
-										className='mb-0 d-flex align-items-center gap-1'>
-										<span>Per page:</span>
-										<select
-											id='dynamicReportLimitSelect'
-											className='limit-select'
-											value={limit}
-											onChange={(e) => {
-												setLimit(Number(e.target.value));
-												setPage(1);
-											}}>
-											<option value={10}>10</option>
-											<option value={20}>20</option>
-											<option value={50}>50</option>
-											<option value={100}>100</option>
-										</select>
-									</label>
-								</div>
-
-								<div className='pagination-nav'>
-									<button
-										type='button'
-										className='page-btn'
-										disabled={page <= 1}
-										onClick={() => setPage(1)}
-										title='First page'>
-										<Icon icon='FirstPage' size='sm' />
-									</button>
-									<button
-										type='button'
-										className='page-btn'
-										disabled={page <= 1}
-										onClick={() => setPage((p) => Math.max(p - 1, 1))}
-										title='Previous page'>
-										<Icon icon='ChevronLeft' size='sm' />
-									</button>
-
-									<span className='px-2 small fw-bold text-dark'>
-										Page {page} of {totalPages}
-									</span>
-
-									<button
-										type='button'
-										className='page-btn'
-										disabled={page >= totalPages}
-										onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-										title='Next page'>
-										<Icon icon='ChevronRight' size='sm' />
-									</button>
-									<button
-										type='button'
-										className='page-btn'
-										disabled={page >= totalPages}
-										onClick={() => setPage(totalPages)}
-										title='Last page'>
-										<Icon icon='LastPage' size='sm' />
-									</button>
-								</div>
+							<div className='report-pagination-wrapper'>
+								<ListingPagination
+									pagination={{
+										currentPage: page,
+										totalItems: total,
+										perPage: limit,
+										perPageOptions: [10, 25, 50, 100],
+										onPageChange: (newPage: number) => {
+											setPage(newPage);
+										},
+										onPerPageChange: (newLimit: number) => {
+											setLimit(newLimit);
+											setPage(1);
+										},
+									}}
+								/>
 							</div>
 						)}
 					</div>

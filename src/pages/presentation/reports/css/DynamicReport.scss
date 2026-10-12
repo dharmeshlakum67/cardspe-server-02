@@ -9,7 +9,11 @@
 	gap: 1.25rem;
 	padding-bottom: 2.5rem;
 	color: #0f172a;
-	font-family: inherit;
+	font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif;
+
+	* {
+		font-family: inherit;
+	}
 
 	// TOP NAVIGATION & HEADER BAR
 	.report-top-bar {
@@ -497,40 +501,78 @@
 		}
 	}
 
-	// REPORT DATA TABLE CARD
+	// REPORT DATA TABLE CARD (MATCHING WALLET TRANSACTION / LISTING PAGE EXACTLY)
 	.report-table-card {
 		background: #ffffff;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+		border-radius: 1.25rem;
+		border: 1px solid #f1f5f9;
+		box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04);
+		padding: 1.5rem;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 
-		.table-responsive-wrapper {
+		.table-responsive-wrapper,
+		.listing-table-container {
 			width: 100%;
+			max-width: 100%;
 			overflow-x: auto;
+			overflow-y: hidden;
+			-webkit-overflow-scrolling: touch;
+			display: block;
+
+			&::-webkit-scrollbar {
+				height: 6px;
+			}
+			&::-webkit-scrollbar-track {
+				background: #f1f5f9;
+				border-radius: 4px;
+			}
+			&::-webkit-scrollbar-thumb {
+				background: #cbd5e1;
+				border-radius: 4px;
+
+				&:hover {
+					background: #94a3b8;
+				}
+			}
 		}
 
-		.report-table {
+		.report-table,
+		.table {
 			width: 100%;
+			min-width: 100%;
 			margin-bottom: 0;
 			border-collapse: separate;
 			border-spacing: 0;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
 
 			thead {
 				tr {
 					th {
-						background-color: #f8fafc;
-						color: #475569;
-						font-size: 0.75rem;
+						background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+						font-size: 0.875rem;
 						font-weight: 700;
-						text-transform: uppercase;
-						letter-spacing: 0.04em;
-						padding: 0.85rem 1rem;
-						border-bottom: 1px solid #e2e8f0;
+						color: #0f172a;
+						letter-spacing: 0.01em;
+						padding: 1.1rem 1rem;
+						vertical-align: middle;
+						line-height: 1.4;
+						border-bottom: 1.5px solid #e2e8f0;
+						border-top: none;
 						white-space: nowrap;
 						user-select: none;
+						font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+
+						&:first-child {
+							border-top-left-radius: 0.75rem;
+							border-bottom-left-radius: 0.75rem;
+						}
+
+						&:last-child {
+							border-top-right-radius: 0.75rem;
+							border-bottom-right-radius: 0.75rem;
+						}
 
 						&.text-end {
 							text-align: right !important;
@@ -588,16 +630,17 @@
 					transition: background-color 0.15s ease;
 
 					&:hover {
-						background-color: #fafbfc;
+						background-color: #fbfcfe !important;
 					}
 
 					td {
-						padding: 0.85rem 1rem;
+						padding: 1.15rem 1rem;
 						vertical-align: middle;
 						font-size: 0.875rem;
-						color: #0f172a;
-						border-bottom: 1px dashed #e2e8f0;
+						color: #334155;
+						border-bottom: 1px solid #f1f5f9;
 						white-space: nowrap;
+						font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
 
 						&.text-end {
 							text-align: right !important;
@@ -624,13 +667,14 @@
 					border-top: 2px solid #cbd5e1;
 
 					td {
-						padding: 0.85rem 1rem;
+						padding: 1.15rem 1rem;
 						vertical-align: middle;
 						font-size: 0.875rem;
 						font-weight: 800;
 						color: #0f172a;
 						border-bottom: none;
 						white-space: nowrap;
+						font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
 
 						&.text-end {
 							text-align: right !important;
@@ -648,7 +692,72 @@
 			}
 		}
 
-		// CUSTOM CELL TYPES
+		// WALLET-STYLE CATEGORY TAG: CRISP RECTANGULAR BOX (ZERO BORDER-RADIUS MATCHING WALLET PAGE)
+		.category-tag {
+			font-size: 0.75rem !important;
+			font-weight: 600 !important;
+			padding: 0.25rem 0.5rem !important;
+			border-radius: 0 !important;
+			border-width: 1px !important;
+			border-style: solid !important;
+			display: inline-block !important;
+			text-transform: capitalize !important;
+			line-height: 1.25 !important;
+			letter-spacing: 0.01em !important;
+			white-space: nowrap !important;
+			user-select: none !important;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+		}
+
+		// WALLET-STYLE STATUS BADGE: CLEAN UPPERCASE PILL
+		.status-pill-badge {
+			font-size: 0.725rem !important;
+			font-weight: 700 !important;
+			letter-spacing: 0.03em !important;
+			padding: 0.25rem 0.75rem !important;
+			border-radius: 2rem !important;
+			border-width: 1px !important;
+			border-style: solid !important;
+			display: inline-block !important;
+			text-transform: uppercase !important;
+			line-height: 1.25 !important;
+			white-space: nowrap !important;
+			user-select: none !important;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+		}
+
+		// WALLET-STYLE AMOUNT DISPLAY: POPPINS BOLD (NEVER MONOSPACE)
+		.amount-display {
+			font-size: 0.925rem !important;
+			font-weight: 700 !important;
+			color: #0f172a !important;
+			line-height: 1.2 !important;
+			white-space: nowrap !important;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+			letter-spacing: 0 !important;
+
+			&.credit {
+				color: #16a34a !important;
+			}
+
+			&.debit {
+				color: #dc2626 !important;
+			}
+		}
+
+		// CELL BADGE FALLBACK
+		.cell-badge {
+			font-size: 0.75rem !important;
+			font-weight: 600 !important;
+			padding: 0.25rem 0.5rem !important;
+			border-radius: 0 !important;
+			border-width: 1px !important;
+			border-style: solid !important;
+			display: inline-block !important;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+		}
+
+		// CELL LINK
 		.cell-link {
 			color: #4f46e5;
 			background-color: rgba(99, 102, 241, 0.08);
@@ -663,11 +772,12 @@
 			line-height: 1.3;
 			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 			cursor: pointer;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
 
 			.cell-link-text {
-				font-family: var(--bs-font-monospace, monospace);
+				font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
 				font-size: 0.8125rem;
-				letter-spacing: 0.02em;
+				letter-spacing: 0.01em;
 				color: inherit;
 			}
 
@@ -698,96 +808,117 @@
 			}
 		}
 
-		.cell-badge {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			padding: 0.25rem 0.65rem;
-			border-radius: 6px;
-			font-size: 0.75rem;
-			font-weight: 700;
-			letter-spacing: 0.02em;
-			line-height: 1.2;
+		// OPERATOR LOGO & FALLBACK AVATAR
+		.report-avatar-fallback,
+		.report-image-wrapper {
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+			transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+			&:hover {
+				transform: scale(1.06);
+				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+			}
 		}
 
 		.cell-currency {
-			font-weight: 700;
-			color: #0f172a;
-			display: inline-block;
-			text-align: center;
+			font-family: 'Poppins', var(--bs-font-sans-serif), sans-serif !important;
+			font-size: 0.925rem !important;
+			font-weight: 700 !important;
+			color: #0f172a !important;
+			display: inline-block !important;
 		}
 
-		// PAGINATION BOTTOM BAR
-		.table-pagination-bar {
-			padding: 0.85rem 1.25rem;
+		// STANDARDIZED LISTING PAGINATION CONTAINER (MATCHES WALLET EXACTLY)
+		.report-pagination-wrapper {
+			padding-top: 1.15rem;
+			margin-top: 0.5rem;
 			border-top: 1px solid #f1f5f9;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			flex-wrap: wrap;
-			gap: 1rem;
-			background-color: #fafbfc;
+			background-color: transparent;
 
-			.pagination-left {
+			.listing-pagination-container {
+				padding: 0;
+				margin: 0;
 				display: flex;
 				align-items: center;
-				gap: 0.75rem;
-				font-size: 0.825rem;
-				color: #64748b;
+				justify-content: space-between;
+				flex-wrap: wrap;
+				gap: 1rem;
 
-				.limit-select {
-					height: 34px;
-					border-radius: 6px;
-					border: 1px solid #cbd5e1;
-					font-size: 0.8rem;
-					padding: 0 0.5rem;
-					background-color: #ffffff;
-					color: #0f172a;
-
-					&:focus {
-						border-color: #5c56b6;
-						outline: none;
-					}
-				}
-			}
-
-			.pagination-nav {
-				display: flex;
-				align-items: center;
-				gap: 0.35rem;
-
-				.page-btn {
-					min-width: 32px;
-					height: 32px;
-					border-radius: 6px;
-					border: 1px solid #cbd5e1;
-					background-color: #ffffff;
-					color: #475569;
-					font-size: 0.8rem;
-					font-weight: 600;
+				.pagination-pill-bar {
+					background: #f1f5f9;
+					border: 1px solid #e2e8f0;
+					border-radius: 0.5rem;
+					padding: 3px 6px;
 					display: inline-flex;
 					align-items: center;
-					justify-content: center;
-					padding: 0 0.45rem;
-					cursor: pointer;
-					transition: all 0.15s ease;
+					gap: 4px;
 
-					&:hover:not(:disabled) {
-						background-color: #f1f5f9;
-						border-color: #94a3b8;
-						color: #0f172a;
+					.page-pill-btn {
+						background: transparent;
+						border: none;
+						color: #334155;
+						font-size: 0.875rem;
+						font-weight: 600;
+						min-width: 32px;
+						height: 32px;
+						padding: 0 6px;
+						border-radius: 0.35rem;
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
+						transition: all 0.15s ease-in-out;
+						cursor: pointer;
+
+						&:hover:not(:disabled):not(.is-active) {
+							background-color: #e2e8f0;
+							color: #0f172a;
+						}
+
+						&.is-active {
+							background-color: #5c56b6;
+							color: #ffffff;
+							font-weight: 700;
+							box-shadow: 0 1px 3px rgba(92, 86, 182, 0.35);
+						}
+
+						&:disabled {
+							color: #94a3b8;
+							opacity: 0.4;
+							cursor: not-allowed;
+						}
+
+						&.nav-btn {
+							font-size: 1rem;
+							color: #475569;
+						}
 					}
 
-					&.active {
-						background-color: #5c56b6;
-						border-color: #5c56b6;
-						color: #ffffff;
+					.page-pill-dots {
+						color: #64748b;
+						font-size: 0.875rem;
 						font-weight: 700;
+						padding: 0 4px;
+						user-select: none;
 					}
+				}
 
-					&:disabled {
-						opacity: 0.45;
-						cursor: not-allowed;
+				.per-page-selector {
+					select {
+						border: 1.5px solid #d1d5db;
+						border-radius: 0.5rem;
+						height: 38px;
+						font-size: 0.875rem;
+						padding: 0 1.8rem 0 0.85rem;
+						background-color: #ffffff;
+						font-weight: 600;
+						color: #334155;
+						cursor: pointer;
+						outline: none;
+
+						&:focus {
+							border-color: #5c56b6;
+							box-shadow: 0 0 0 3px rgba(92, 86, 182, 0.12);
+						}
 					}
 				}
 			}

@@ -244,6 +244,12 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Service Category Report',
 		subMenu: null,
 	},
+	operator_transaction_report: {
+		path: PAGE_ROUTES.OPERATOR_TRANSACTION_REPORT,
+		icon: 'SimCard',
+		text: 'Operator Transaction Report',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

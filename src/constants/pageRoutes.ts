@@ -79,6 +79,7 @@ export const PAGE_ROUTES = {
 	REPORTS: 'reports',
 	TRANSACTION_REPORT: 'reports/transaction-report',
 	SERVICE_CATEGORY_TRANSACTION_REPORT: 'reports/service-category-transaction-report',
+	OPERATOR_TRANSACTION_REPORT: 'reports/operator-transaction-report',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

@@ -98,17 +98,33 @@ export interface IReportFilterItem {
 	[key: string]: any;
 }
 
+export interface IReportMetadata {
+	filters?: IReportFilterItem[] | Record<string, any>;
+	columns?: IReportColumn[];
+}
+
+export interface IReportPagination {
+	currentPage?: number;
+	page?: number;
+	limit?: number;
+	totalRecords?: number;
+	total?: number;
+	totalPages?: number;
+}
+
 export interface IReportData {
-	title: string;
-	page: number;
-	limit: number;
-	total: number;
-	totalPages: number;
-	columns: IReportColumn[];
+	title?: string;
+	page?: number;
+	limit?: number;
+	total?: number;
+	totalPages?: number;
+	columns?: IReportColumn[];
 	rows: IReportRow[];
 	summary?: TReportSummary;
 	cards?: IReportSummaryCard[];
 	filters?: IReportFilterItem[] | Record<string, any>;
+	pagination?: IReportPagination;
+	metadata?: IReportMetadata;
 }
 
 export interface IReportResponse {
