@@ -18,6 +18,11 @@ import { decryptId, encryptId } from '../../../../helpers/routeEncryption';
 import { IApiDocumentation } from './type/api-documentation.type';
 import apiDocumentationService from './service/apiDocumentationService';
 import ApiDocMethodBadge from './components/ApiDocMethodBadge';
+import {
+	buildJavaSnippet,
+	buildPhpSnippet,
+	buildSnippetHeaders,
+} from './helpers/codeSnippetGenerators';
 import './css/ApiDocumentation.scss';
 
 export const ApiDocumentationViewPage: FC = () => {
@@ -39,7 +44,9 @@ export const ApiDocumentationViewPage: FC = () => {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
-	const [activeCodeTab, setActiveCodeTab] = useState<'curl' | 'javascript' | 'python'>('curl');
+	const [activeCodeTab, setActiveCodeTab] = useState<
+		'curl' | 'javascript' | 'python' | 'java' | 'php'
+	>('curl');
 	const [activeResponseTab, setActiveResponseTab] = useState<'success' | 'fail'>('success');
 
 	const fetchedIdRef = useRef<string>('');
@@ -274,7 +281,7 @@ export const ApiDocumentationViewPage: FC = () => {
 
 	// GENERATE MULTI-LANGUAGE CODE SNIPPETS (FULLY DYNAMIC)
 	const codeSnippets = useMemo(() => {
-		if (!doc) return { curl: '', javascript: '', python: '' };
+		if (!doc) return { curl: '', javascript: '', python: '', java: '', php: '' };
 
 		const normalizedEndpoint = normalizeEndpoint(doc.endpoint);
 		let qs = '';
@@ -373,7 +380,11 @@ export const ApiDocumentationViewPage: FC = () => {
 		}
 		py += `print(response.json())`;
 
-		return { curl, javascript: js, python: py };
+		const snippetHeaders = buildSnippetHeaders(doc.method, displayHeaders);
+		const java = buildJavaSnippet(doc.method, fullUrl, snippetHeaders, formattedRequestBody);
+		const php = buildPhpSnippet(doc.method, fullUrl, snippetHeaders, formattedRequestBody);
+
+		return { curl, javascript: js, python: py, java, php };
 	}, [doc, displayHeaders, queryParams, formattedRequestBody]);
 
 	if (isLoadingPermissions || isLoading) {
@@ -780,6 +791,22 @@ export const ApiDocumentationViewPage: FC = () => {
 											}`}
 											onClick={() => setActiveCodeTab('python')}>
 											Python
+										</button>
+										<button
+											type='button'
+											className={`terminal-tab-btn ${
+												activeCodeTab === 'java' ? 'active' : ''
+											}`}
+											onClick={() => setActiveCodeTab('java')}>
+											Java
+										</button>
+										<button
+											type='button'
+											className={`terminal-tab-btn ${
+												activeCodeTab === 'php' ? 'active' : ''
+											}`}
+											onClick={() => setActiveCodeTab('php')}>
+											PHP
 										</button>
 									</div>
 

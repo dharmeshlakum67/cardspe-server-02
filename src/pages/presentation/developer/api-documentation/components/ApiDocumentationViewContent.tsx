@@ -13,6 +13,11 @@ import {
 	IRequestHeaderItem,
 } from '../type/api-documentation.type';
 import showNotification from '../../../../../components/extras/showNotification';
+import {
+	buildJavaSnippet,
+	buildPhpSnippet,
+	buildSnippetHeaders,
+} from '../helpers/codeSnippetGenerators';
 
 interface IApiDocumentationViewContentProps {
 	doc: IApiDocumentation;
@@ -28,7 +33,9 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 	className,
 }) => {
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
-	const [activeCodeTab, setActiveCodeTab] = useState<'curl' | 'javascript' | 'python'>('curl');
+	const [activeCodeTab, setActiveCodeTab] = useState<
+		'curl' | 'javascript' | 'python' | 'java' | 'php'
+	>('curl');
 	const [activeResponseTab, setActiveResponseTab] = useState<'success' | 'fail'>('success');
 
 	const copyToClipboard = (text: string, key: string) => {
@@ -286,7 +293,11 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 		}
 		py += `print(response.json())`;
 
-		return { curl, javascript: js, python: py };
+		const snippetHeaders = buildSnippetHeaders(doc.method, displayHeaders);
+		const java = buildJavaSnippet(doc.method, fullUrl, snippetHeaders, formattedRequestBody);
+		const php = buildPhpSnippet(doc.method, fullUrl, snippetHeaders, formattedRequestBody);
+
+		return { curl, javascript: js, python: py, java, php };
 	}, [doc, displayHeaders, queryParams, formattedRequestBody, fullEndpointUrl]);
 
 	return (
@@ -610,6 +621,18 @@ export const ApiDocumentationViewContent: FC<IApiDocumentationViewContentProps> 
 									className={`terminal-tab-btn ${activeCodeTab === 'python' ? 'active' : ''}`}
 									onClick={() => setActiveCodeTab('python')}>
 									Python
+								</button>
+								<button
+									type='button'
+									className={`terminal-tab-btn ${activeCodeTab === 'java' ? 'active' : ''}`}
+									onClick={() => setActiveCodeTab('java')}>
+									Java
+								</button>
+								<button
+									type='button'
+									className={`terminal-tab-btn ${activeCodeTab === 'php' ? 'active' : ''}`}
+									onClick={() => setActiveCodeTab('php')}>
+									PHP
 								</button>
 							</div>
 
