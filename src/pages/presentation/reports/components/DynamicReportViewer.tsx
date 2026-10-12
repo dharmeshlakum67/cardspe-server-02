@@ -1,7 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props, react/default-props-match-prop-types */
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
@@ -13,6 +13,7 @@ import showNotification from '../../../../components/extras/showNotification';
 import { AppBreadcrumbs, DateRangePicker, ListingPagination } from '../../../../components/common';
 import usePermission from '../../../../hooks/usePermission';
 import { authPagesMenu } from '../../../../menu';
+import AuthContext from '../../../../contexts/authContext';
 import {
 	IDynamicReportProps,
 	IReportColumn,
@@ -22,12 +23,13 @@ import {
 	IReportSummaryCardItem,
 	TReportSummary,
 	IReportFilterItem,
+	IReportFilterOption,
 	IReportQueryParams,
 } from '../type/report.type';
 import { getImageUrl } from '../../../../helpers/helpers';
 import { encryptId } from '../../../../helpers/routeEncryption';
 import reportService from '../service/reportService';
-import AsyncDropdownFilter from './AsyncDropdownFilter';
+import AsyncDropdownFilter, { loadDropdownOptions } from './AsyncDropdownFilter';
 import '../css/DynamicReport.scss';
 
 // MAP BACKEND ICON NAMES TO MATERIAL / SVG ICONS SAFELY
@@ -183,14 +185,136 @@ export interface IReportMetricCard {
 	title: string;
 	value: string | number;
 	countText?: string;
+	subtext?: string;
+	email?: string;
+	mobile_number?: string;
+	image?: string;
 	icon: string;
-	theme: 'purple' | 'green' | 'blue' | 'amber' | 'rose';
+	theme: 'purple' | 'green' | 'blue' | 'amber' | 'rose' | 'custom';
+	bgColor?: string;
+	textColor?: string;
+	borderColor?: string;
 }
 
 // PARSE BACKEND SUMMARY OBJECT INTO STYLISH METRIC CARDS
 export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 	if (!summary || typeof summary !== 'object') {
 		return [];
+	}
+
+	// 1. Support backend cards array (e.g. Ledger Report contract)
+	if (Array.isArray(summary.cards) && summary.cards.length > 0) {
+		return summary.cards.map((c: any, index: number) => {
+			let defaultIcon = 'Assessment';
+			let defaultTheme: 'purple' | 'green' | 'blue' | 'amber' | 'rose' = 'blue';
+			const titleLower = (c.title || '').toLowerCase();
+			const isProfileCard =
+				titleLower.includes('profile') ||
+				titleLower.includes('user') ||
+				Boolean(c.image);
+
+			if (isProfileCard) {
+				let email = c.email || summary.email;
+				let mobile = c.mobile_number || summary.mobile_number;
+				if ((!email || !mobile) && c.subtext && typeof c.subtext === 'string' && c.subtext.includes('|')) {
+					const [emailPart, mobilePart] = c.subtext.split('|').map((s: string) => s.trim());
+					if (!email) email = emailPart;
+					if (!mobile) mobile = mobilePart;
+				}
+
+				return {
+					key: c.key || `card_${index}`,
+					title: '', // User requested to remove "User Profile" title
+					value: c.value || summary.user_name || 'User Profile',
+					subtext: (!email && !mobile) ? c.subtext : undefined,
+					email,
+					mobile_number: mobile,
+					image: c.image || summary.image,
+					icon: 'Person',
+					theme: 'purple',
+					bgColor: c.bgColor || '#F8FAFC',
+					textColor: c.textColor || '#0F172A',
+					borderColor: c.borderColor,
+				};
+			}
+
+			if (titleLower.includes('current') || titleLower.includes('balance')) {
+				defaultIcon = 'AccountBalanceWallet';
+				defaultTheme = 'blue';
+			} else if (titleLower.includes('add') || titleLower.includes('credit')) {
+				defaultIcon = 'AddCircle';
+				defaultTheme = 'green';
+			} else if (titleLower.includes('expense') || titleLower.includes('debit')) {
+				defaultIcon = 'TrendingDown';
+				defaultTheme = 'rose';
+			}
+
+			return {
+				key: c.key || `card_${index}`,
+				title: c.title,
+				value: c.value,
+				subtext: c.subtext,
+				image: c.image,
+				icon: c.icon || defaultIcon,
+				theme: defaultTheme,
+				bgColor: c.bgColor,
+				textColor: c.textColor,
+				borderColor: c.borderColor,
+			};
+		});
+	}
+
+	// 2. Support user profile summary object if cards array is absent
+	if (
+		summary.current_balance !== undefined ||
+		summary.total_add_money !== undefined ||
+		summary.total_expense !== undefined
+	) {
+		const { email, mobile_number: mobile } = summary;
+		return [
+			{
+				key: 'user_profile',
+				title: '', // User requested to remove "User Profile" title
+				value: summary.user_name || 'User Profile',
+				email,
+				mobile_number: mobile,
+				image: summary.image,
+				icon: 'Person',
+				theme: 'purple',
+				bgColor: '#F8FAFC',
+				textColor: '#0F172A',
+			},
+			{
+				key: 'current_balance',
+				title: 'Current Balance',
+				value: formatCurrency(summary.current_balance),
+				icon: 'AccountBalanceWallet',
+				theme: 'blue',
+				bgColor: '#EFF6FF',
+				textColor: '#1D4ED8',
+				borderColor: '#BFDBFE',
+			},
+			{
+				key: 'total_add_money',
+				title: 'Total Add Money',
+				value: formatCurrency(summary.total_add_money),
+				icon: 'AddCircle',
+				theme: 'green',
+				bgColor: '#ECFDF5',
+				textColor: '#047857',
+				borderColor: '#A7F3D0',
+			},
+			{
+				key: 'total_expense',
+				title: 'Total Expense',
+				value: formatCurrency(summary.total_expense),
+				icon: 'TrendingDown',
+				theme: 'rose',
+				bgColor: '#FEF2F2',
+				textColor: '#B91C1C',
+				borderColor: '#FECACA',
+			},
+		];
 	}
 
 	const hasOverview =
@@ -308,9 +432,10 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 interface IReportImageCellProps {
 	src?: any;
 	name?: string;
+	size?: number;
 }
 
-const ReportImageCell: FC<IReportImageCellProps> = ({ src, name = '' }) => {
+const ReportImageCell: FC<IReportImageCellProps> = ({ src, name = '', size = 36 }) => {
 	const [hasError, setHasError] = useState<boolean>(false);
 	const imageUrl = src ? getImageUrl(src) : '';
 	const displayName = (name || '').trim();
@@ -348,19 +473,19 @@ const ReportImageCell: FC<IReportImageCellProps> = ({ src, name = '' }) => {
 			<div
 				className='report-avatar-fallback d-inline-flex align-items-center justify-content-center flex-shrink-0'
 				style={{
-					width: '36px',
-					height: '36px',
+					width: `${size}px`,
+					height: `${size}px`,
 					borderRadius: '50%',
 					backgroundColor: palette.bg,
 					color: palette.text,
 					border: `1.5px solid ${palette.border}`,
-					fontSize: initial.length > 1 ? '0.75rem' : '0.875rem',
+					fontSize: initial.length > 1 ? `${Math.round(size * 0.36)}px` : `${Math.round(size * 0.44)}px`,
 					fontWeight: 700,
 					letterSpacing: '0.02em',
 					lineHeight: 1,
 					userSelect: 'none',
 				}}
-				title={displayName || 'Operator'}>
+				title={displayName || 'User'}>
 				{initial}
 			</div>
 		);
@@ -370,8 +495,8 @@ const ReportImageCell: FC<IReportImageCellProps> = ({ src, name = '' }) => {
 		<div
 			className='report-image-wrapper d-inline-flex align-items-center justify-content-center flex-shrink-0'
 			style={{
-				width: '36px',
-				height: '36px',
+				width: `${size}px`,
+				height: `${size}px`,
 				borderRadius: '50%',
 				backgroundColor: '#ffffff',
 				border: '1px solid #e2e8f0',
@@ -402,6 +527,14 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 }) => {
 	const navigate = useNavigate();
 	const { canRead, hasPermission, isLoadingPermissions } = usePermission();
+	const { authUser, isLoading: isAuthLoading } = useContext(AuthContext);
+	const authUserId = authUser?.id;
+	const authRoleId = (authUser as any)?.role_id || authUser?.role?.id;
+	const authRoleName = authUser?.role?.role_name;
+	const isAuthSuperAdmin = Boolean((authUser as any)?.is_super_admin);
+
+	const isLedgerReport = reportType.toLowerCase().includes('ledger');
+	const needsRoleDefaults = isLedgerReport || Boolean(permissionKey?.includes('ledger'));
 
 	const resolvedPermKey =
 		permissionKey || reportType.toLowerCase().trim().replace(/[-/\s]+/g, '_');
@@ -453,15 +586,89 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	// FILTER & PAGINATION STATES
 	const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
 	const [page, setPage] = useState<number>(1);
-	const [limit, setLimit] = useState<number>(defaultLimit || 10);
-	const [sortBy, setSortBy] = useState<string>(defaultSortBy || 'created_at');
+	const [limit, setLimit] = useState<number>(defaultLimit || (isLedgerReport ? 20 : 10));
+	const [sortBy, setSortBy] = useState<string>(
+		defaultSortBy || (isLedgerReport ? 'date' : 'created_at'),
+	);
 	const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>(defaultSortOrder || 'DESC');
 	const [filterValues, setFilterValues] = useState<Record<string, any>>(() =>
-		getCurrentMonthDateRange(),
+		isLedgerReport ? {} : getCurrentMonthDateRange(),
 	);
 	const [debouncedFilterValues, setDebouncedFilterValues] = useState<Record<string, any>>(() =>
-		getCurrentMonthDateRange(),
+		isLedgerReport ? {} : getCurrentMonthDateRange(),
 	);
+
+	const [roleOptions, setRoleOptions] = useState<IReportFilterOption[]>([]);
+
+	// REPORT LIST MUST NOT BE FETCHED UNTIL DEFAULT ROLE / USER FILTERS ARE APPLIED
+	const [areFilterDefaultsReady, setAreFilterDefaultsReady] = useState<boolean>(
+		!needsRoleDefaults,
+	);
+
+	// 1. FETCH ROLES FIRST FOR USER FILTERING (api/role/get-active?page=1&limit=50)
+	useEffect(() => {
+		if (!needsRoleDefaults || isAuthLoading) {
+			return undefined;
+		}
+
+		let isCancelled = false;
+		const loadRolesFirst = async () => {
+			try {
+				const options = await loadDropdownOptions('/api/role/get-active');
+				if (isCancelled) return;
+
+				setRoleOptions(options);
+
+				// Once roles arrive, find appropriate role for logged-in user or first role
+				let targetRoleId: any;
+				if (authRoleId) {
+					const found = options.find((o) => String(o.value) === String(authRoleId));
+					if (found) targetRoleId = found.value;
+				}
+				if (!targetRoleId && authRoleName) {
+					const found = options.find(
+						(o) => String(o.label).toLowerCase() === authRoleName.toLowerCase(),
+					);
+					if (found) targetRoleId = found.value;
+				}
+				if (!targetRoleId && isAuthSuperAdmin) {
+					const found = options.find((o) =>
+						String(o.label).toLowerCase().includes('super'),
+					);
+					if (found) targetRoleId = found.value;
+				}
+				if (!targetRoleId && options.length > 0) {
+					targetRoleId = options[0].value;
+				}
+
+				if (targetRoleId) {
+					// Applied to both states at once so the debounce does not trigger a second fetch
+					const applyRoleDefaults = (prev: Record<string, any>) => ({
+						...prev,
+						role_id: prev.role_id || targetRoleId,
+						admin_id:
+							prev.admin_id !== undefined && prev.admin_id !== ''
+								? prev.admin_id
+								: authUserId,
+					});
+					setFilterValues(applyRoleDefaults);
+					setDebouncedFilterValues(applyRoleDefaults);
+				}
+			} catch {
+				// Silently fallback if role fetch fails
+			} finally {
+				if (!isCancelled) {
+					setAreFilterDefaultsReady(true);
+				}
+			}
+		};
+
+		loadRolesFirst();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [needsRoleDefaults, isAuthLoading, authUserId, authRoleId, authRoleName, isAuthSuperAdmin]);
 
 	// STABLE EXTRA PARAMS FOR OPERATOR DROPDOWN (CASCADING FILTER)
 	const selectedCategory =
@@ -477,12 +684,23 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		return undefined;
 	}, [selectedCategory]);
 
+	// STABLE EXTRA PARAMS FOR ADMIN DROPDOWN (CASCADING FILTER FROM ROLE)
+	const selectedRole = filterValues.role_id;
+	const adminExtraParams = useMemo(() => {
+		const params: Record<string, any> = {};
+		if (selectedRole && selectedRole !== 'all') {
+			params.role_id = selectedRole;
+		}
+		return params;
+	}, [selectedRole]);
+
 	// NORMALIZE BACKEND-DRIVEN FILTERS (SUPPORTING ARRAY OR OBJECT CONTRACT)
 	const parsedFilters = useMemo<IReportFilterItem[]>(() => {
-		if (!rawFilters) return [];
-		if (Array.isArray(rawFilters)) return rawFilters;
-		if (typeof rawFilters === 'object') {
-			return Object.entries(rawFilters).map(([fieldKey, def]: [string, any]) => ({
+		let list: IReportFilterItem[] = [];
+		if (Array.isArray(rawFilters)) {
+			list = [...rawFilters];
+		} else if (rawFilters && typeof rawFilters === 'object') {
+			list = Object.entries(rawFilters).map(([fieldKey, def]: [string, any]) => ({
 				field: def?.field || fieldKey,
 				label: def?.label || fieldKey.replace(/_/g, ' '),
 				type: def?.type || 'text',
@@ -499,8 +717,44 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 				...def,
 			}));
 		}
-		return [];
-	}, [rawFilters]);
+
+		// Ensure Admin (admin_id) filter exists for Ledger Report
+		if (isLedgerReport && !list.some((f) => f.field === 'admin_id')) {
+			list.unshift({
+				field: 'admin_id',
+				label: 'User',
+				type: 'dropdown',
+				placeholder: 'Select User',
+				apiRoute: '/api/admin/get-active',
+			});
+		}
+
+		// Ensure Role dropdown is prepended before User (admin_id) dropdown
+		const hasAdmin = list.some((f) => f.field === 'admin_id');
+		const hasRole = list.some((f) => f.field === 'role_id');
+		if (hasAdmin && !hasRole) {
+			const adminIndex = list.findIndex((f) => f.field === 'admin_id');
+			const roleFilter: IReportFilterItem = {
+				field: 'role_id',
+				label: 'Role',
+				type: 'dropdown',
+				placeholder: 'Select Role',
+				apiRoute: '/api/role/get-active',
+				options: roleOptions.length > 0 ? roleOptions : undefined,
+			};
+			if (adminIndex >= 0) {
+				list.splice(adminIndex, 0, roleFilter);
+			} else {
+				list.unshift(roleFilter);
+			}
+		} else if (hasRole && roleOptions.length > 0) {
+			list = list.map((f) =>
+				f.field === 'role_id' ? { ...f, options: roleOptions } : f,
+			);
+		}
+
+		return list;
+	}, [rawFilters, isLedgerReport, roleOptions]);
 
 	// COUNT ACTIVE FILTERS (INCREMENTS IF ANY FILTER VALUE IS PRESENT)
 	const activeFilterCount = useMemo(() => {
@@ -521,8 +775,8 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 
 			if (isDateRange) {
 				if (!handledRangeFields.has(filter.field)) {
-					const s = filterValues.date_from || filterValues.startDate;
-					const e = filterValues.date_to || filterValues.endDate;
+					const s = filterValues.start_date || filterValues.startDate || filterValues.date_from;
+					const e = filterValues.end_date || filterValues.endDate || filterValues.date_to;
 					const directVal = filterValues[filter.field];
 					if (
 						(s && String(s).trim() !== '') ||
@@ -585,25 +839,47 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	);
 
 	// DEBOUNCE FILTER TEXT VALUES TO PREVENT EXCESSIVE API CALLS
-	const prevFilterValuesRef = useRef<string>(JSON.stringify(filterValues));
 	useEffect(() => {
-		const serialized = JSON.stringify(filterValues);
-		if (prevFilterValuesRef.current === serialized) {
+		if (JSON.stringify(filterValues) === JSON.stringify(debouncedFilterValues)) {
 			return undefined;
 		}
 		const timer = setTimeout(() => {
-			prevFilterValuesRef.current = serialized;
 			setDebouncedFilterValues(filterValues);
 			setPage(1);
 		}, 350);
 		return () => clearTimeout(timer);
-	}, [filterValues]);
+	}, [filterValues, debouncedFilterValues]);
 
-	// BUILD ACTIVE QUERY PARAMETERS (ONLY SENDS RANGES IF BOTH BOUNDS EXIST)
+	// BUILD ACTIVE QUERY PARAMETERS (CLEAN BACKEND-COMPLIANT PARAMS)
 	const buildQueryParams = useCallback((): IReportQueryParams => {
 		const cleanFilters: Record<string, any> = {};
-		const handledRangeKeys = new Set<string>();
+		const handledRangeKeys = new Set<string>([
+			'date_from',
+			'date_to',
+			'startDate',
+			'endDate',
+			'start_date',
+			'end_date',
+			'date',
+		]);
 		const currentFilters = parsedFiltersRef.current || [];
+
+		// TWO SEPARATE DATE PARAMETERS (start_date AND end_date)
+		const s =
+			debouncedFilterValues.start_date ||
+			debouncedFilterValues.startDate ||
+			debouncedFilterValues.date_from;
+		const e =
+			debouncedFilterValues.end_date ||
+			debouncedFilterValues.endDate ||
+			debouncedFilterValues.date_to;
+
+		if (s) {
+			cleanFilters.start_date = s;
+		}
+		if (e) {
+			cleanFilters.end_date = e;
+		}
 
 		currentFilters.forEach((filter) => {
 			const isDateRange =
@@ -618,34 +894,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 				filter.field === 'amount';
 
 			if (isDateRange) {
-				const s = debouncedFilterValues.date_from || debouncedFilterValues.startDate;
-				const e = debouncedFilterValues.date_to || debouncedFilterValues.endDate;
-				if (s && e) {
-					cleanFilters.date_from = s;
-					cleanFilters.date_to = e;
-					cleanFilters.startDate = s;
-					cleanFilters.endDate = e;
-					cleanFilters.start_date = s;
-					cleanFilters.end_date = e;
-					cleanFilters.date = `${s},${e}`;
-					cleanFilters[filter.field] = `${s},${e}`;
-				} else if (s) {
-					cleanFilters.date_from = s;
-					cleanFilters.startDate = s;
-					cleanFilters.start_date = s;
-				} else if (e) {
-					cleanFilters.date_to = e;
-					cleanFilters.endDate = e;
-					cleanFilters.end_date = e;
-				}
 				handledRangeKeys.add(filter.field);
-				handledRangeKeys.add('date_from');
-				handledRangeKeys.add('date_to');
-				handledRangeKeys.add('startDate');
-				handledRangeKeys.add('endDate');
-				handledRangeKeys.add('start_date');
-				handledRangeKeys.add('end_date');
-				handledRangeKeys.add('date');
 			} else if (isNumberRange) {
 				const min = debouncedFilterValues.amount_min ?? debouncedFilterValues[`${filter.field}_min`];
 				const max = debouncedFilterValues.amount_max ?? debouncedFilterValues[`${filter.field}_max`];
@@ -677,6 +926,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		// Pass remaining non-range filter fields
 		Object.entries(debouncedFilterValues).forEach(([k, v]) => {
 			if (!handledRangeKeys.has(k) && v !== undefined && v !== null && v !== '' && v !== 'all') {
+				if (k === 'role_id' && isLedgerReport) {
+					return;
+				}
 				cleanFilters[k] = typeof v === 'string' ? v.trim() : v;
 			}
 		});
@@ -699,32 +951,46 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			...extra,
 		};
 		return query;
-	}, [page, limit, sortBy, sortOrder, debouncedFilterValues, extraQueryParamsSerialized]);
+	}, [
+		page,
+		limit,
+		sortBy,
+		sortOrder,
+		debouncedFilterValues,
+		extraQueryParamsSerialized,
+		isLedgerReport,
+	]);
 
 	// REF GUARDS PREVENTING DUPLICATE REQUESTS (REPOSITORY STANDARD)
 	const lastFetchKeyRef = useRef<string>('');
-	const isFetchingRef = useRef<boolean>(false);
+	const latestRequestIdRef = useRef<number>(0);
 
 	const fetchReport = useCallback(
 		async (force = false) => {
-			if (isLoadingPermissions) {
+			if (isLoadingPermissions || !areFilterDefaultsReady) {
 				return;
 			}
 
 			const queryParams = buildQueryParams();
-			const currentFetchKey = `${reportType}_${page}_${limit}_${sortBy}_${sortOrder}_${JSON.stringify(queryParams)}`;
+			const currentFetchKey = `${reportType}_${JSON.stringify(queryParams)}`;
 
-			if (!force && (isFetchingRef.current || lastFetchKeyRef.current === currentFetchKey)) {
+			if (!force && lastFetchKeyRef.current === currentFetchKey) {
 				return;
 			}
 
-			isFetchingRef.current = true;
 			lastFetchKeyRef.current = currentFetchKey;
+			latestRequestIdRef.current += 1;
+			const requestId = latestRequestIdRef.current;
 			setIsLoading(true);
 
 			try {
 				const res = await reportService.getReportList(reportType, queryParams);
-				const data = res?.data;
+				// A newer request has started; ignore this stale response
+				if (requestId !== latestRequestIdRef.current) return;
+				const rawData = res?.data;
+				const data = (rawData as any)?.formattedData
+					? { ...rawData, ...(rawData as any).formattedData }
+					: rawData;
 				if (data) {
 					setReportTitle(data.title || fallbackTitle);
 					const metaCols = data.metadata?.columns;
@@ -766,6 +1032,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					setTotalPages(pages);
 				}
 			} catch (error: any) {
+				if (requestId !== latestRequestIdRef.current) return;
 				lastFetchKeyRef.current = '';
 				const msg =
 					error?.data?.message ||
@@ -773,20 +1040,12 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					`Failed to fetch ${fallbackTitle} data.`;
 				showNotification('Error', msg, 'danger');
 			} finally {
-				setIsLoading(false);
-				isFetchingRef.current = false;
+				if (requestId === latestRequestIdRef.current) {
+					setIsLoading(false);
+				}
 			}
 		},
-		[
-			reportType,
-			buildQueryParams,
-			fallbackTitle,
-			isLoadingPermissions,
-			page,
-			limit,
-			sortBy,
-			sortOrder,
-		],
+		[reportType, buildQueryParams, fallbackTitle, isLoadingPermissions, areFilterDefaultsReady],
 	);
 
 	useEffect(() => {
@@ -813,13 +1072,22 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		}
 	};
 
-	// RESET ALL FILTERS (RESTORES CURRENT MONTH DEFAULT)
+	// RESET ALL FILTERS (RESTORES CURRENT MONTH DEFAULT FOR STANDARD REPORTS)
 	const handleResetFilters = () => {
 		lastFetchKeyRef.current = '';
-		prevFilterValuesRef.current = '{}';
-		const defaultDateRange = getCurrentMonthDateRange();
-		setFilterValues(defaultDateRange);
-		setDebouncedFilterValues(defaultDateRange);
+		const defaultDateRange = isLedgerReport ? {} : getCurrentMonthDateRange();
+		setFilterValues((prev) => {
+			const nextVals: Record<string, any> = { ...defaultDateRange };
+			if (isLedgerReport && prev.role_id) nextVals.role_id = prev.role_id;
+			if (isLedgerReport && prev.admin_id) nextVals.admin_id = prev.admin_id;
+			return nextVals;
+		});
+		setDebouncedFilterValues((prev) => {
+			const nextVals: Record<string, any> = { ...defaultDateRange };
+			if (isLedgerReport && prev.role_id) nextVals.role_id = prev.role_id;
+			if (isLedgerReport && prev.admin_id) nextVals.admin_id = prev.admin_id;
+			return nextVals;
+		});
 		setSortBy(defaultSortBy || 'created_at');
 		setSortOrder(defaultSortOrder || 'DESC');
 		setPage(1);
@@ -838,6 +1106,13 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			if (field === 'service_category_id' || field === 'category_id') {
 				if (prev.operator_id) {
 					next.operator_id = '';
+				}
+			}
+
+			// CASCADING: If role changes or is cleared, reset the user/admin filter
+			if (field === 'role_id') {
+				if (prev.admin_id) {
+					next.admin_id = '';
 				}
 			}
 
@@ -889,14 +1164,23 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		}
 	};
 
-	// COLUMN ALIGNMENT HELPER (CENTER ALIGN AMOUNT, CHARGE, PAYABLE AMOUNT, STATUS, ETC.)
+	// COLUMN ALIGNMENT HELPER (RESPECTS BACKEND ALIGN, FALLS BACK TO SENSIBLE DEFAULTS)
 	const getColumnAlignment = (col: IReportColumn): { alignmentClass: string; justifyClass: string } => {
+		if (col.align === 'right') {
+			return { alignmentClass: 'text-end', justifyClass: 'justify-content-end' };
+		}
+		if (col.align === 'center') {
+			return { alignmentClass: 'text-center', justifyClass: 'justify-content-center' };
+		}
+		if (col.align === 'left') {
+			return { alignmentClass: 'text-start', justifyClass: 'justify-content-start' };
+		}
+
 		const field = (col.field || '').toLowerCase();
 		const header = (col.header || '').toLowerCase();
 
-		// Center aligned columns as requested: amount, charge, payable_amount, currency, status, badge, date
+		// Center aligned columns as default if no align specified: amount, charge, payable_amount, currency, status, badge, date
 		const isCenter =
-			col.align === 'center' ||
 			col.type === 'currency' ||
 			col.type === 'status' ||
 			col.type === 'badge' ||
@@ -914,10 +1198,6 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 
 		if (isCenter) {
 			return { alignmentClass: 'text-center', justifyClass: 'justify-content-center' };
-		}
-
-		if (col.align === 'right') {
-			return { alignmentClass: 'text-end', justifyClass: 'justify-content-end' };
 		}
 
 		return { alignmentClass: 'text-start', justifyClass: 'justify-content-start' };
@@ -1000,7 +1280,33 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			);
 		}
 
-		// 3. CATEGORY / TYPE BADGE (MATCHING WALLET TRANSACTION CATEGORY: CRISP RECTANGLE, ZERO BORDER-RADIUS)
+		// 3. DIFFERENCE BADGE (MATCHING LEDGER REPORT DIFFERENCE: PILL BADGE WITH GREEN +₹ FOR CREDITS & RED -₹ FOR DEBITS)
+		const isDifference =
+			fieldLower === 'difference' ||
+			headerLower === 'difference';
+
+		if (isDifference) {
+			const label = styleObj?.label || rawValue || '-';
+			const isNegative = String(label).trim().startsWith('-');
+			const badgeStyle = getCustomBadgeStyle(
+				styleObj,
+				isNegative ? '#FEF2F2' : '#DCFCE7',
+				isNegative ? '#B91C1C' : '#15803D',
+			);
+			return (
+				<span
+					className='difference-pill-badge px-2 py-1 rounded-pill fw-bold d-inline-block'
+					style={{
+						...badgeStyle,
+						fontSize: '0.75rem',
+						lineHeight: 1.2,
+					}}>
+					{label}
+				</span>
+			);
+		}
+
+		// 4. CATEGORY / TYPE BADGE (MATCHING WALLET TRANSACTION CATEGORY: CRISP RECTANGLE, ZERO BORDER-RADIUS)
 		if (
 			col.type === 'badge' ||
 			Boolean(styleObj?.bgColor) ||
@@ -1026,13 +1332,17 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			);
 		}
 
-		// 4. CURRENCY / AMOUNT (MATCHING WALLET AMOUNT DISPLAY: POPPINS BOLD)
+		// 5. CURRENCY / AMOUNT (MATCHING WALLET AMOUNT DISPLAY: POPPINS BOLD)
 		if (
 			col.type === 'currency' ||
 			fieldLower.includes('amount') ||
 			fieldLower.includes('charge') ||
+			fieldLower.includes('balance') ||
+			fieldLower.includes('prebalance') ||
+			fieldLower.includes('post_balance') ||
 			headerLower.includes('amount') ||
-			headerLower.includes('charge')
+			headerLower.includes('charge') ||
+			headerLower.includes('balance')
 		) {
 			return (
 				<span className='amount-display'>
@@ -1153,8 +1463,16 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 
 										// 1. DATE RANGE FILTER WITH COMMON DATERANGEPICKER
 										if (isDateRange) {
-											const sDate = filterValues.date_from || filterValues.startDate || '';
-											const eDate = filterValues.date_to || filterValues.endDate || '';
+											const sDate =
+												filterValues.start_date ||
+												filterValues.startDate ||
+												filterValues.date_from ||
+												'';
+											const eDate =
+												filterValues.end_date ||
+												filterValues.endDate ||
+												filterValues.date_to ||
+												'';
 
 											return (
 												<div
@@ -1259,16 +1577,41 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 												const isCategoryChosen = Boolean(selectedCategory && selectedCategory !== 'all');
 												const isOperatorDisabled = isOperatorField && !isCategoryChosen;
 
+												const isAdminField = filter.field === 'admin_id';
+												const isRoleChosen = Boolean(selectedRole && selectedRole !== 'all');
+												const isAdminDisabled = isAdminField && !isRoleChosen;
+												const fallbackLabel =
+													isAdminField && String(currentVal) === String(authUser?.id)
+														? authUser?.name || authUser?.username
+														: undefined;
+
 												return (
 													<AsyncDropdownFilter
 														key={filter.field}
 														filter={filter}
 														value={currentVal}
-														disabled={isOperatorDisabled}
-														disabledPlaceholder='Select Category first'
-														extraParams={isOperatorField ? operatorExtraParams : undefined}
+														fallbackLabel={fallbackLabel}
+														disabled={isOperatorDisabled || isAdminDisabled}
+														disabledPlaceholder={
+															isOperatorDisabled
+																? 'Select Category first'
+																: isAdminDisabled
+																? 'Select Role first'
+																: undefined
+														}
+														extraParams={
+															isOperatorField
+																? operatorExtraParams
+																: isAdminField
+																? adminExtraParams
+																: undefined
+														}
 														onChange={(newVal) => handleFilterChange(filter.field, newVal)}
-														width={filter.field === 'service_category_id' ? '220px' : '200px'}
+														width={
+															filter.field === 'service_category_id' || filter.field === 'admin_id'
+																? '220px'
+																: '200px'
+														}
 													/>
 												);
 											}
@@ -1417,25 +1760,99 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 
 					{/* BACKEND-DRIVEN STAT METRIC CARDS (PASTEL LUXURY CARDS MATCHING DESIGN) */}
 					{metricCards.length > 0 && (
-						<div className='report-summary-cards-grid'>
-							{metricCards.map((card) => (
-								<div key={card.key} className={`summary-metric-card theme-${card.theme}`}>
-									<div className='metric-card-inner'>
-										<div className='metric-icon-wrap'>
-											<Icon icon={mapReportIcon(card.icon)} />
-										</div>
-										<div className='metric-content-wrap'>
-											<div className='metric-title'>{card.title}</div>
-											<div className='metric-value-row'>
-												<span className='metric-value'>{card.value}</span>
-												{card.countText && (
-													<span className='metric-count-pill'>{card.countText}</span>
+						<div
+							className={`report-summary-cards-grid ${
+								metricCards.some((c) => c.image || c.email || c.mobile_number)
+									? 'has-profile-card'
+									: ''
+							}`}>
+							{metricCards.map((card) => {
+								const cardStyle: React.CSSProperties = {};
+								if (card.bgColor) cardStyle.backgroundColor = card.bgColor;
+								if (card.borderColor) cardStyle.borderColor = card.borderColor;
+								const isProfile = Boolean(card.image || card.email || card.mobile_number);
+
+								return (
+									<div
+										key={card.key}
+										className={`summary-metric-card theme-${card.theme} ${
+											isProfile ? 'is-profile-card' : ''
+										}`}
+										style={cardStyle}>
+										<div className='metric-card-inner'>
+											{card.image ? (
+												<div className='metric-icon-wrap bg-transparent shadow-none border-0'>
+													<ReportImageCell
+														src={card.image}
+														name={String(card.value || card.title)}
+														size={44}
+													/>
+												</div>
+											) : (
+												<div
+													className='metric-icon-wrap'
+													style={card.textColor ? { color: card.textColor } : undefined}>
+													<Icon icon={mapReportIcon(card.icon)} />
+												</div>
+											)}
+											<div className='metric-content-wrap'>
+												{card.title && (
+													<div
+														className='metric-title'
+														style={card.textColor ? { color: card.textColor, opacity: 0.85 } : undefined}>
+														{card.title}
+													</div>
 												)}
+												<div className='metric-value-row'>
+													<span
+														className='metric-value'
+														style={card.textColor ? { color: card.textColor } : undefined}>
+														{card.value}
+													</span>
+													{card.countText && (
+														<span className='metric-count-pill'>{card.countText}</span>
+													)}
+												</div>
+												{card.email || card.mobile_number ? (
+													<div className='metric-contact-wrap mt-1 d-flex flex-column'>
+														{card.email && (
+															<span
+																className='metric-subtext text-truncate'
+																title={card.email}
+																style={
+																	card.textColor
+																		? { color: card.textColor, opacity: 0.8 }
+																		: undefined
+																}>
+																{card.email}
+															</span>
+														)}
+														{card.mobile_number && (
+															<span
+																className='metric-subtext text-truncate'
+																title={card.mobile_number}
+																style={
+																	card.textColor
+																		? { color: card.textColor, opacity: 0.8 }
+																		: undefined
+																}>
+																{card.mobile_number}
+															</span>
+														)}
+													</div>
+												) : card.subtext ? (
+													<div
+														className='metric-subtext'
+														title={card.subtext}
+														style={card.textColor ? { color: card.textColor, opacity: 0.75 } : undefined}>
+														{card.subtext}
+													</div>
+												) : null}
 											</div>
 										</div>
 									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 					)}
 

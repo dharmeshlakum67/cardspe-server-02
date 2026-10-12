@@ -140,6 +140,9 @@ export interface IReportQueryParams {
 	search?: string;
 	sortBy?: string;
 	sortOrder?: 'ASC' | 'DESC';
+	start_date?: string;
+	end_date?: string;
+	date?: string;
 	[key: string]: any;
 }
 

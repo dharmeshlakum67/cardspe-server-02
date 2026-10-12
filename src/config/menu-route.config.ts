@@ -250,6 +250,12 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Operator Transaction Report',
 		subMenu: null,
 	},
+	ledger_report: {
+		path: PAGE_ROUTES.LEDGER_REPORT,
+		icon: 'AccountBalanceWallet',
+		text: 'Ledger Report',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

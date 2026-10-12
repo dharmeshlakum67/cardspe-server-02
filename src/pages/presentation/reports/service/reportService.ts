@@ -2,19 +2,33 @@ import apiClient from '../../../../services/apiClient';
 import { ENV } from '../../../../config/env.config';
 import { IReportQueryParams, IReportResponse } from '../type/report.type';
 
+const REDUNDANT_DATE_KEYS = new Set([
+	'date_from',
+	'date_to',
+	'startDate',
+	'endDate',
+]);
+
 export const reportService = {
 	// 1. GET GENERIC REPORT DATA (JSON LIST)
 	getReportList: async (
 		reportType: string,
 		params?: IReportQueryParams,
+		customUrl?: string,
 	): Promise<IReportResponse> => {
 		const cleanType = reportType.replace(/^\//, '').replace(/\/$/, '');
-		const url = `/api/reports/${cleanType}/list`;
+		const url = customUrl || `/api/reports/${cleanType}/list`;
 
 		const apiParams: Record<string, any> = {};
 		if (params) {
 			Object.entries(params).forEach(([key, val]) => {
-				if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+				if (
+					!REDUNDANT_DATE_KEYS.has(key) &&
+					val !== undefined &&
+					val !== null &&
+					val !== '' &&
+					val !== 'all'
+				) {
 					apiParams[key] = typeof val === 'string' ? val.trim() : val;
 				}
 			});
@@ -32,9 +46,10 @@ export const reportService = {
 		reportType: string,
 		params?: IReportQueryParams,
 		customFilename?: string,
+		customDownloadUrl?: string,
 	): Promise<void> => {
 		const cleanType = reportType.replace(/^\//, '').replace(/\/$/, '');
-		const rawUrl = `/api/reports/${cleanType}/download`;
+		const rawUrl = customDownloadUrl || `/api/reports/${cleanType}/download`;
 
 		const apiParams: Record<string, any> = {};
 		if (params) {
@@ -42,6 +57,7 @@ export const reportService = {
 				if (
 					key !== 'page' &&
 					key !== 'limit' &&
+					!REDUNDANT_DATE_KEYS.has(key) &&
 					val !== undefined &&
 					val !== null &&
 					val !== '' &&

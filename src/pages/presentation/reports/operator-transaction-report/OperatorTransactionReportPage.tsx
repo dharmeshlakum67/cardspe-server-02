@@ -14,7 +14,7 @@ export const OperatorTransactionReportPage: FC = () => {
 			permissionKey={PERMISSION_KEYS.OPERATOR_TRANSACTION_REPORT}
 			parentPermissionKey={PERMISSION_KEYS.REPORTS}
 			defaultTitle='Operator Transaction Report'
-			defaultSortBy='total'
+			defaultSortBy='total_amount'
 			defaultSortOrder='DESC'
 			defaultLimit={10}
 			breadcrumbs={OPERATOR_TRANSACTION_REPORT_BREADCRUMBS}

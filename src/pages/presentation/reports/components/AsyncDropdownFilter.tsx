@@ -1,7 +1,7 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable react/require-default-props, react/default-props-match-prop-types */
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../../components/icon/Icon';
 import Spinner from '../../../../components/bootstrap/Spinner';
 import apiClient from '../../../../services/apiClient';
@@ -14,9 +14,90 @@ const dropdownPendingRequests = new Map<string, Promise<IReportFilterOption[]>>(
 const dropdownSearchCache = new Map<string, IReportFilterOption[]>();
 const dropdownSearchPendingRequests = new Map<string, Promise<IReportFilterOption[]>>();
 
+// PARSE BACKEND RESPONSE INTO STANDARDIZED OPTIONS
+const parseDropdownOptions = (res: any): IReportFilterOption[] => {
+	let items: any[] = [];
+	if (Array.isArray(res)) {
+		items = res;
+	} else if (Array.isArray(res?.data)) {
+		items = res.data;
+	} else if (Array.isArray(res?.data?.data)) {
+		items = res.data.data;
+	}
+
+	return items.map((item: any) => {
+		const val = item.id !== undefined && item.id !== null ? item.id : item.value;
+		const fullName = [item.first_name, item.last_name].filter(Boolean).join(' ');
+		let label =
+			item.role_name ||
+			fullName ||
+			item.name ||
+			item.user_name ||
+			item.username ||
+			item.title ||
+			item.label ||
+			String(val);
+		if (item.operator_code) {
+			label = `${label} (${item.operator_code})`;
+		}
+		return {
+			label,
+			value: val,
+		};
+	});
+};
+
+const normalizeApiRoute = (apiRoute: string) =>
+	apiRoute.startsWith('/') ? apiRoute : `/${apiRoute}`;
+
+const buildExtraParamsKey = (extraParams?: Record<string, any>) => {
+	const searchParams = new URLSearchParams();
+	Object.entries(extraParams || {}).forEach(([k, v]) => {
+		if (v !== undefined && v !== null && v !== '' && v !== 'all') {
+			searchParams.append(k, String(v));
+		}
+	});
+	return searchParams.toString();
+};
+
+const buildDropdownCacheKey = (apiRoute: string, extraParamsKey: string) =>
+	`${apiRoute}${extraParamsKey ? `?${extraParamsKey}` : ''}`;
+
+// LOAD INITIAL DROPDOWN OPTIONS THROUGH THE SHARED CACHE (ONE NETWORK REQUEST PER ROUTE + PARAMS)
+export const loadDropdownOptions = async (
+	apiRoute: string,
+	extraParams?: Record<string, any>,
+): Promise<IReportFilterOption[]> => {
+	const cleanApiRoute = normalizeApiRoute(apiRoute);
+	const cacheKey = buildDropdownCacheKey(cleanApiRoute, buildExtraParamsKey(extraParams));
+
+	const cached = dropdownOptionsCache.get(cacheKey);
+	if (cached) return cached;
+
+	const pending = dropdownPendingRequests.get(cacheKey);
+	if (pending) return pending;
+
+	const requestPromise = (async () => {
+		try {
+			const res = await apiClient<any>(cleanApiRoute, {
+				params: { page: 1, limit: 50, ...(extraParams || {}) },
+			});
+			const parsed = parseDropdownOptions(res);
+			dropdownOptionsCache.set(cacheKey, parsed);
+			return parsed;
+		} finally {
+			dropdownPendingRequests.delete(cacheKey);
+		}
+	})();
+
+	dropdownPendingRequests.set(cacheKey, requestPromise);
+	return requestPromise;
+};
+
 export interface IAsyncDropdownFilterProps {
 	filter: IReportFilterItem;
 	value?: any;
+	fallbackLabel?: string;
 	onChange: (value: any) => void;
 	extraParams?: Record<string, any>;
 	width?: string | number;
@@ -27,6 +108,7 @@ export interface IAsyncDropdownFilterProps {
 export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 	filter,
 	value,
+	fallbackLabel,
 	onChange,
 	extraParams,
 	width = '210px',
@@ -34,10 +116,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 	disabledPlaceholder,
 }) => {
 	const rawApiRoute = filter.apiRoute || (filter as any).apiUrl || (filter as any).endpoint || '';
-	let cleanApiRoute = '';
-	if (rawApiRoute) {
-		cleanApiRoute = rawApiRoute.startsWith('/') ? rawApiRoute : `/${rawApiRoute}`;
-	}
+	const cleanApiRoute = rawApiRoute ? normalizeApiRoute(rawApiRoute) : '';
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [options, setOptions] = useState<IReportFilterOption[]>(filter.options || []);
@@ -59,14 +138,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 	const extraParamsSerialized = JSON.stringify(extraParams || {});
 	const extraParamsKey = useMemo(() => {
 		try {
-			const parsed = JSON.parse(extraParamsSerialized);
-			const searchParams = new URLSearchParams();
-			Object.entries(parsed).forEach(([k, v]) => {
-				if (v !== undefined && v !== null && v !== '' && v !== 'all') {
-					searchParams.append(k, String(v));
-				}
-			});
-			return searchParams.toString();
+			return buildExtraParamsKey(JSON.parse(extraParamsSerialized));
 		} catch {
 			return '';
 		}
@@ -75,32 +147,8 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 	// COMPACT STABLE CACHE KEY FOR INITIAL FETCH
 	const cacheKey = useMemo(() => {
 		if (!cleanApiRoute) return '';
-		return `${cleanApiRoute}${extraParamsKey ? `?${extraParamsKey}` : ''}`;
+		return buildDropdownCacheKey(cleanApiRoute, extraParamsKey);
 	}, [cleanApiRoute, extraParamsKey]);
-
-	// PARSE BACKEND RESPONSE INTO STANDARDIZED OPTIONS
-	const parseApiResponse = useCallback((res: any): IReportFilterOption[] => {
-		let items: any[] = [];
-		if (Array.isArray(res)) {
-			items = res;
-		} else if (Array.isArray(res?.data)) {
-			items = res.data;
-		} else if (Array.isArray(res?.data?.data)) {
-			items = res.data.data;
-		}
-
-		return items.map((item: any) => {
-			const val = item.id !== undefined && item.id !== null ? item.id : item.value;
-			let label = item.name || item.title || item.label || String(val);
-			if (item.operator_code) {
-				label = `${item.name} (${item.operator_code})`;
-			}
-			return {
-				label,
-				value: val,
-			};
-		});
-	}, []);
 
 	// FETCH INITIAL OPTIONS EXACTLY ONCE (DEDUPLICATES CONCURRENT IN-FLIGHT CALLS)
 	useEffect(() => {
@@ -123,32 +171,8 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 
 		const fetchInitialOptions = async () => {
 			try {
-				let parsedOptions: IReportFilterOption[];
-
-				// 2. Check if identical request is already in-flight: reuse existing promise!
-				if (dropdownPendingRequests.has(cacheKey)) {
-					parsedOptions = await dropdownPendingRequests.get(cacheKey)!;
-				} else {
-					// 3. Initiate single network request and register promise in pending map
-					const requestPromise = (async () => {
-						try {
-							const params: Record<string, any> = {
-								page: 1,
-								limit: 50,
-								...(extraParamsRef.current || {}),
-							};
-							const res = await apiClient<any>(cleanApiRoute, { params });
-							const parsed = parseApiResponse(res);
-							dropdownOptionsCache.set(cacheKey, parsed);
-							return parsed;
-						} finally {
-							dropdownPendingRequests.delete(cacheKey);
-						}
-					})();
-
-					dropdownPendingRequests.set(cacheKey, requestPromise);
-					parsedOptions = await requestPromise;
-				}
+				// 2. Reuses any identical in-flight request instead of firing a new one
+				const parsedOptions = await loadDropdownOptions(cleanApiRoute, extraParamsRef.current);
 
 				if (!isCancelled) {
 					setOptions(parsedOptions);
@@ -169,7 +193,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 		return () => {
 			isCancelled = true;
 		};
-	}, [cleanApiRoute, cacheKey, disabled, parseApiResponse]);
+	}, [cleanApiRoute, cacheKey, disabled]);
 
 	// HANDLE SEARCH DEBOUNCING (300ms) WITH IN-FLIGHT DEDUPLICATION
 	useEffect(() => {
@@ -225,7 +249,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 								...(extraParamsRef.current || {}),
 							};
 							const res = await apiClient<any>(cleanApiRoute, { params });
-							const parsedData = parseApiResponse(res);
+							const parsedData = parseDropdownOptions(res);
 							dropdownSearchCache.set(searchCacheKey, parsedData);
 							return parsedData;
 						} finally {
@@ -250,7 +274,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 				clearTimeout(searchTimeoutRef.current);
 			}
 		};
-	}, [searchTerm, cleanApiRoute, cacheKey, parseApiResponse]);
+	}, [searchTerm, cleanApiRoute, cacheKey]);
 
 	// CLOSE DROPDOWN WHEN CLICKING OUTSIDE
 	useEffect(() => {
@@ -287,8 +311,12 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 			if (foundInCached) return foundInCached;
 		}
 
+		if (fallbackLabel) {
+			return { label: fallbackLabel, value };
+		}
+
 		return { label: String(value), value };
-	}, [value, options, cacheKey]);
+	}, [value, options, cacheKey, fallbackLabel]);
 
 	const hasSelection = Boolean(selectedOption);
 

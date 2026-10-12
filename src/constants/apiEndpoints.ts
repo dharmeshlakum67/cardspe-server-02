@@ -890,6 +890,26 @@ export const REPORT_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	LEDGER_REPORT: {
+		url: '/api/reports/ledger-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	LEDGER_REPORT_LIST: {
+		url: '/api/reports/ledger-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	LEDGER_REPORT_EXPORT: {
+		url: '/api/reports/ledger-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	LEDGER_REPORT_DOWNLOAD: {
+		url: '/api/reports/ledger-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 } as const;
 
 // COMBINED API ENDPOINTS
