@@ -780,12 +780,10 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 					</div>
 				</ModalBody>
 
-				<ModalFooter className='border-top-0 pt-2 pb-4 px-4 gap-2'>
+				<ModalFooter className='px-4 py-3'>
 					<Button
 						type='button'
 						color='light'
-						className='px-4 fw-semibold border'
-						style={{ borderRadius: '10px' }}
 						onClick={handleClose}
 						isDisable={isSubmitting}>
 						Cancel
@@ -793,12 +791,10 @@ export const PaymentGatewayModal: FC<IPaymentGatewayModalProps> = ({
 					<Button
 						type='submit'
 						color='primary'
-						className='px-4 fw-semibold'
-						style={{ borderRadius: '10px' }}
 						isDisable={isSubmitting}>
 						{isSubmitting ? (
 							<>
-								<Spinner isSmall inButton isGrow={false} className='me-2' />
+								<Spinner isSmall inButton isGrow className='me-2' />
 								{isEditMode ? 'Updating...' : 'Creating...'}
 							</>
 						) : (

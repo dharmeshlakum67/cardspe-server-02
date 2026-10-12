@@ -47,7 +47,8 @@ const App = () => {
 	 * Full Screen
 	 */
 	const { fullScreenStatus, setFullScreenStatus } = useContext(ThemeContext);
-	const ref = useRef(null);
+	// Fullscreen the whole document so the aside / wrapper layout and portals behave exactly as in normal mode
+	const ref = useRef<HTMLElement>(document.documentElement);
 	useFullscreen(ref, fullScreenStatus, {
 		onClose: () => setFullScreenStatus(false),
 	});
@@ -66,14 +67,7 @@ const App = () => {
 	return (
 		<ThemeProvider theme={theme}>
 			<SocketNotificationListener />
-			<div
-				ref={ref}
-				className='app'
-				style={{
-					backgroundColor: fullScreenStatus ? 'var(--bs-body-bg)' : undefined,
-					zIndex: fullScreenStatus ? 1 : undefined,
-					overflow: fullScreenStatus ? 'scroll' : undefined,
-				}}>
+			<div className='app'>
 				<AsideRoutes />
 				<Wrapper />
 			</div>

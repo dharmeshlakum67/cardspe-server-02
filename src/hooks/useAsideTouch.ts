@@ -23,7 +23,10 @@ const useAsideTouch = () => {
 	const x = useMotionValue(
 		process.env.REACT_APP_ASIDE_TOUCH_STATUS === 'true' ? 0 : asideWidthWithSpace,
 	);
-	const [touchStatus, setTouchStatus] = useState(!x.get());
+	// Must match the `left` transform below: x >= -10 renders the aside fully on screen,
+	// so tiny offsets (e.g. drag-constraint re-measure on fullscreen resize) still count as open
+	const isAsideVisible = (value: number) => value > -50;
+	const [touchStatus, setTouchStatus] = useState(isAsideVisible(x.get()));
 	const left = useTransform(
 		x,
 		[-100, -90, -10, 0],
@@ -33,8 +36,7 @@ const useAsideTouch = () => {
 	// X value get
 	useEffect(() => {
 		function updateX() {
-			const X = x.get();
-			setTouchStatus(!X);
+			setTouchStatus(isAsideVisible(x.get()));
 		}
 
 		// @ts-ignore
@@ -68,7 +70,7 @@ const useAsideTouch = () => {
 
 	const asideStyle = hasTouchButton ? { left } : undefined;
 
-	return { asideStyle, touchStatus, hasTouchButton, asideWidthWithSpace, x };
+	return { asideStyle, touchStatus, hasTouchButton, asideWidthWithSpace, x, isAsideVisible };
 };
 
 export default useAsideTouch;

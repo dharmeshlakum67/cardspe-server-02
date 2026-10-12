@@ -217,38 +217,125 @@
 	}
 }
 
-.gateway-detail-list {
-	display: flex;
-	flex-direction: column;
-	gap: 0.875rem;
+.gateway-view-hero .hero-code-chip {
+	align-self: flex-start;
+	padding: 0.2rem 0.6rem;
+	border-radius: 6px;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	font-family: var(--bs-font-monospace, monospace);
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #475569;
+	letter-spacing: 0.02em;
+}
 
-	.detail-item {
+.gateway-view-stats {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+
+	@media (max-width: 575.98px) {
+		grid-template-columns: 1fr;
+	}
+
+	.gateway-stat-tile {
 		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		padding: 0.75rem 0;
-		border-bottom: 1px solid #f1f5f9;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 0.9rem 1rem;
+		border: 1px solid #e2e8f0;
+		border-radius: 12px;
+		background: #ffffff;
+	}
 
-		&:last-child {
-			border-bottom: none;
+	.stat-icon {
+		width: 40px;
+		height: 40px;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+
+		&.is-min {
+			background: #eff6ff;
+			color: #2563eb;
 		}
 
-		.detail-label {
-			font-size: 0.8125rem;
-			font-weight: 500;
-			color: #64748b;
-			width: 35%;
-			flex-shrink: 0;
+		&.is-max {
+			background: #f0fdf4;
+			color: #16a34a;
 		}
+	}
 
-		.detail-value {
-			font-size: 0.875rem;
-			font-weight: 600;
-			color: #1e293b;
-			width: 65%;
-			text-align: right;
-			word-break: break-word;
+	.stat-body {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.stat-label {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: #64748b;
+	}
+
+	.stat-value {
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: #0f172a;
+	}
+}
+
+.gateway-view-section {
+	padding: 0.9rem 1rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #ffffff;
+	margin-bottom: 0.75rem;
+
+	.section-label {
+		display: block;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #64748b;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		margin-bottom: 0.4rem;
+	}
+
+	.section-text {
+		margin: 0;
+		font-size: 0.875rem;
+		line-height: 1.6;
+		color: #334155;
+
+		&.is-empty {
+			color: #94a3b8;
+			font-style: italic;
 		}
+	}
+}
+
+.gateway-view-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.5rem;
+	padding: 0 0.25rem;
+
+	.meta-item {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.8rem;
+		color: #64748b;
+	}
+
+	.meta-value {
+		font-weight: 600;
+		color: #334155;
 	}
 }
 

@@ -1,7 +1,6 @@
-import React, { FC, ReactNode, useContext } from 'react';
+import React, { FC, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
-import ThemeContext from '../../contexts/themeContext';
 
 interface IPortalProps {
 	children: ReactNode;
@@ -9,9 +8,6 @@ interface IPortalProps {
 }
 
 const Portal: FC<IPortalProps> = ({ id = 'portal-root', children }) => {
-	const { fullScreenStatus } = useContext(ThemeContext);
-
-	if (fullScreenStatus) return children as React.ReactElement | null;
 	const mount =
 		(id ? document.getElementById(id) : null) ||
 		document.getElementById('portal-root') ||

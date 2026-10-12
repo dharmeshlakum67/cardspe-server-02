@@ -7,12 +7,18 @@ import Modal, {
 	ModalBody,
 	ModalFooter,
 } from '../../../../../components/bootstrap/Modal';
+import Button from '../../../../../components/bootstrap/Button';
 import Icon from '../../../../../components/icon/Icon';
 import { PillBadge } from '../../../../../components/common/PillBadge';
 import { getImageUrl } from '../../../../../helpers/helpers';
 import { formatDateTime } from '../../../../../helpers/dateUtils';
 import { IPaymentGateway, parseGatewayCharges } from '../type/payment-gateway-type';
 import '../css/payment-gateway.scss';
+
+const formatLimit = (amount: unknown, emptyText: string) =>
+	amount !== null && amount !== undefined && amount !== ''
+		? `₹${Number(amount).toLocaleString('en-IN')}`
+		: emptyText;
 
 interface IPaymentGatewayViewModalProps {
 	isOpen: boolean;
@@ -86,76 +92,55 @@ export const PaymentGatewayViewModal: FC<IPaymentGatewayViewModalProps> = ({
 								{gateway.status?.toUpperCase()}
 							</PillBadge>
 						</div>
-						<span className='text-muted small'>
-							Code: {gateway.code}
-						</span>
+						<span className='hero-code-chip'>{gateway.code}</span>
 					</div>
 				</div>
 
-				{/* DETAIL METADATA */}
-				<div className='card border rounded-3 p-3 bg-light'>
-					<div className='gateway-detail-list'>
-						<div className='detail-item'>
-							<span className='detail-label'>Gateway Name</span>
-							<span className='detail-value'>{gateway.name}</span>
+				{/* TRANSACTION LIMITS */}
+				<div className='gateway-view-stats'>
+					<div className='gateway-stat-tile'>
+						<div className='stat-icon is-min'>
+							<Icon icon='SouthEast' size='md' />
 						</div>
-
-						<div className='detail-item'>
-							<span className='detail-label'>Identifier Code</span>
-							<span className='detail-value font-monospace'>{gateway.code}</span>
-						</div>
-
-						<div className='detail-item'>
-							<span className='detail-label'>Status</span>
-							<span className='detail-value'>
-								<PillBadge color={isActive ? 'success' : 'danger'} size='sm'>
-									{gateway.status.toUpperCase()}
-								</PillBadge>
+						<div className='stat-body'>
+							<span className='stat-label'>Minimum Amount</span>
+							<span className='stat-value'>
+								{formatLimit(gateway.min_amount, 'No minimum limit')}
 							</span>
 						</div>
-
-						<div className='detail-item'>
-							<span className='detail-label'>Min Amount</span>
-							<span className='detail-value font-monospace'>
-								{gateway.min_amount !== null &&
-								gateway.min_amount !== undefined &&
-								gateway.min_amount !== ('' as any)
-									? `₹${Number(gateway.min_amount).toLocaleString('en-IN')}`
-									: 'No minimum limit'}
+					</div>
+					<div className='gateway-stat-tile'>
+						<div className='stat-icon is-max'>
+							<Icon icon='NorthEast' size='md' />
+						</div>
+						<div className='stat-body'>
+							<span className='stat-label'>Maximum Amount</span>
+							<span className='stat-value'>
+								{formatLimit(gateway.max_amount, 'No maximum limit')}
 							</span>
 						</div>
+					</div>
+				</div>
 
-						<div className='detail-item'>
-							<span className='detail-label'>Max Amount</span>
-							<span className='detail-value font-monospace'>
-								{gateway.max_amount !== null &&
-								gateway.max_amount !== undefined &&
-								gateway.max_amount !== ('' as any)
-									? `₹${Number(gateway.max_amount).toLocaleString('en-IN')}`
-									: 'No maximum limit'}
-							</span>
-						</div>
+				{/* DESCRIPTION */}
+				<div className='gateway-view-section'>
+					<span className='section-label'>Description</span>
+					<p className={`section-text ${gateway.description ? '' : 'is-empty'}`}>
+						{gateway.description || 'No description provided.'}
+					</p>
+				</div>
 
-						<div className='detail-item'>
-							<span className='detail-label'>Description</span>
-							<span className='detail-value text-muted font-normal'>
-								{gateway.description || 'No description provided.'}
-							</span>
-						</div>
-
-						<div className='detail-item'>
-							<span className='detail-label'>Created At</span>
-							<span className='detail-value'>
-								{formatDateTime(gateway.created_at).full}
-							</span>
-						</div>
-
-						<div className='detail-item'>
-							<span className='detail-label'>Last Updated</span>
-							<span className='detail-value'>
-								{formatDateTime(gateway.updated_at).full}
-							</span>
-						</div>
+				{/* AUDIT TIMESTAMPS */}
+				<div className='gateway-view-meta'>
+					<div className='meta-item'>
+						<Icon icon='EventAvailable' size='sm' />
+						<span className='meta-label'>Created</span>
+						<span className='meta-value'>{formatDateTime(gateway.created_at).full}</span>
+					</div>
+					<div className='meta-item'>
+						<Icon icon='Update' size='sm' />
+						<span className='meta-label'>Last Updated</span>
+						<span className='meta-value'>{formatDateTime(gateway.updated_at).full}</span>
 					</div>
 				</div>
 
@@ -221,14 +206,10 @@ export const PaymentGatewayViewModal: FC<IPaymentGatewayViewModalProps> = ({
 				</div>
 			</ModalBody>
 
-			<ModalFooter className='border-top-0 pt-0 pb-4 px-4'>
-				<button
-					type='button'
-					className='btn btn-dark px-4 py-2 fw-semibold shadow-sm'
-					style={{ borderRadius: '10px', minWidth: '105px' }}
-					onClick={() => setIsOpen(false)}>
+			<ModalFooter className='px-4 py-3'>
+				<Button type='button' color='light' onClick={() => setIsOpen(false)}>
 					Close
-				</button>
+				</Button>
 			</ModalFooter>
 		</Modal>
 	);

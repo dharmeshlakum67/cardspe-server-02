@@ -353,8 +353,8 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 
 												<div className='d-flex align-items-center justify-content-end gap-2 mt-4 pt-3 border-top'>
 													<Button
-														color='secondary'
-														isLight
+														type='button'
+														color='light'
 														size='sm'
 														isDisable={isSaving}
 														onClick={handleCancelEdit}>
@@ -405,10 +405,10 @@ export const ServiceConfigurationModal: FC<IServiceConfigurationModalProps> = ({
 				)}
 			</ModalBody>
 
-			<ModalFooter className='border-top pt-3'>
+			<ModalFooter className='px-4 py-3'>
 				<Button
-					color='secondary'
-					isLight
+					type='button'
+					color='light'
 					isDisable={isSaving}
 					onClick={() => setIsOpen(false)}>
 					Close

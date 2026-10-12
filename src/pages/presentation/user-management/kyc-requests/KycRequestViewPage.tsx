@@ -679,8 +679,7 @@ export const KycRequestViewPage: FC = () => {
 														return (
 															<div key={fileUrl || `file_${fIdx}`} className='col-12 col-sm-6 col-md-4 col-lg-3'>
 																<div
-																	className='p-3 border rounded-3 bg-light text-center h-100 d-flex flex-column align-items-center justify-content-center gap-2 cursor-pointer shadow-sm'
-																	style={{ cursor: 'pointer', minHeight: '130px' }}
+																	className='kyc-file-tile'
 																	role='button'
 																	tabIndex={0}
 																	onClick={handlePreview}
@@ -690,23 +689,23 @@ export const KycRequestViewPage: FC = () => {
 																			handlePreview();
 																		}
 																	}}>
-																	{isPdf ? (
-																		<Icon icon='PictureAsPdf' size='3x' className='text-danger' />
-																	) : (
-																		<img
-																			src={fullUrl}
-																			alt={`Attachment #${fIdx + 1}`}
-																			style={{
-																				maxHeight: '80px',
-																				maxWidth: '100%',
-																				objectFit: 'contain',
-																				borderRadius: '4px',
-																			}}
-																		/>
-																	)}
-																	<span className='small fw-bold text-primary text-truncate w-100'>
-																		{isPdf ? 'Open PDF File' : `View Image #${fIdx + 1}`}
-																	</span>
+																	<div className='kyc-file-frame'>
+																		{isPdf ? (
+																			<Icon icon='PictureAsPdf' size='4x' className='text-danger' />
+																		) : (
+																			<img src={fullUrl} alt={`Attachment #${fIdx + 1}`} loading='lazy' />
+																		)}
+																		<div className='kyc-file-overlay'>
+																			<Icon icon={isPdf ? 'OpenInNew' : 'ZoomIn'} size='lg' />
+																			<span>{isPdf ? 'Open' : 'Preview'}</span>
+																		</div>
+																	</div>
+																	<div className='kyc-file-footer'>
+																		<Icon icon={isPdf ? 'PictureAsPdf' : 'Image'} size='sm' />
+																		<span className='text-truncate'>
+																			{isPdf ? `PDF Document #${fIdx + 1}` : `Image #${fIdx + 1}`}
+																		</span>
+																	</div>
 																</div>
 															</div>
 														);

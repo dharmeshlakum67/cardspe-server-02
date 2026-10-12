@@ -32,7 +32,8 @@ interface IAsideProps {
 const Aside: FC<IAsideProps> = ({ children }) => {
 	const { asideStatus } = useContext(ThemeContext);
 
-	const { asideStyle, touchStatus, hasTouchButton, asideWidthWithSpace, x } = useAsideTouch();
+	const { asideStyle, touchStatus, hasTouchButton, asideWidthWithSpace, x, isAsideVisible } =
+		useAsideTouch();
 
 	const isModernDesign = process.env.REACT_APP_MODERN_DESGIN === 'true';
 
@@ -75,7 +76,7 @@ const Aside: FC<IAsideProps> = ({ children }) => {
 							// onDrag={(event, info) => console.log(info.point.x, info.point.y)}
 							dragElastic={0.1}
 							style={{ x, zIndex: 1039 }}
-							onClick={() => x.set(x.get() === 0 ? asideWidthWithSpace : 0)}
+							onClick={() => x.set(isAsideVisible(x.get()) ? asideWidthWithSpace : 0)}
 						/>
 					</Tooltips>
 				</>

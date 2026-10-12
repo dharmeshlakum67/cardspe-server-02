@@ -329,13 +329,12 @@ export const BbpsServiceModal: FC<IBbpsServiceModalProps> = ({
 					{renderModalBody()}
 				</ModalBody>
 
-				<ModalFooter className='border-top pt-3 pb-3 px-4 gap-2'>
+				<ModalFooter className='px-4 py-3'>
 					{isUpdateAllowed ? (
 						<>
 							<Button
 								type='button'
 								color='light'
-								className='px-4 py-2 border rounded-3'
 								onClick={handleClose}
 								isDisable={isSaving}>
 								Cancel
@@ -343,16 +342,15 @@ export const BbpsServiceModal: FC<IBbpsServiceModalProps> = ({
 							<Button
 								type='submit'
 								color='primary'
-								className='px-4 py-2 d-inline-flex align-items-center gap-2 rounded-3'
 								isDisable={isSaving || isLoading}>
 								{isSaving ? (
 									<>
-										<Spinner isSmall inButton isGrow={false} className='me-1' />
+										<Spinner isSmall inButton isGrow className='me-2' />
 										Saving Provider...
 									</>
 								) : (
 									<>
-										<Icon icon='Save' size='sm' />
+										<Icon icon='Save' className='me-1' />
 										Save Provider
 									</>
 								)}
@@ -362,7 +360,6 @@ export const BbpsServiceModal: FC<IBbpsServiceModalProps> = ({
 						<Button
 							type='button'
 							color='light'
-							className='px-4 py-2 border rounded-3'
 							onClick={handleClose}>
 							Close
 						</Button>
