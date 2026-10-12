@@ -14,6 +14,7 @@ import AuthContext from '../../contexts/authContext';
 import ThemeContext from '../../contexts/themeContext';
 import USERS from '../../common/data/userDummyData';
 import authService from '../../pages/presentation/auth/services/authService';
+import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 
 import { getImageUrl } from '../../helpers/helpers';
 
@@ -44,6 +45,27 @@ const User = () => {
 	const avatarSrc = getImageUrl(rawImage, userData?.src || USERS.JOHN.src);
 	const avatarSrcSet = avatarSrc;
 
+	const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
+	const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+
+	const handleLogout = async () => {
+		setIsLoggingOut(true);
+		try {
+			await authService.logout();
+		} finally {
+			setIsLoggingOut(false);
+			setIsLogoutModalOpen(false);
+		}
+		if (setUser) {
+			setUser('');
+		}
+		const asideMinimizeBreakpoint =
+			Number(process.env.REACT_APP_ASIDE_MINIMIZE_BREAKPOINT_SIZE) || 1024;
+		if (width < asideMinimizeBreakpoint) {
+			setAsideStatus(false);
+		}
+		navigate(`/${authPagesMenu.login.path}`);
+	};
 
 	return (
 		<>
@@ -102,18 +124,7 @@ const User = () => {
 						<div
 							role='presentation'
 							className='navigation-item cursor-pointer'
-							onClick={async () => {
-								await authService.logout();
-								if (setUser) {
-									setUser('');
-								}
-								const asideMinimizeBreakpoint =
-									Number(process.env.REACT_APP_ASIDE_MINIMIZE_BREAKPOINT_SIZE) || 1024;
-								if (width < asideMinimizeBreakpoint) {
-									setAsideStatus(false);
-								}
-								navigate(`/${authPagesMenu.login.path}`);
-							}}>
+							onClick={() => setIsLogoutModalOpen(true)}>
 							<span className='navigation-link navigation-link-pill'>
 								<span className='navigation-link-info'>
 									<Icon icon='Logout' className='navigation-icon' />
@@ -126,6 +137,18 @@ const User = () => {
 					</div>
 				</nav>
 			</Collapse>
+
+			<ConfirmationModal
+				isOpen={isLogoutModalOpen}
+				setIsOpen={setIsLogoutModalOpen}
+				title='Logout Confirmation'
+				message='Are you sure you want to logout?'
+				confirmText='Yes, Logout'
+				cancelText='Cancel'
+				loadingText='Logging out...'
+				isLoading={isLoggingOut}
+				onConfirm={handleLogout}
+			/>
 		</>
 	);
 };

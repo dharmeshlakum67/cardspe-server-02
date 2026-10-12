@@ -15,6 +15,7 @@ export interface IConfirmationModalProps {
 	onConfirm: () => Promise<void> | void;
 	onCancel?: () => void;
 	isLoading?: boolean;
+	loadingText?: string;
 }
 
 export const ConfirmationModal: FC<IConfirmationModalProps> = ({
@@ -27,6 +28,7 @@ export const ConfirmationModal: FC<IConfirmationModalProps> = ({
 	onConfirm,
 	onCancel,
 	isLoading = false,
+	loadingText = 'Removing...',
 }) => {
 	const [selectedAction, setSelectedAction] = useState<'confirm' | 'cancel'>('confirm');
 
@@ -131,7 +133,7 @@ export const ConfirmationModal: FC<IConfirmationModalProps> = ({
 					{isLoading ? (
 						<>
 							<Spinner size='sm' isGrow={false} />
-							<span>Removing...</span>
+							<span>{loadingText}</span>
 						</>
 					) : (
 						<>
@@ -155,6 +157,7 @@ ConfirmationModal.propTypes = {
 	onConfirm: PropTypes.func.isRequired,
 	onCancel: PropTypes.func,
 	isLoading: PropTypes.bool,
+	loadingText: PropTypes.string,
 };
 
 ConfirmationModal.defaultProps = {
@@ -164,6 +167,7 @@ ConfirmationModal.defaultProps = {
 	cancelText: 'No',
 	onCancel: undefined,
 	isLoading: false,
+	loadingText: 'Removing...',
 };
 
 export default ConfirmationModal;
