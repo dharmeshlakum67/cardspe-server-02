@@ -50,8 +50,9 @@ const useAsideTouch = () => {
 
 	// Set Aside & Touch Button value
 	useEffect(() => {
-		if (!hasTouchButton) {
+		if (!hasTouchButton || asideStatus) {
 			x.set(0);
+			setTouchStatus(Boolean(asideStatus) || !hasTouchButton);
 		}
 		return () => { };
 		// eslint-disable-next-line react-hooks/exhaustive-deps
