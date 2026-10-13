@@ -262,6 +262,12 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Income Report',
 		subMenu: null,
 	},
+	mobiquick_transaction_report: {
+		path: PAGE_ROUTES.MOBIQUICK_TRANSACTION_REPORT,
+		icon: 'Receipt',
+		text: 'Mobikwik Transaction Report',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

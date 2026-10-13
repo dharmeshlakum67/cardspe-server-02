@@ -82,6 +82,7 @@ export const PAGE_ROUTES = {
 	OPERATOR_TRANSACTION_REPORT: 'reports/operator-transaction-report',
 	LEDGER_REPORT: 'reports/ledger-report',
 	INCOME_REPORT: 'reports/income-report',
+	MOBIQUICK_TRANSACTION_REPORT: 'reports/mobiquick-transaction-report',
 } as const;
 
 export type TPageRoutes = (typeof PAGE_ROUTES)[keyof typeof PAGE_ROUTES];

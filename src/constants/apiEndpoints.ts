@@ -930,6 +930,26 @@ export const REPORT_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	MOBIQUICK_TRANSACTION_REPORT: {
+		url: '/api/reports/mobiquick-transaction-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	MOBIQUICK_TRANSACTION_REPORT_LIST: {
+		url: '/api/reports/mobiquick-transaction-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	MOBIQUICK_TRANSACTION_REPORT_EXPORT: {
+		url: '/api/reports/mobiquick-transaction-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	MOBIQUICK_TRANSACTION_REPORT_DOWNLOAD: {
+		url: '/api/reports/mobiquick-transaction-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 } as const;
 
 // COMBINED API ENDPOINTS

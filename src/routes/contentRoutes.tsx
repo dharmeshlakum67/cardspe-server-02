@@ -137,6 +137,12 @@ const LedgerReportPage = lazy(
 const IncomeReportPage = lazy(
 	() => import('../pages/presentation/reports/income-report/IncomeReportPage'),
 );
+const MobiquickTransactionReportPage = lazy(
+	() =>
+		import(
+			'../pages/presentation/reports/mobiquick-transaction-report/MobiquickTransactionReportPage'
+		),
+);
 const GenericReportPage = lazy(
 	() => import('../pages/presentation/reports/GenericReportPage'),
 );
@@ -357,6 +363,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.INCOME_REPORT,
 		element: <IncomeReportPage />,
+	},
+	{
+		path: PAGE_ROUTES.MOBIQUICK_TRANSACTION_REPORT,
+		element: <MobiquickTransactionReportPage />,
 	},
 	{
 		path: 'reports/:reportType',
