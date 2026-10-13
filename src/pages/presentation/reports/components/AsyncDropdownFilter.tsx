@@ -67,12 +67,18 @@ const buildDropdownCacheKey = (apiRoute: string, extraParamsKey: string) =>
 export const loadDropdownOptions = async (
 	apiRoute: string,
 	extraParams?: Record<string, any>,
+	force = false,
 ): Promise<IReportFilterOption[]> => {
 	const cleanApiRoute = normalizeApiRoute(apiRoute);
-	const cacheKey = buildDropdownCacheKey(cleanApiRoute, buildExtraParamsKey(extraParams));
+	const extraParamsKey = buildExtraParamsKey(extraParams);
+	const cacheKey = buildDropdownCacheKey(cleanApiRoute, extraParamsKey);
 
-	const cached = dropdownOptionsCache.get(cacheKey);
-	if (cached) return cached;
+	// Do not use stale cache if cascading extraParams (like role_id) are present or when force is requested
+	const hasExtra = Boolean(extraParamsKey);
+	if (!force && !hasExtra) {
+		const cached = dropdownOptionsCache.get(cacheKey);
+		if (cached) return cached;
+	}
 
 	const pending = dropdownPendingRequests.get(cacheKey);
 	if (pending) return pending;
@@ -159,8 +165,9 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 			return undefined;
 		}
 
-		// 1. If options already exist in cache, load immediately without network call!
-		if (dropdownOptionsCache.has(cacheKey)) {
+		// 1. If options already exist in cache and no dynamic extra params, load immediately
+		const hasExtra = Boolean(extraParamsKey);
+		if (!hasExtra && dropdownOptionsCache.has(cacheKey)) {
 			setOptions(dropdownOptionsCache.get(cacheKey)!);
 			setIsLoading(false);
 			return undefined;
@@ -193,7 +200,7 @@ export const AsyncDropdownFilter: FC<IAsyncDropdownFilterProps> = ({
 		return () => {
 			isCancelled = true;
 		};
-	}, [cleanApiRoute, cacheKey, disabled]);
+	}, [cleanApiRoute, cacheKey, disabled, extraParamsKey]);
 
 	// HANDLE SEARCH DEBOUNCING (300ms) WITH IN-FLIGHT DEDUPLICATION
 	useEffect(() => {

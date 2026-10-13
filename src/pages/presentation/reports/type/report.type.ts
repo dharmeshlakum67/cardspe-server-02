@@ -125,6 +125,10 @@ export interface IReportData {
 	filters?: IReportFilterItem[] | Record<string, any>;
 	pagination?: IReportPagination;
 	metadata?: IReportMetadata;
+	can_export?: boolean;
+	total_commission_earned?: number | string;
+	commission_earned?: number | string;
+	total_commission?: number | string;
 }
 
 export interface IReportResponse {
@@ -158,4 +162,5 @@ export interface IDynamicReportProps {
 	extraQueryParams?: Record<string, any>;
 	hideExport?: boolean;
 	onRowClick?: (row: IReportRow) => void;
+	emptyDateRangeByDefault?: boolean;
 }

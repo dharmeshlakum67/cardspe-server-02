@@ -351,12 +351,30 @@
 		margin-bottom: 1.25rem;
 		width: 100%;
 
-		// Proportional 4-column layout on desktop
+		// Proportional layout on desktop
 		@media (min-width: 1280px) {
 			grid-template-columns: repeat(4, 1fr);
 
 			&.has-profile-card {
 				grid-template-columns: 1.35fr 1fr 1fr 1fr;
+			}
+
+			&.cards-count-3 {
+				grid-template-columns: repeat(3, 1fr);
+			}
+
+			&.cards-count-5 {
+				grid-template-columns: repeat(5, 1fr);
+
+				&.has-profile-card {
+					grid-template-columns: 1.3fr repeat(4, 1fr);
+				}
+			}
+		}
+
+		@media (max-width: 1399px) and (min-width: 1280px) {
+			&.cards-count-5 {
+				grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 			}
 		}
 
@@ -888,6 +906,26 @@
 			&:active {
 				transform: translateY(0);
 				box-shadow: none;
+			}
+		}
+
+		// TRUNCATED REMARK CELL WITH HOVER TOOLTIP AFFORDANCE
+		.remark-truncated-cell {
+			display: inline-block;
+			max-width: 220px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
+			cursor: pointer;
+			color: #334155;
+			border-bottom: 1px dotted rgba(100, 116, 139, 0.45);
+			padding-bottom: 1px;
+			transition: color 0.15s ease, border-color 0.15s ease;
+
+			&:hover {
+				color: #0f172a;
+				border-bottom-color: #3b82f6;
 			}
 		}
 

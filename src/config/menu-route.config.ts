@@ -256,6 +256,12 @@ export const MENU_ROUTE_CONFIG: Record<string, IMenuRouteMetadata> = {
 		text: 'Ledger Report',
 		subMenu: null,
 	},
+	income_report: {
+		path: PAGE_ROUTES.INCOME_REPORT,
+		icon: 'Payments',
+		text: 'Income Report',
+		subMenu: null,
+	},
 };
 
 // RESOLVE ROUTE METADATA FOR A GIVEN PERMISSION KEY OR NAME DYNAMICALLY

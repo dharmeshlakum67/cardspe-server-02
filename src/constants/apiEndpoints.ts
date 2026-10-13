@@ -910,6 +910,26 @@ export const REPORT_ENDPOINTS = {
 		method: HTTP_METHODS.GET,
 		requiresAuth: true,
 	},
+	INCOME_REPORT: {
+		url: '/api/reports/income-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	INCOME_REPORT_LIST: {
+		url: '/api/reports/income-report/list',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	INCOME_REPORT_EXPORT: {
+		url: '/api/reports/income-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
+	INCOME_REPORT_DOWNLOAD: {
+		url: '/api/reports/income-report/download',
+		method: HTTP_METHODS.GET,
+		requiresAuth: true,
+	},
 } as const;
 
 // COMBINED API ENDPOINTS

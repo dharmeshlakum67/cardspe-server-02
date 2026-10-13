@@ -134,6 +134,9 @@ const OperatorTransactionReportPage = lazy(
 const LedgerReportPage = lazy(
 	() => import('../pages/presentation/reports/ledger-report/LedgerReportPage'),
 );
+const IncomeReportPage = lazy(
+	() => import('../pages/presentation/reports/income-report/IncomeReportPage'),
+);
 const GenericReportPage = lazy(
 	() => import('../pages/presentation/reports/GenericReportPage'),
 );
@@ -350,6 +353,10 @@ const contents: RouteProps[] = [
 	{
 		path: PAGE_ROUTES.LEDGER_REPORT,
 		element: <LedgerReportPage />,
+	},
+	{
+		path: PAGE_ROUTES.INCOME_REPORT,
+		element: <IncomeReportPage />,
 	},
 	{
 		path: 'reports/:reportType',

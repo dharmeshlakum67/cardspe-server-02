@@ -8,6 +8,7 @@ import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import Spinner from '../../../../components/bootstrap/Spinner';
 import Collapse from '../../../../components/bootstrap/Collapse';
+import Tooltips from '../../../../components/bootstrap/Tooltips';
 import Icon from '../../../../components/icon/Icon';
 import showNotification from '../../../../components/extras/showNotification';
 import { AppBreadcrumbs, DateRangePicker, ListingPagination } from '../../../../components/common';
@@ -53,6 +54,8 @@ const mapReportIcon = (name?: string): string => {
 		tune: 'Tune',
 		filter: 'FilterAlt',
 		payments: 'Payments',
+		monetizationon: 'MonetizationOn',
+		commission: 'Payments',
 		trendingup: 'TrendingUp',
 		assessment: 'Assessment',
 	};
@@ -202,9 +205,18 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 		return [];
 	}
 
+	const rawCommission =
+		summary.total_commission_earned !== undefined && summary.total_commission_earned !== null
+			? summary.total_commission_earned
+			: summary.commission_earned !== undefined && summary.commission_earned !== null
+			? summary.commission_earned
+			: summary.total_commission !== undefined && summary.total_commission !== null
+			? summary.total_commission
+			: undefined;
+
 	// 1. Support backend cards array (e.g. Ledger Report contract)
 	if (Array.isArray(summary.cards) && summary.cards.length > 0) {
-		return summary.cards.map((c: any, index: number) => {
+		const cards: IReportMetricCard[] = summary.cards.map((c: any, index: number) => {
 			let defaultIcon = 'Assessment';
 			let defaultTheme: 'purple' | 'green' | 'blue' | 'amber' | 'rose' = 'blue';
 			const titleLower = (c.title || '').toLowerCase();
@@ -247,6 +259,15 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 			} else if (titleLower.includes('expense') || titleLower.includes('debit')) {
 				defaultIcon = 'TrendingDown';
 				defaultTheme = 'rose';
+			} else if (titleLower.includes('commission') || titleLower.includes('earned')) {
+				defaultIcon = 'Payments';
+				defaultTheme = 'green';
+			} else if (titleLower.includes('income') || titleLower.includes('today')) {
+				defaultIcon = 'TrendingUp';
+				defaultTheme = 'purple';
+			} else if (titleLower.includes('transaction') || titleLower.includes('count')) {
+				defaultIcon = 'ReceiptLong';
+				defaultTheme = 'blue';
 			}
 
 			return {
@@ -262,16 +283,38 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 				borderColor: c.borderColor,
 			};
 		});
+
+		const hasCommissionCard = cards.some(
+			(c) =>
+				(c.title || '').toLowerCase().includes('commission') ||
+				c.key === 'total_commission_earned',
+		);
+
+		if (rawCommission !== undefined && !hasCommissionCard) {
+			cards.push({
+				key: 'total_commission_earned',
+				title: 'Total Commission Earned',
+				value: formatCurrency(rawCommission),
+				icon: 'Payments',
+				theme: 'amber',
+				bgColor: '#FFFBEB',
+				textColor: '#B45309',
+				borderColor: '#FDE68A',
+			});
+		}
+
+		return cards;
 	}
 
 	// 2. Support user profile summary object if cards array is absent
 	if (
 		summary.current_balance !== undefined ||
 		summary.total_add_money !== undefined ||
-		summary.total_expense !== undefined
+		summary.total_expense !== undefined ||
+		rawCommission !== undefined
 	) {
 		const { email, mobile_number: mobile } = summary;
-		return [
+		const cards: IReportMetricCard[] = [
 			{
 				key: 'user_profile',
 				title: '', // User requested to remove "User Profile" title
@@ -313,6 +356,68 @@ export const parseReportSummary = (summary: any): IReportMetricCard[] => {
 				bgColor: '#FEF2F2',
 				textColor: '#B91C1C',
 				borderColor: '#FECACA',
+			},
+		];
+
+		if (rawCommission !== undefined) {
+			cards.push({
+				key: 'total_commission_earned',
+				title: 'Total Commission Earned',
+				value: formatCurrency(rawCommission),
+				icon: 'Payments',
+				theme: 'amber',
+				bgColor: '#FFFBEB',
+				textColor: '#B45309',
+				borderColor: '#FDE68A',
+			});
+		}
+
+		return cards;
+	}
+
+	// 3. Support income report summary metrics if cards array is absent
+	if (
+		summary.total_income !== undefined ||
+		summary.today_amount !== undefined ||
+		summary.today_count !== undefined
+	) {
+		const totalEarnings = summary.total_income ?? summary.total_commission_earned ?? summary.total_amount;
+		const totalCount = summary.total_count ?? 0;
+		const todayAmount = summary.today_amount ?? '0.00';
+		const todayCount = summary.today_count ?? 0;
+
+		return [
+			{
+				key: 'total_commission_earned',
+				title: 'Total Commission Earned',
+				value: formatCurrency(totalEarnings),
+				subtext: totalCount ? `${totalCount} earnings` : undefined,
+				icon: 'Payments',
+				theme: 'green',
+				bgColor: '#ECFDF5',
+				textColor: '#047857',
+				borderColor: '#A7F3D0',
+			},
+			{
+				key: 'today_income',
+				title: "Today's Income",
+				value: formatCurrency(todayAmount),
+				subtext: todayCount ? `${todayCount} earnings today` : undefined,
+				icon: 'TrendingUp',
+				theme: 'purple',
+				bgColor: '#FAF5FF',
+				textColor: '#7E22CE',
+				borderColor: '#E9D5FF',
+			},
+			{
+				key: 'total_transactions',
+				title: 'Total Transactions',
+				value: String(totalCount),
+				icon: 'ReceiptLong',
+				theme: 'blue',
+				bgColor: '#F8FAFC',
+				textColor: '#0F172A',
+				borderColor: '#E2E8F0',
 			},
 		];
 	}
@@ -524,17 +629,24 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	extraQueryParams,
 	hideExport = false,
 	onRowClick,
+	emptyDateRangeByDefault = false,
 }) => {
 	const navigate = useNavigate();
 	const { canRead, hasPermission, isLoadingPermissions } = usePermission();
 	const { authUser, isLoading: isAuthLoading } = useContext(AuthContext);
 	const authUserId = authUser?.id;
-	const authRoleId = (authUser as any)?.role_id || authUser?.role?.id;
-	const authRoleName = authUser?.role?.role_name;
-	const isAuthSuperAdmin = Boolean((authUser as any)?.is_super_admin);
 
 	const isLedgerReport = reportType.toLowerCase().includes('ledger');
-	const needsRoleDefaults = isLedgerReport || Boolean(permissionKey?.includes('ledger'));
+	const isIncomeReport = reportType.toLowerCase().includes('income');
+
+	const isSuperAdmin = Boolean(
+		authUser?.is_super_admin ||
+		(authUser as any)?.is_super_admin ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_user' ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_admin' ||
+		authUser?.role?.role_type?.toLowerCase().includes('super') ||
+		(authUser as any)?.role_type?.toLowerCase() === 'super_user'
+	);
 
 	const resolvedPermKey =
 		permissionKey || reportType.toLowerCase().trim().replace(/[-/\s]+/g, '_');
@@ -546,8 +658,11 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		canRead('reports'),
 	);
 
+	const [apiCanExport, setApiCanExport] = useState<boolean | undefined>(undefined);
+
 	const canExport = Boolean(
 		!hideExport &&
+		(apiCanExport !== undefined ? apiCanExport : true) &&
 		(hasPermission(resolvedPermKey, 'export') ||
 			hasPermission(resolvedPermKey, 'download') ||
 			hasPermission(resolvedPermKey, 'excel')),
@@ -586,89 +701,47 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	// FILTER & PAGINATION STATES
 	const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
 	const [page, setPage] = useState<number>(1);
-	const [limit, setLimit] = useState<number>(defaultLimit || (isLedgerReport ? 20 : 10));
+	const [limit, setLimit] = useState<number>(defaultLimit || (isLedgerReport || isIncomeReport ? 20 : 10));
 	const [sortBy, setSortBy] = useState<string>(
 		defaultSortBy || (isLedgerReport ? 'date' : 'created_at'),
 	);
 	const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>(defaultSortOrder || 'DESC');
+	const shouldUseEmptyDateRange = isLedgerReport || emptyDateRangeByDefault;
 	const [filterValues, setFilterValues] = useState<Record<string, any>>(() =>
-		isLedgerReport ? {} : getCurrentMonthDateRange(),
+		shouldUseEmptyDateRange ? {} : getCurrentMonthDateRange(),
 	);
 	const [debouncedFilterValues, setDebouncedFilterValues] = useState<Record<string, any>>(() =>
-		isLedgerReport ? {} : getCurrentMonthDateRange(),
+		shouldUseEmptyDateRange ? {} : getCurrentMonthDateRange(),
 	);
 
 	const [roleOptions, setRoleOptions] = useState<IReportFilterOption[]>([]);
 
-	// REPORT LIST MUST NOT BE FETCHED UNTIL DEFAULT ROLE / USER FILTERS ARE APPLIED
-	const [areFilterDefaultsReady, setAreFilterDefaultsReady] = useState<boolean>(
-		!needsRoleDefaults,
-	);
+	// REPORT LIST MUST NOT BE FETCHED UNTIL AUTH CONTEXT IS READY
+	const areFilterDefaultsReady = (!isLedgerReport && !isIncomeReport) || !isAuthLoading;
 
-	// 1. FETCH ROLES FIRST FOR USER FILTERING (api/role/get-active?page=1&limit=50)
+	// 1. FETCH ROLES FOR USER FILTERING (api/role/get-active?page=1&limit=50)
 	useEffect(() => {
-		if (!needsRoleDefaults || isAuthLoading) {
+		if (!isLedgerReport) {
 			return undefined;
 		}
 
 		let isCancelled = false;
-		const loadRolesFirst = async () => {
+		const loadRoles = async () => {
 			try {
 				const options = await loadDropdownOptions('/api/role/get-active');
 				if (isCancelled) return;
-
 				setRoleOptions(options);
-
-				// Once roles arrive, find appropriate role for logged-in user or first role
-				let targetRoleId: any;
-				if (authRoleId) {
-					const found = options.find((o) => String(o.value) === String(authRoleId));
-					if (found) targetRoleId = found.value;
-				}
-				if (!targetRoleId && authRoleName) {
-					const found = options.find(
-						(o) => String(o.label).toLowerCase() === authRoleName.toLowerCase(),
-					);
-					if (found) targetRoleId = found.value;
-				}
-				if (!targetRoleId && isAuthSuperAdmin) {
-					const found = options.find((o) =>
-						String(o.label).toLowerCase().includes('super'),
-					);
-					if (found) targetRoleId = found.value;
-				}
-				if (!targetRoleId && options.length > 0) {
-					targetRoleId = options[0].value;
-				}
-
-				if (targetRoleId) {
-					// Applied to both states at once so the debounce does not trigger a second fetch
-					const applyRoleDefaults = (prev: Record<string, any>) => ({
-						...prev,
-						role_id: prev.role_id || targetRoleId,
-						admin_id:
-							prev.admin_id !== undefined && prev.admin_id !== ''
-								? prev.admin_id
-								: authUserId,
-					});
-					setFilterValues(applyRoleDefaults);
-					setDebouncedFilterValues(applyRoleDefaults);
-				}
 			} catch {
 				// Silently fallback if role fetch fails
-			} finally {
-				if (!isCancelled) {
-					setAreFilterDefaultsReady(true);
-				}
 			}
 		};
 
-		loadRolesFirst();
+		loadRoles();
 
 		return () => {
 			isCancelled = true;
 		};
-	}, [needsRoleDefaults, isAuthLoading, authUserId, authRoleId, authRoleName, isAuthSuperAdmin]);
+	}, [isLedgerReport]);
 
 	// STABLE EXTRA PARAMS FOR OPERATOR DROPDOWN (CASCADING FILTER)
 	const selectedCategory =
@@ -694,6 +767,28 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		return params;
 	}, [selectedRole]);
 
+	// 2. FETCH ACTIVE ADMINS FOR SELECTED ROLE (TRIGGERS IMMEDIATELY WHEN ROLE IS CHOSEN)
+	useEffect(() => {
+		if (!isLedgerReport || !selectedRole || selectedRole === 'all') {
+			return undefined;
+		}
+
+		let isCancelled = false;
+		const loadAdminsForRole = async () => {
+			try {
+				await loadDropdownOptions('/api/admin/get-active', { role_id: selectedRole }, true);
+			} catch {
+				// Silently fallback if fetch fails
+			}
+		};
+
+		loadAdminsForRole();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [isLedgerReport, selectedRole]);
+
 	// NORMALIZE BACKEND-DRIVEN FILTERS (SUPPORTING ARRAY OR OBJECT CONTRACT)
 	const parsedFilters = useMemo<IReportFilterItem[]>(() => {
 		let list: IReportFilterItem[] = [];
@@ -718,8 +813,13 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			}));
 		}
 
+		// Hide User (admin_id) filter if user is not a Super Admin
+		if (!isSuperAdmin) {
+			list = list.filter((f) => f.field !== 'admin_id' && f.field !== 'role_id');
+		}
+
 		// Ensure Admin (admin_id) filter exists for Ledger Report
-		if (isLedgerReport && !list.some((f) => f.field === 'admin_id')) {
+		if (isLedgerReport && isSuperAdmin && !list.some((f) => f.field === 'admin_id')) {
 			list.unshift({
 				field: 'admin_id',
 				label: 'User',
@@ -729,10 +829,10 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			});
 		}
 
-		// Ensure Role dropdown is prepended before User (admin_id) dropdown
+		// Ensure Role dropdown is prepended before User (admin_id) dropdown ONLY for Ledger Report
 		const hasAdmin = list.some((f) => f.field === 'admin_id');
 		const hasRole = list.some((f) => f.field === 'role_id');
-		if (hasAdmin && !hasRole) {
+		if (isLedgerReport && hasAdmin && !hasRole) {
 			const adminIndex = list.findIndex((f) => f.field === 'admin_id');
 			const roleFilter: IReportFilterItem = {
 				field: 'role_id',
@@ -754,7 +854,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		}
 
 		return list;
-	}, [rawFilters, isLedgerReport, roleOptions]);
+	}, [rawFilters, isLedgerReport, isSuperAdmin, roleOptions]);
 
 	// COUNT ACTIVE FILTERS (INCREMENTS IF ANY FILTER VALUE IS PRESENT)
 	const activeFilterCount = useMemo(() => {
@@ -926,12 +1026,23 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		// Pass remaining non-range filter fields
 		Object.entries(debouncedFilterValues).forEach(([k, v]) => {
 			if (!handledRangeKeys.has(k) && v !== undefined && v !== null && v !== '' && v !== 'all') {
-				if (k === 'role_id' && isLedgerReport) {
+				if (k === 'role_id' && (isLedgerReport || isIncomeReport)) {
 					return;
 				}
 				cleanFilters[k] = typeof v === 'string' ? v.trim() : v;
 			}
 		});
+
+		// For non-super admins, strip admin_id and role_id from query parameters (enforce backend self-scoping)
+		if (!isSuperAdmin) {
+			delete cleanFilters.admin_id;
+			delete cleanFilters.role_id;
+		}
+
+		// For Ledger Report, always pass default admin_id if not explicitly selected in filters
+		if (isLedgerReport && isSuperAdmin && !cleanFilters.admin_id && authUserId) {
+			cleanFilters.admin_id = authUserId;
+		}
 
 		// Support category <-> service_category_id bidirectional mapping
 		if (cleanFilters.category && !cleanFilters.service_category_id) {
@@ -959,6 +1070,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 		debouncedFilterValues,
 		extraQueryParamsSerialized,
 		isLedgerReport,
+		isIncomeReport,
+		isSuperAdmin,
+		authUserId,
 	]);
 
 	// REF GUARDS PREVENTING DUPLICATE REQUESTS (REPOSITORY STANDARD)
@@ -1002,8 +1116,32 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					setColumns(cols);
 					setRows(Array.isArray(data.rows) ? data.rows : []);
 					// Backend sends summary on page 1 only; preserve existing summary when page > 1
-					if (data.summary !== undefined && data.summary !== null) {
-						setSummary(data.summary);
+					const rawSummary = data.summary;
+					const rootCommission =
+						data.total_commission_earned !== undefined && data.total_commission_earned !== null
+							? data.total_commission_earned
+							: data.commission_earned !== undefined && data.commission_earned !== null
+							? data.commission_earned
+							: data.total_commission !== undefined && data.total_commission !== null
+							? data.total_commission
+							: undefined;
+
+					if (rawSummary !== undefined && rawSummary !== null) {
+						const summ =
+							typeof rawSummary === 'object' && !Array.isArray(rawSummary)
+								? { ...rawSummary }
+								: rawSummary;
+						if (
+							rootCommission !== undefined &&
+							typeof summ === 'object' &&
+							summ !== null &&
+							summ.total_commission_earned === undefined
+						) {
+							summ.total_commission_earned = rootCommission;
+						}
+						setSummary(summ);
+					} else if (rootCommission !== undefined) {
+						setSummary({ total_commission_earned: rootCommission });
 					}
 					const metaFilters = data.metadata?.filters;
 					const fltrs =
@@ -1030,6 +1168,9 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 						data.pagination?.totalPages ?? data.totalPages ?? 1;
 					setTotal(totalRecords);
 					setTotalPages(pages);
+					if (data.can_export !== undefined) {
+						setApiCanExport(Boolean(data.can_export));
+					}
 				}
 			} catch (error: any) {
 				if (requestId !== latestRequestIdRef.current) return;
@@ -1075,20 +1216,10 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 	// RESET ALL FILTERS (RESTORES CURRENT MONTH DEFAULT FOR STANDARD REPORTS)
 	const handleResetFilters = () => {
 		lastFetchKeyRef.current = '';
-		const defaultDateRange = isLedgerReport ? {} : getCurrentMonthDateRange();
-		setFilterValues((prev) => {
-			const nextVals: Record<string, any> = { ...defaultDateRange };
-			if (isLedgerReport && prev.role_id) nextVals.role_id = prev.role_id;
-			if (isLedgerReport && prev.admin_id) nextVals.admin_id = prev.admin_id;
-			return nextVals;
-		});
-		setDebouncedFilterValues((prev) => {
-			const nextVals: Record<string, any> = { ...defaultDateRange };
-			if (isLedgerReport && prev.role_id) nextVals.role_id = prev.role_id;
-			if (isLedgerReport && prev.admin_id) nextVals.admin_id = prev.admin_id;
-			return nextVals;
-		});
-		setSortBy(defaultSortBy || 'created_at');
+		const defaultDateRange = shouldUseEmptyDateRange ? {} : getCurrentMonthDateRange();
+		setFilterValues(() => ({ ...defaultDateRange }));
+		setDebouncedFilterValues(() => ({ ...defaultDateRange }));
+		setSortBy(defaultSortBy || (isLedgerReport ? 'date' : 'created_at'));
 		setSortOrder(defaultSortOrder || 'DESC');
 		setPage(1);
 	};
@@ -1306,6 +1437,10 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			);
 		}
 
+		const customTextStyle: React.CSSProperties = {};
+		if (styleObj?.textColor) customTextStyle.color = normalizeColor(styleObj.textColor);
+		if (styleObj?.bold) customTextStyle.fontWeight = 700;
+
 		// 4. CATEGORY / TYPE BADGE (MATCHING WALLET TRANSACTION CATEGORY: CRISP RECTANGLE, ZERO BORDER-RADIUS)
 		if (
 			col.type === 'badge' ||
@@ -1325,7 +1460,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					style={{
 						...badgeStyle,
 						fontSize: '0.75rem',
-						borderRadius: 0,
+						borderRadius: 4,
 					}}>
 					{label}
 				</span>
@@ -1345,18 +1480,24 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			headerLower.includes('balance')
 		) {
 			return (
-				<span className='amount-display'>
+				<span className='amount-display' style={customTextStyle}>
 					{formatCurrency(rawValue)}
 				</span>
 			);
 		}
 
-		// 5. DATE
+		// 6. DATE
 		if (col.type === 'date' || col.type === 'datetime' || fieldLower.includes('date')) {
-			return <span className='text-muted small'>{rawValue || '-'}</span>;
+			return (
+				<span
+					className={customTextStyle.color ? 'small' : 'text-muted small'}
+					style={customTextStyle}>
+					{rawValue || '-'}
+				</span>
+			);
 		}
 
-		// 6. IMAGE (WITH ELEGANT INITIALS AVATAR FALLBACK IF BROKEN OR EMPTY)
+		// 7. IMAGE (WITH ELEGANT INITIALS AVATAR FALLBACK IF BROKEN OR EMPTY)
 		if (
 			col.type === 'image' ||
 			fieldLower === 'logo' ||
@@ -1378,9 +1519,44 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 			return <ReportImageCell src={rawValue} name={operatorName} />;
 		}
 
-		// 7. DEFAULT TEXT
+		// 8. REMARK / DESCRIPTION / LONG TEXT (SHOW TRUNCATED WITH TOOLTIP)
+		const isRemarkOrDesc =
+			fieldLower === 'remark' ||
+			fieldLower.includes('remark') ||
+			headerLower === 'remark' ||
+			headerLower.includes('remark') ||
+			fieldLower.includes('description') ||
+			headerLower.includes('description') ||
+			fieldLower.includes('note');
+
+		if (isRemarkOrDesc || (typeof rawValue === 'string' && rawValue.length > 25)) {
+			const strVal = rawValue !== undefined && rawValue !== null ? String(rawValue) : '-';
+			const isLong = strVal.length > 22;
+			const displayVal = isLong ? `${strVal.substring(0, 22)}...` : strVal;
+
+			if (isLong) {
+				return (
+					<Tooltips title={strVal} placement='top'>
+						<span
+							className='remark-truncated-cell'
+							style={customTextStyle}
+							title={strVal}>
+							{displayVal}
+						</span>
+					</Tooltips>
+				);
+			}
+
+			return (
+				<span style={customTextStyle}>
+					{strVal}
+				</span>
+			);
+		}
+
+		// 9. DEFAULT TEXT
 		return (
-			<span>
+			<span style={customTextStyle}>
 				{rawValue !== undefined && rawValue !== null ? String(rawValue) : '-'}
 			</span>
 		);
@@ -1577,7 +1753,10 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 												const isCategoryChosen = Boolean(selectedCategory && selectedCategory !== 'all');
 												const isOperatorDisabled = isOperatorField && !isCategoryChosen;
 
-												const isAdminField = filter.field === 'admin_id';
+												const isAdminField =
+													filter.field === 'admin_id' ||
+													filter.field === 'user_id' ||
+													filter.field === 'admin';
 												const isRoleChosen = Boolean(selectedRole && selectedRole !== 'all');
 												const isAdminDisabled = isAdminField && !isRoleChosen;
 												const fallbackLabel =
@@ -1761,7 +1940,7 @@ export const DynamicReportViewer: FC<IDynamicReportProps> = ({
 					{/* BACKEND-DRIVEN STAT METRIC CARDS (PASTEL LUXURY CARDS MATCHING DESIGN) */}
 					{metricCards.length > 0 && (
 						<div
-							className={`report-summary-cards-grid ${
+							className={`report-summary-cards-grid cards-count-${metricCards.length} ${
 								metricCards.some((c) => c.image || c.email || c.mobile_number)
 									? 'has-profile-card'
 									: ''
