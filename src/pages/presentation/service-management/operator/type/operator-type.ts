@@ -2,6 +2,8 @@
 
 export type OperatorStatusType = 'active' | 'inactive';
 
+export type OperatorAssignedService = 'mobiquick' | 'setu';
+
 export type BillFetchRequirementType = 'mandatory' | 'optional' | 'not_supported' | 'not_required';
 
 export type AmountExactnessType = 'exact' | 'above' | 'below' | 'any';
@@ -109,6 +111,7 @@ export interface IOperator {
 	help_line_number?: string | null;
 	display_order?: number | null;
 	status: OperatorStatusType;
+	assigned_service?: OperatorAssignedService;
 	parameters?: IOperatorInputParam[];
 	input_params?: IOperatorInputParam[];
 	input_parameters?: IOperatorInputParam[];
@@ -119,12 +122,25 @@ export interface IOperator {
 	updated_at?: string;
 }
 
+export type Operator = IOperator;
+
+export interface CreateOperatorPayload {
+	assigned_service?: OperatorAssignedService;
+	[key: string]: any;
+}
+
+export interface UpdateOperatorPayload {
+	assigned_service?: OperatorAssignedService;
+	[key: string]: any;
+}
+
 export interface IOperatorFilterParams {
 	page?: number;
 	limit?: number;
 	search?: string;
 	service_category_id?: number | string;
 	status?: OperatorStatusType | '';
+	assigned_service?: OperatorAssignedService | '';
 	is_bbps_enabled?: boolean | string;
 	startDate?: string;
 	endDate?: string;

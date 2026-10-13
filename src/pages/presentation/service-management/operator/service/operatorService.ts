@@ -32,6 +32,7 @@ export const operatorService = {
 			if (params.search?.trim()) queryParams.search = params.search.trim();
 			if (params.service_category_id) queryParams.service_category_id = params.service_category_id;
 			if (params.status) queryParams.status = params.status;
+			if (params.assigned_service) queryParams.assigned_service = params.assigned_service;
 			if (params.is_bbps_enabled !== undefined && params.is_bbps_enabled !== '') {
 				queryParams.is_bbps_enabled = params.is_bbps_enabled;
 			}

@@ -9,6 +9,7 @@ import operatorService from './service/operatorService';
 import {
 	IOperator,
 	OperatorStatusType,
+	OperatorAssignedService,
 	IActiveServiceCategoryOption,
 } from './type/operator-type';
 import showNotification from '../../../../components/extras/showNotification';
@@ -66,6 +67,7 @@ export const OperatorListPage: FC = () => {
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 	const [categoryFilter, setCategoryFilter] = useState<string>('');
 	const [statusFilter, setStatusFilter] = useState<string>('');
+	const [assignedServiceFilter, setAssignedServiceFilter] = useState<string>('');
 	const [bbpsFilter, setBbpsFilter] = useState<string>('');
 	const [startDate, setStartDate] = useState<string>('');
 	const [endDate, setEndDate] = useState<string>('');
@@ -85,6 +87,7 @@ export const OperatorListPage: FC = () => {
 		(searchTerm.trim() ? 1 : 0) +
 		(categoryFilter ? 1 : 0) +
 		(statusFilter ? 1 : 0) +
+		(assignedServiceFilter ? 1 : 0) +
 		(bbpsFilter !== '' ? 1 : 0) +
 		(startDate && endDate ? 1 : 0);
 
@@ -127,7 +130,7 @@ export const OperatorListPage: FC = () => {
 			}
 
 			const isDateRangeValid = Boolean(startDate && endDate);
-			const currentFetchKey = `${debouncedSearchTerm}_${categoryFilter}_${statusFilter}_${bbpsFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''
+			const currentFetchKey = `${debouncedSearchTerm}_${categoryFilter}_${statusFilter}_${assignedServiceFilter}_${bbpsFilter}_${isDateRangeValid ? `${startDate}_${endDate}` : ''
 				}_${currentPage}_${perPage}`;
 
 			if (!force && (isFetchingRef.current || lastFetchKeyRef.current === currentFetchKey)) {
@@ -144,6 +147,7 @@ export const OperatorListPage: FC = () => {
 					search: debouncedSearchTerm.trim() || undefined,
 					service_category_id: categoryFilter || undefined,
 					status: (statusFilter as OperatorStatusType) || undefined,
+					assigned_service: (assignedServiceFilter as OperatorAssignedService) || undefined,
 					is_bbps_enabled:
 						bbpsFilter === 'true' ? true : bbpsFilter === 'false' ? false : undefined,
 					startDate: isDateRangeValid ? startDate : undefined,
@@ -214,6 +218,7 @@ export const OperatorListPage: FC = () => {
 			currentPage,
 			debouncedSearchTerm,
 			endDate,
+			assignedServiceFilter,
 			bbpsFilter,
 			isLoadingPermissions,
 			perPage,
@@ -300,6 +305,7 @@ export const OperatorListPage: FC = () => {
 		setSearchTerm('');
 		setCategoryFilter('');
 		setStatusFilter('');
+		setAssignedServiceFilter('');
 		setBbpsFilter('');
 		setStartDate('');
 		setEndDate('');
@@ -474,6 +480,33 @@ export const OperatorListPage: FC = () => {
 			),
 		},
 		{
+			key: 'assigned_service',
+			header: 'Assigned Service',
+			align: 'center',
+			headerAlign: 'center',
+			width: '150px',
+			minWidth: '150px',
+			render: (item) => {
+				const isSetu = item.assigned_service === 'setu';
+				return (
+					<span
+						className={`badge border px-2 py-1 fw-semibold ${
+							isSetu
+								? 'bg-primary-subtle text-primary border-primary-subtle'
+								: 'bg-info-subtle text-info border-info-subtle'
+						}`}
+						style={{
+							fontSize: '0.8rem',
+							backgroundColor: isSetu ? '#f3e8ff' : '#e0f2fe',
+							color: isSetu ? '#7e22ce' : '#0369a1',
+							borderColor: isSetu ? '#d8b4fe' : '#bae6fd',
+						}}>
+						{isSetu ? 'Setu' : 'Mobikwik'}
+					</span>
+				);
+			},
+		},
+		{
 			key: 'status',
 			header: 'Status',
 			align: 'center',
@@ -626,6 +659,26 @@ export const OperatorListPage: FC = () => {
 									<option value="">All BBPS</option>
 									<option value="true">BBPS Enabled</option>
 									<option value="false">Non-BBPS</option>
+								</select>
+							</div>
+
+							{/* ASSIGNED SERVICE FILTER */}
+							<div style={{ width: '150px' }}>
+								<label htmlFor="assignedServiceFilterSelect" className="form-label fw-bold small mb-1">
+									Assigned Service
+								</label>
+								<select
+									id="assignedServiceFilterSelect"
+									className="form-select"
+									value={assignedServiceFilter}
+									onChange={(e) => {
+										setAssignedServiceFilter(e.target.value);
+										setCurrentPage(1);
+									}}
+									style={{ height: '38px', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}>
+									<option value="">All Services</option>
+									<option value="mobiquick">Mobikwik</option>
+									<option value="setu">Setu</option>
 								</select>
 							</div>
 

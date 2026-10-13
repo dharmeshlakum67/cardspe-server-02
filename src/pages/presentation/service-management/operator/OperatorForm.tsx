@@ -9,6 +9,7 @@ import {
 	IOperator,
 	IOperatorInputParam,
 	OperatorStatusType,
+	OperatorAssignedService,
 	IActiveServiceCategoryOption,
 	IActivePaymentModeOption,
 	BillFetchRequirementType,
@@ -29,6 +30,11 @@ export interface IOperatorFormProps {
 	onCancel: () => void;
 	isSubmitting: boolean;
 }
+
+const ASSIGNED_SERVICE_OPTIONS: { label: string; value: OperatorAssignedService }[] = [
+	{ label: 'Mobikwik', value: 'mobiquick' },
+	{ label: 'Setu', value: 'setu' },
+];
 
 const BILL_FETCH_REQUIREMENT_OPTIONS: { label: string; value: BillFetchRequirementType }[] = [
 	{ label: 'Mandatory (Must fetch bill)', value: 'mandatory' },
@@ -69,6 +75,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 	const [maxAmount, setMaxAmount] = useState<string>('500000.00');
 	const [helpLineNumber, setHelpLineNumber] = useState<string>('');
 	const [status, setStatus] = useState<OperatorStatusType>('active');
+	const [assignedService, setAssignedService] = useState<OperatorAssignedService>('mobiquick');
 
 	// ICON STATE
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -209,6 +216,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 			);
 			setHelpLineNumber(initialValues.help_line_number || '');
 			setStatus(initialValues.status || 'active');
+			setAssignedService(initialValues.assigned_service || 'mobiquick');
 
 			setIsBbpsEnabled(initialValues.is_bbps_enabled ?? true);
 			setBillFetchRequirement(
@@ -570,6 +578,7 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 		formData.append('name', name.trim());
 		formData.append('short_name', shortName.trim());
 		formData.append('status', status);
+		formData.append('assigned_service', assignedService || 'mobiquick');
 
 		formData.append('is_bbps_enabled', String(isBbpsEnabled));
 		formData.append('bill_fetch_requirement', billFetchRequirement);
@@ -719,6 +728,28 @@ export const OperatorForm: FC<IOperatorFormProps> = ({
 									{categories.map((cat) => (
 										<option key={cat.id} value={cat.id}>
 											{cat.name}
+										</option>
+									))}
+								</select>
+							</div>
+
+							{/* ASSIGNED SERVICE */}
+							<div className="col-12 col-md-6">
+								<label htmlFor="opAssignedService" className="form-label fw-bold small mb-1">
+									Assigned Service <span className="text-danger">*</span>
+								</label>
+								<select
+									id="opAssignedService"
+									className="form-select role-name-input"
+									value={assignedService}
+									onChange={(e) =>
+										setAssignedService(e.target.value as OperatorAssignedService)
+									}
+									style={inputStyle}
+									required>
+									{ASSIGNED_SERVICE_OPTIONS.map((opt) => (
+										<option key={opt.value} value={opt.value}>
+											{opt.label}
 										</option>
 									))}
 								</select>

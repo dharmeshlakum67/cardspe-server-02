@@ -114,6 +114,22 @@ export const OperatorViewModal: FC<IOperatorViewModalProps> = ({
 											Non-BBPS
 										</span>
 									)}
+									<span
+										className={`badge border px-2 py-1 fw-semibold ${
+											operator.assigned_service === 'setu'
+												? 'bg-primary-subtle text-primary border-primary-subtle'
+												: 'bg-info-subtle text-info border-info-subtle'
+										}`}
+										style={{
+											fontSize: '0.75rem',
+											backgroundColor:
+												operator.assigned_service === 'setu' ? '#f3e8ff' : '#e0f2fe',
+											color: operator.assigned_service === 'setu' ? '#7e22ce' : '#0369a1',
+											borderColor:
+												operator.assigned_service === 'setu' ? '#d8b4fe' : '#bae6fd',
+										}}>
+										{operator.assigned_service === 'setu' ? 'Setu' : 'Mobikwik'}
+									</span>
 								</div>
 								{operator.slug && (
 									<div className="text-muted small">
@@ -197,6 +213,28 @@ export const OperatorViewModal: FC<IOperatorViewModalProps> = ({
 											<td className="text-muted small fw-semibold">BBPS Biller ID:</td>
 											<td className="small font-monospace text-dark">
 												{operator.biller_id || <span className="text-muted">-</span>}
+											</td>
+										</tr>
+										<tr>
+											<td className="text-muted small fw-semibold">Assigned Service:</td>
+											<td className="small">
+												<span
+													className={`badge border px-2 py-1 fw-semibold ${
+														operator.assigned_service === 'setu'
+															? 'bg-primary-subtle text-primary border-primary-subtle'
+															: 'bg-info-subtle text-info border-info-subtle'
+													}`}
+													style={{
+														fontSize: '0.8rem',
+														backgroundColor:
+															operator.assigned_service === 'setu' ? '#f3e8ff' : '#e0f2fe',
+														color:
+															operator.assigned_service === 'setu' ? '#7e22ce' : '#0369a1',
+														borderColor:
+															operator.assigned_service === 'setu' ? '#d8b4fe' : '#bae6fd',
+													}}>
+													{operator.assigned_service === 'setu' ? 'Setu' : 'Mobikwik'}
+												</span>
 											</td>
 										</tr>
 										<tr>
