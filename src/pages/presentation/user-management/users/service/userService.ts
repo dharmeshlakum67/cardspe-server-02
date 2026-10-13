@@ -156,6 +156,26 @@ export const userService = {
 			body: payload,
 		});
 	},
+
+	// SEND USER CREDENTIALS (ONLY FOR INACTIVE USERS)
+	sendCredentials: async (
+		id: number | string,
+	): Promise<{ success: boolean; message: string; data?: any }> => {
+		return apiClient(ADMIN_ENDPOINTS.SEND_CREDENTIAL(id), {
+			method: 'POST',
+		});
+	},
+
+	// CHANGE USER PASSWORD (ADMIN ACTION)
+	changeUserPassword: async (
+		id: number | string,
+		payload: { password: string; confirm_password?: string },
+	): Promise<{ success: boolean; message: string; data?: any }> => {
+		return apiClient(ADMIN_ENDPOINTS.CHANGE_PASSWORD(id), {
+			method: 'PATCH',
+			body: payload,
+		});
+	},
 };
 
 export default userService;

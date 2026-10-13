@@ -36,6 +36,7 @@ export interface IPermissionContextProps {
 	canReview: (permissionKeyOrName: string) => boolean;
 	canDelete: (permissionKeyOrName: string) => boolean;
 	canResetPassword: (permissionKeyOrName: string) => boolean;
+	canModifyCredential: (permissionKeyOrName?: string) => boolean;
 	refetchPermissions: () => Promise<void>;
 }
 
@@ -125,24 +126,13 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			// EXTRACT ACCESS BOOLEANS (e.g. access: { create: true, read: true, update: true, delete: true, reset_password: true })
 			const accessObj: Record<string, any> = { ...(p.access || {}) };
 
-			// Handle actions array if present (could be array of objects or strings)
+			// Handle actions array if present ONLY if it contains objects with boolean flags (e.g. [{ create: true }])
 			if (Array.isArray(p.actions)) {
 				p.actions.forEach((act: any) => {
-					if (typeof act === 'string') {
-						accessObj[act.toLowerCase().trim()] = true;
-					} else if (typeof act === 'object' && act !== null) {
+					if (typeof act === 'object' && act !== null) {
 						Object.entries(act).forEach(([k, v]) => {
 							accessObj[k.toLowerCase().trim()] = Boolean(v);
 						});
-					}
-				});
-			}
-
-			// Handle permissions array if present
-			if (Array.isArray(p.permissions)) {
-				p.permissions.forEach((permKey: string) => {
-					if (typeof permKey === 'string') {
-						accessObj[permKey.toLowerCase().trim()] = true;
 					}
 				});
 			}
@@ -176,6 +166,16 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 					(p as any).resetPassword ||
 					(p as any)['reset-password'],
 			);
+			const modifyCredentialVal = Boolean(
+				accessObj.modify_credential ||
+					accessObj.modifyCredential ||
+					accessObj['modify-credential'] ||
+					(p as any).modify_credential ||
+					(p as any).modifyCredential ||
+					(p as any)['modify-credential'] ||
+					(p as any).access?.modify_credential ||
+					(p as any).access?.modifyCredential,
+			);
 
 			const state: IPermissionActionState = {
 				id: p.id,
@@ -188,6 +188,9 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				delete: deleteVal,
 				reset_password: resetPasswordVal,
 				resetPassword: resetPasswordVal,
+				modify_credential: modifyCredentialVal,
+				modifyCredential: modifyCredentialVal,
+				'modify-credential': modifyCredentialVal,
 			};
 
 			const idStr = String(p.id).trim();
@@ -246,6 +249,22 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 				);
 			}
 
+			if (
+				actNorm === 'modify_credential' ||
+				actNorm === 'modifycredential' ||
+				actNorm === 'modify-credential'
+			) {
+				return Boolean(
+					perm.modify_credential ||
+						perm.modifyCredential ||
+						perm['modify-credential'] ||
+						(perm as any).access?.modify_credential ||
+						(perm as any).access?.modifyCredential ||
+						perm[action] ||
+						perm[actNorm],
+				);
+			}
+
 			if (actNorm === 'view' || actNorm === 'read') {
 				return Boolean(perm.read || perm.view || perm[action] || perm[actNorm]);
 			}
@@ -297,6 +316,24 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 
 	const canPortal = useCallback(
 		(permissionKeyOrName: string): boolean => hasPermission(permissionKeyOrName, 'portal'),
+		[hasPermission],
+	);
+
+	const isSuperUser = Boolean(
+		authUser?.is_super_admin ||
+		(authUser as any)?.is_super_admin ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_user' ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_admin' ||
+		authUser?.role?.role_type?.toLowerCase().includes('super') ||
+		(authUser as any)?.role_type?.toLowerCase() === 'super_user'
+	);
+
+	const canModifyCredential = useCallback(
+		(permissionKeyOrName: string = 'user'): boolean =>
+			hasPermission(permissionKeyOrName, 'modify_credential') ||
+			hasPermission('user', 'modify_credential') ||
+			hasPermission('users', 'modify_credential') ||
+			hasPermission('user_management', 'modify_credential'),
 		[hasPermission],
 	);
 
@@ -465,6 +502,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canReview,
 			canDelete,
 			canResetPassword,
+			canModifyCredential,
 			canPortal,
 			refetchPermissions,
 		}),
@@ -480,6 +518,7 @@ export const PermissionContextProvider: FC<IPermissionContextProviderProps> = ({
 			canReview,
 			canDelete,
 			canResetPassword,
+			canModifyCredential,
 			canPortal,
 			refetchPermissions,
 		],

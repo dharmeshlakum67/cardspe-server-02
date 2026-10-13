@@ -1,7 +1,8 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 /* eslint-disable no-nested-ternary */
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import AuthContext from '../../../../contexts/authContext';
 import PageWrapper from '../../../../layout/PageWrapper/PageWrapper';
 import Page from '../../../../layout/Page/Page';
 import Icon from '../../../../components/icon/Icon';
@@ -34,8 +35,15 @@ import Modal, {
 	ModalHeader,
 	ModalTitle,
 } from '../../../../components/bootstrap/Modal';
+import Dropdown, {
+	DropdownItem,
+	DropdownMenu,
+	DropdownToggle,
+} from '../../../../components/bootstrap/Dropdown';
 import ServiceAccessManager from './components/ServiceAccessManager';
 import PaymentGatewayAccessManager from './components/PaymentGatewayAccessManager';
+import SendCredentialsModal from './components/SendCredentialsModal';
+import ChangeUserPasswordModal from './components/ChangeUserPasswordModal';
 import './css/UserViewPage.scss';
 
 export type TUserDetailTab =
@@ -130,18 +138,47 @@ export const UserViewPage: FC = () => {
 		canRead,
 		canUpdate,
 		canDelete,
+		canModifyCredential,
 		hasPermission,
 		isLoadingPermissions,
 	} = usePermission();
+	const { authUser } = useContext(AuthContext);
+
+	const isSuperUser = Boolean(
+		authUser?.is_super_admin ||
+		(authUser as any)?.is_super_admin ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_user' ||
+		authUser?.role?.role_type?.toLowerCase() === 'super_admin' ||
+		authUser?.role?.role_type?.toLowerCase().includes('super') ||
+		(authUser as any)?.role_type?.toLowerCase() === 'super_user'
+	);
+
+	// MODIFY CREDENTIAL PERMISSION GUARD (SEND CREDENTIALS & CHANGE PASSWORD)
+	// Strictly requires modify_credential permission on user module
+	const canModifyCred = Boolean(
+		(canModifyCredential && canModifyCredential()) ||
+		(canModifyCredential && (
+			canModifyCredential(PERMISSION_KEYS.USERS) ||
+			canModifyCredential(PERMISSION_KEYS.USER) ||
+			canModifyCredential('user') ||
+			canModifyCredential('users')
+		)) ||
+		(hasPermission && (
+			hasPermission(PERMISSION_KEYS.USERS, 'modify_credential') ||
+			hasPermission(PERMISSION_KEYS.USER, 'modify_credential') ||
+			hasPermission('user', 'modify_credential') ||
+			hasPermission('users', 'modify_credential') ||
+			hasPermission('user_management', 'modify_credential')
+		))
+	);
 
 	// MANAGE SERVICE PERMISSION GUARD
 	const canManageService = Boolean(
-		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
-		hasPermission('manage_service') ||
-		hasPermission('manage_services') ||
 		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.USER, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
-		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+		hasPermission('users', 'manage_service') ||
+		hasPermission('user', 'manage_service'),
 	);
 
 	// MANAGE PAYMENT GATEWAY PERMISSION GUARD
@@ -150,16 +187,26 @@ export const UserViewPage: FC = () => {
 		hasPermission(PERMISSION_KEYS.USER, 'manage_gateway') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_gateway') ||
 		hasPermission('users', 'manage_gateway') ||
-		hasPermission('user', 'manage_gateway') ||
-		hasPermission('manage_gateway') ||
-		hasPermission('manage_gateways'),
+		hasPermission('user', 'manage_gateway'),
 	);
 
-	const canViewGatewayAccess = Boolean(
-		canRead(PERMISSION_KEYS.USERS) ||
-		canRead(PERMISSION_KEYS.USER) ||
-		canRead(PERMISSION_KEYS.USER_MANAGEMENT) ||
-		canManageGateway,
+	// UPDATE / EDIT USER PERMISSION GUARD
+	const canUpdateUser = Boolean(
+		canUpdate(PERMISSION_KEYS.USERS) ||
+		canUpdate(PERMISSION_KEYS.USER) ||
+		canUpdate(PERMISSION_KEYS.USER_MANAGEMENT),
+	);
+
+	// BLOCK / ACTIVATE USER PERMISSION GUARD
+	const canBlockUser = canUpdateUser;
+
+	// HAS ANY HEADER ACTION PERMISSION
+	const hasAnyHeaderAction = Boolean(
+		canUpdateUser ||
+		canBlockUser ||
+		canModifyCred ||
+		canManageService ||
+		canManageGateway
 	);
 
 	// TABS FILTERED BY PERMISSION
@@ -169,11 +216,11 @@ export const UserViewPage: FC = () => {
 				return canManageService;
 			}
 			if (tab.id === 'payment_gateway_management') {
-				return canViewGatewayAccess || canManageGateway;
+				return canManageGateway;
 			}
 			return true;
 		});
-	}, [canManageService, canViewGatewayAccess, canManageGateway]);
+	}, [canManageService, canManageGateway]);
 
 	// DECRYPT ID FROM URL
 	const decryptedId = useMemo(() => decryptId(rawId), [rawId]);
@@ -237,6 +284,10 @@ export const UserViewPage: FC = () => {
 
 	const fetchedIdRef = useRef<string>('');
 	const isFetchingRef = useRef<boolean>(false);
+
+	// CREDENTIALS & PASSWORD MODAL STATES
+	const [isSendCredentialsModalOpen, setIsSendCredentialsModalOpen] = useState<boolean>(false);
+	const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState<boolean>(false);
 
 	// REDIRECT TO 404 IF NO PERMISSIONS OR INVALID ID
 	useEffect(() => {
@@ -649,7 +700,7 @@ export const UserViewPage: FC = () => {
 								{ label: 'User Details', current: true },
 							]}
 						/>
-						<div className="d-flex align-items-center gap-2">
+						<div className="header-actions-wrapper d-flex align-items-center gap-2">
 							<button
 								type="button"
 								className="btn-header-back"
@@ -657,46 +708,95 @@ export const UserViewPage: FC = () => {
 								<Icon icon="ArrowBack" size="sm" />
 								<span>Back</span>
 							</button>
-							<button
-								type="button"
-								className={statusLower === 'active' ? 'btn-header-block' : 'btn-header-activate'}
-								disabled={isStatusChanging}
-								onClick={() => setIsBlockModalOpen(true)}>
-								<Icon
-									icon={statusLower === 'active' ? 'Block' : 'CheckCircle'}
-									size="sm"
-								/>
-								<span>{statusLower === 'active' ? 'Block User' : 'Activate User'}</span>
-							</button>
-							{canManageService && (
-								<button
-									type="button"
-									className="btn-header-manage-services"
-									onClick={() => setActiveTab('service_management')}>
-									<Icon icon="Shield" size="sm" />
-									<span>Manage Services</span>
-								</button>
-							)}
-							{(canManageGateway || canViewGatewayAccess) && (
-								<button
-									type="button"
-									className="btn-header-manage-services"
-									style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#16a34a' }}
-									onClick={() => setActiveTab('payment_gateway_management')}>
-									<Icon icon="AccountBalanceWallet" size="sm" />
-									<span>Payment Gateways</span>
-								</button>
-							)}
-							{canUpdate(PERMISSION_KEYS.USERS) && (
-								<button
-									type="button"
-									className="btn-header-edit"
-									onClick={() =>
-										navigate(`/${PAGE_ROUTES.USERS_EDIT.replace(':id', encryptId(user.id))}`)
-									}>
-									<Icon icon="Edit" size="sm" />
-									<span>Edit User</span>
-								</button>
+							{/* ALL ACTIONS WRAPPED INTO ONE DROPDOWN - ONLY PERMITTED ACTIONS ARE SHOWN */}
+							{hasAnyHeaderAction && (
+								<Dropdown>
+									<DropdownToggle hasIcon={false}>
+										<button type="button" className="btn-header-actions-dropdown">
+											<Icon icon="MoreVert" size="sm" />
+											<span>Actions</span>
+											<Icon icon="KeyboardArrowDown" size="sm" />
+										</button>
+									</DropdownToggle>
+									<DropdownMenu isAlignmentEnd>
+										{/* EDIT USER */}
+										{canUpdateUser && (
+											<DropdownItem
+												onClick={() =>
+													navigate(`/${PAGE_ROUTES.USERS_EDIT.replace(':id', encryptId(user.id))}`)
+												}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon icon="Edit" className="text-primary action-item-icon" size="sm" />
+													<span>Edit User</span>
+												</div>
+											</DropdownItem>
+										)}
+
+										{/* BLOCK / ACTIVATE USER */}
+										{canBlockUser && (
+											<DropdownItem
+												className={isStatusChanging ? 'disabled' : undefined}
+												onClick={() => {
+													if (!isStatusChanging) setIsBlockModalOpen(true);
+												}}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon
+														icon={statusLower === 'active' ? 'Block' : 'CheckCircle'}
+														className={`${
+															statusLower === 'active' ? 'text-danger' : 'text-success'
+														} action-item-icon`}
+														size="sm"
+													/>
+													<span>{statusLower === 'active' ? 'Block User' : 'Activate User'}</span>
+												</div>
+											</DropdownItem>
+										)}
+
+										{/* SEND CREDENTIALS (ONLY IF INACTIVE & HAS MODIFY CREDENTIAL PERMISSION) */}
+										{canModifyCred && statusLower === 'inactive' && (
+											<DropdownItem onClick={() => setIsSendCredentialsModalOpen(true)}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon icon="Email" className="text-info action-item-icon" size="sm" />
+													<span>Send Credentials</span>
+												</div>
+											</DropdownItem>
+										)}
+
+										{/* CHANGE USER PASSWORD (ONLY IF HAS MODIFY CREDENTIAL PERMISSION) */}
+										{canModifyCred && (
+											<DropdownItem onClick={() => setIsChangePasswordModalOpen(true)}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon icon="VpnKey" className="text-warning action-item-icon" size="sm" />
+													<span>Change Password</span>
+												</div>
+											</DropdownItem>
+										)}
+
+										{/* MANAGE SERVICES */}
+										{canManageService && (
+											<DropdownItem onClick={() => setActiveTab('service_management')}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon icon="Shield" className="text-secondary action-item-icon" size="sm" />
+													<span>Manage Services</span>
+												</div>
+											</DropdownItem>
+										)}
+
+										{/* PAYMENT GATEWAYS */}
+										{canManageGateway && (
+											<DropdownItem onClick={() => setActiveTab('payment_gateway_management')}>
+												<div className="d-flex align-items-center gap-2 py-1">
+													<Icon
+														icon="AccountBalanceWallet"
+														className="text-success action-item-icon"
+														size="sm"
+													/>
+													<span>Payment Gateways</span>
+												</div>
+											</DropdownItem>
+										)}
+									</DropdownMenu>
+								</Dropdown>
 							)}
 						</div>
 					</div>
@@ -1526,7 +1626,7 @@ export const UserViewPage: FC = () => {
 					)}
 
 					{/* PAYMENT GATEWAY MANAGEMENT TAB */}
-					{(canManageGateway || canViewGatewayAccess) && activeTab === 'payment_gateway_management' && (
+					{canManageGateway && activeTab === 'payment_gateway_management' && (
 						<div className="row g-4">
 							<div className="col-12">
 								<div className="user-section-card p-4">
@@ -2181,6 +2281,32 @@ export const UserViewPage: FC = () => {
 							isLoading={isStatusChanging}
 							onConfirm={handleBlockUnblockConfirm}
 							onCancel={() => setIsBlockModalOpen(false)}
+						/>
+					)}
+
+					{/* SEND USER CREDENTIALS MODAL */}
+					{user && (
+						<SendCredentialsModal
+							isOpen={isSendCredentialsModalOpen}
+							setIsOpen={setIsSendCredentialsModalOpen}
+							user={user}
+							onSuccess={() => {
+								fetchedIdRef.current = '';
+								fetchUserDetails();
+							}}
+						/>
+					)}
+
+					{/* CHANGE USER PASSWORD MODAL */}
+					{user && (
+						<ChangeUserPasswordModal
+							isOpen={isChangePasswordModalOpen}
+							setIsOpen={setIsChangePasswordModalOpen}
+							user={user}
+							onSuccess={() => {
+								fetchedIdRef.current = '';
+								fetchUserDetails();
+							}}
 						/>
 					)}
 				</div>

@@ -52,9 +52,7 @@ export const PaymentGatewayAccessManager: FC<IPaymentGatewayAccessManagerProps> 
 		hasPermission(PERMISSION_KEYS.USER, 'manage_gateway') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_gateway') ||
 		hasPermission('users', 'manage_gateway') ||
-		hasPermission('user', 'manage_gateway') ||
-		hasPermission('manage_gateway') ||
-		hasPermission('manage_gateways'),
+		hasPermission('user', 'manage_gateway'),
 	);
 
 	const [gateways, setGateways] = useState<IPaymentGatewayAccessItem[]>([]);

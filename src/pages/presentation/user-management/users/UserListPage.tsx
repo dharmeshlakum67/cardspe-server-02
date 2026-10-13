@@ -71,12 +71,11 @@ export const UserListPage: FC = () => {
 
 	// MANAGE SERVICE PERMISSION GUARD
 	const canManageService = Boolean(
-		hasPermission(PERMISSION_KEYS.MANAGE_SERVICE) ||
-		hasPermission('manage_service') ||
-		hasPermission('manage_services') ||
 		hasPermission(PERMISSION_KEYS.USERS, 'manage_service') ||
+		hasPermission(PERMISSION_KEYS.USER, 'manage_service') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_service') ||
-		hasPermission(PERMISSION_KEYS.SERVICE_MANAGEMENT, 'manage_service'),
+		hasPermission('users', 'manage_service') ||
+		hasPermission('user', 'manage_service'),
 	);
 
 	// MANAGE PAYMENT GATEWAY PERMISSION GUARD
@@ -85,9 +84,7 @@ export const UserListPage: FC = () => {
 		hasPermission(PERMISSION_KEYS.USER, 'manage_gateway') ||
 		hasPermission(PERMISSION_KEYS.USER_MANAGEMENT, 'manage_gateway') ||
 		hasPermission('users', 'manage_gateway') ||
-		hasPermission('user', 'manage_gateway') ||
-		hasPermission('manage_gateway') ||
-		hasPermission('manage_gateways'),
+		hasPermission('user', 'manage_gateway'),
 	);
 
 	// REF GUARDS TO PREVENT DUPLICATE FETCHES

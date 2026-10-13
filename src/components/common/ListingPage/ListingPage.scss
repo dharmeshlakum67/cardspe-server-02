@@ -389,6 +389,72 @@
 					box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
 				}
 			}
+
+			&.btn-action-send-credential,
+			&.btn-action-send-credentials {
+				background-color: #f0fdfa !important;
+				color: #0d9488 !important;
+				border-color: #ccfbf1 !important;
+
+				&:hover {
+					background-color: #ccfbf1 !important;
+					border-color: #99f6e4 !important;
+					color: #0f766e !important;
+					box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15);
+				}
+			}
+
+			&.btn-action-change-password {
+				background-color: #fffbeb !important;
+				color: #b45309 !important;
+				border-color: #fde68a !important;
+
+				&:hover {
+					background-color: #fef3c7 !important;
+					border-color: #fcd34d !important;
+					color: #92400e !important;
+					box-shadow: 0 2px 6px rgba(180, 83, 9, 0.15);
+				}
+			}
+
+			&.btn-action-more-actions {
+				background-color: #ffffff !important;
+				color: #334155 !important;
+				border: 1px solid #cbd5e1 !important;
+
+				&:hover {
+					background-color: #f8fafc !important;
+					border-color: #94a3b8 !important;
+					color: #0f172a !important;
+					box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+				}
+			}
+		}
+
+		.listing-action-buttons-group {
+			.dropdown-menu {
+				z-index: 1060 !important;
+				min-width: 190px;
+				padding: 0.4rem 0.35rem;
+				border-radius: 12px;
+				border: 1px solid #e2e8f0;
+				box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+
+				.dropdown-item {
+					font-size: 0.835rem;
+					font-weight: 500;
+					color: #1e293b;
+					padding: 0.45rem 0.85rem;
+					border-radius: 8px;
+					transition: all 0.15s ease;
+					cursor: pointer;
+
+					&:hover {
+						background-color: #f1f5f9;
+						color: #0f172a;
+					}
+				}
+			}
 		}
 
 		// CIRCLE ACTION BUTTONS

@@ -177,6 +177,7 @@ const Modal: FC<IModalProps> = ({
 	size,
 	fullScreen,
 	isAnimation,
+	className,
 	...props
 }) => {
 	const refModal = useRef(null);
@@ -276,7 +277,7 @@ const Modal: FC<IModalProps> = ({
 						<motion.div
 							ref={refModal}
 							key='modal'
-							className={classNames('modal', { fade: isAnimation }, 'show')}
+							className={classNames('modal', { fade: isAnimation }, 'show', className)}
 							role='dialog'
 							style={{ display: 'block', zIndex: modalZIndex }}
 							id={id}

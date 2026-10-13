@@ -582,6 +582,16 @@ export const ADMIN_ENDPOINTS = {
 		method: HTTP_METHODS.PATCH,
 		requiresAuth: true,
 	}),
+	SEND_CREDENTIAL: (id: string | number) => ({
+		url: `/api/admin/send-credential/${id}`,
+		method: HTTP_METHODS.POST,
+		requiresAuth: true,
+	}),
+	CHANGE_PASSWORD: (id: string | number) => ({
+		url: `/api/admin/change-password/${id}`,
+		method: HTTP_METHODS.PATCH,
+		requiresAuth: true,
+	}),
 } as const;
 
 export const USER_ENDPOINTS = ADMIN_ENDPOINTS;
