@@ -13,7 +13,6 @@ import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 import { PAGE_ROUTES } from '../../../constants/pageRoutes';
 import ServiceConfigurationModal from './components/ServiceConfigurationModal';
 import GeneralSettingModal from './components/GeneralSettingModal';
-import BbpsServiceModal from './components/BbpsServiceModal';
 import './css/SettingPage.scss';
 
 export interface ISettingItem {
@@ -63,24 +62,11 @@ export const SettingPage: FC = () => {
 		hasPermission('payment_gateway', 'view') ||
 		hasPermission('payment_gateway', 'read');
 
-	const hasBbpsServiceAccess =
-		canRead(PERMISSION_KEYS.MANAGE_BBPS_SERVICE) ||
-		canRead('manage_bbps_service') ||
-		hasPermission(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'view') ||
-		hasPermission('manage_bbps_service', 'view') ||
-		hasPermission(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'read') ||
-		hasPermission('manage_bbps_service', 'read') ||
-		hasPermission(PERMISSION_KEYS.BASIC_SETTING, 'manage_bbps_service') ||
-		hasPermission('basic_setting', 'manage_bbps_service') ||
-		hasPermission(PERMISSION_KEYS.SETTING, 'manage_bbps_service') ||
-		hasPermission('setting', 'manage_bbps_service');
-
 	// OVERALL SETTINGS ACCESS (IF USER HAS ACCESS TO ANY SUB-MODULE OR PARENT SETTING)
 	const hasAnySettingAccess =
 		hasBasicSettingAccess ||
 		hasServiceConfigAccess ||
 		hasPaymentGatewayAccess ||
-		hasBbpsServiceAccess ||
 		canRead(PERMISSION_KEYS.SETTING) ||
 		canRead('setting');
 
@@ -88,7 +74,6 @@ export const SettingPage: FC = () => {
 	const [activeSettingId, setActiveSettingId] = useState<string | null>(null);
 	const [isServiceConfigModalOpen, setIsServiceConfigModalOpen] = useState<boolean>(false);
 	const [isGeneralSettingModalOpen, setIsGeneralSettingModalOpen] = useState<boolean>(false);
-	const [isBbpsServiceModalOpen, setIsBbpsServiceModalOpen] = useState<boolean>(false);
 
 	// BUILD DYNAMIC MODULES BASED ON PERMISSION NAMES & ACCESS
 	const availableModules = useMemo(() => {
@@ -117,21 +102,12 @@ export const SettingPage: FC = () => {
 				iconBg: '#fdf2f8',
 				iconColor: '#db2777',
 			},
-			{
-				id: 'bbps-service',
-				title: getModuleTitle(PERMISSION_KEYS.MANAGE_BBPS_SERVICE, 'BBPS Service Management'),
-				description: 'Manage which BBPS services are available through third-party providers.',
-				icon: 'CloudDone',
-				iconBg: '#fef3c7',
-				iconColor: '#d97706',
-			},
 		];
 
 		return modules.filter((item) => {
 			if (item.id === 'general') return hasBasicSettingAccess;
 			if (item.id === 'service-configuration') return hasServiceConfigAccess;
 			if (item.id === 'payment-gateway') return hasPaymentGatewayAccess;
-			if (item.id === 'bbps-service') return hasBbpsServiceAccess;
 			return false;
 		});
 	}, [
@@ -139,7 +115,6 @@ export const SettingPage: FC = () => {
 		hasBasicSettingAccess,
 		hasServiceConfigAccess,
 		hasPaymentGatewayAccess,
-		hasBbpsServiceAccess,
 	]);
 
 	// FILTER SETTINGS BASED ON SEARCH QUERY
@@ -161,8 +136,6 @@ export const SettingPage: FC = () => {
 			setIsGeneralSettingModalOpen(true);
 		} else if (item.id === 'payment-gateway') {
 			navigate(`/${PAGE_ROUTES.SETTING_PAYMENT_GATEWAY}`);
-		} else if (item.id === 'bbps-service') {
-			setIsBbpsServiceModalOpen(true);
 		}
 	};
 
@@ -310,12 +283,6 @@ export const SettingPage: FC = () => {
 				<ServiceConfigurationModal
 					isOpen={isServiceConfigModalOpen}
 					setIsOpen={setIsServiceConfigModalOpen}
-				/>
-
-				{/* BBPS SERVICE MANAGEMENT MODAL */}
-				<BbpsServiceModal
-					isOpen={isBbpsServiceModalOpen}
-					setIsOpen={setIsBbpsServiceModalOpen}
 				/>
 			</Page>
 		</PageWrapper>
